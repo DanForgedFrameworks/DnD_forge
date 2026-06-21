@@ -843,9 +843,9 @@ class Component extends DCLogic {
       setTimeout(() => {
         this.setState({ entered: true, view: stage });
         const ov = document.getElementById("ff-rain-overlay");
-        if (ov) { ov.style.transition = "opacity 0.6s ease"; ov.style.opacity = "0"; }
-        setTimeout(() => { this.stopRain(); this.setState({ entering: null }); }, 640);
-      }, 820);
+        if (ov) { ov.style.transition = "opacity 0.7s ease"; ov.style.opacity = "0"; }
+        setTimeout(() => { this.stopRain(); this.setState({ entering: null }); }, 720);
+      }, 1500);
     }, 40);
   }
   goHome() { this.stopRain(); this.setState({ entered: false, entering: null }); }
@@ -853,29 +853,41 @@ class Component extends DCLogic {
     const c = document.getElementById("ff-rain"); if (!c) return;
     const ctx = c.getContext("2d");
     c.width = window.innerWidth; c.height = window.innerHeight;
-    const types = [4, 6, 8, 10, 12, 20];
-    const sidesFor = { 4: 3, 6: 4, 8: 4, 10: 5, 12: 6, 20: 6 };
-    const N = Math.max(22, Math.floor(c.width / 34)), dice = [];
-    for (let i = 0; i < N; i++) {
-      dice.push({ x: Math.random() * c.width, y: Math.random() * -c.height, s: 12 + Math.random() * 22,
-        t: types[Math.floor(Math.random() * types.length)], rot: Math.random() * 6.28,
-        rv: (Math.random() - 0.5) * 0.13, sp: 2.4 + Math.random() * 3.8 });
-    }
+    const W = c.width, H = c.height;
+    const types = [4, 6, 8, 10, 12, 20], sidesFor = { 4: 3, 6: 4, 8: 4, 10: 5, 12: 6, 20: 6 };
+    const GRAV = 0.26;  // a fountain: dice erupt up from the bottom, arc, fall back down
+    const N = Math.max(80, Math.floor(W / 11)), dice = [];
+    const spawn = (d, stagger) => {
+      d.x = Math.random() * W;
+      d.y = H + 14 + Math.random() * 50;
+      d.vx = (Math.random() - 0.5) * 5;
+      d.vy = -(10.5 + Math.random() * 9);              // upward launch
+      d.s = 11 + Math.random() * 22;
+      d.t = types[Math.floor(Math.random() * types.length)];
+      d.rot = Math.random() * 6.28; d.rv = (Math.random() - 0.5) * 0.22;
+      d.delay = stagger ? Math.floor(Math.random() * 55) : 0;
+    };
+    for (let i = 0; i < N; i++) { const d = {}; spawn(d, true); dice.push(d); }
     const draw = (d) => {
       ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(d.rot);
       const sides = sidesFor[d.t]; ctx.beginPath();
       for (let i = 0; i < sides; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / sides; const px = Math.cos(a) * d.s, py = Math.sin(a) * d.s; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
       ctx.closePath();
-      ctx.fillStyle = "rgba(43,32,22,0.9)"; ctx.fill();
+      ctx.fillStyle = "rgba(43,32,22,0.92)"; ctx.fill();
       ctx.strokeStyle = "#bd7d3f"; ctx.lineWidth = Math.max(1.2, d.s * 0.1); ctx.stroke();
       ctx.fillStyle = "#efe4cd"; ctx.font = "700 " + Math.round(d.s * 0.8) + "px 'Cinzel',Georgia,serif";
       ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(d.t), 0, 1);
       ctx.restore();
     };
     this._rain = setInterval(() => {
-      ctx.fillStyle = "rgba(20,17,13,0.30)"; ctx.fillRect(0, 0, c.width, c.height);
-      for (const d of dice) { d.y += d.sp; d.rot += d.rv; if (d.y - d.s > c.height) { d.y = -d.s * 2; d.x = Math.random() * c.width; } draw(d); }
-    }, 33);
+      ctx.fillStyle = "rgba(20,17,13,0.20)"; ctx.fillRect(0, 0, W, H);
+      for (const d of dice) {
+        if (d.delay > 0) { d.delay--; continue; }
+        d.vy += GRAV; d.x += d.vx; d.y += d.vy; d.rot += d.rv;
+        if (d.y - d.s > H && d.vy > 0) spawn(d, false);   // fell back off the bottom -> relaunch
+        draw(d);
+      }
+    }, 24);
   }
   stopRain() { if (this._rain) { clearInterval(this._rain); this._rain = null; } }
   pcSkeleton() { return { species: "", subspecies: "", "class": "", subclass: "", level: 1, background: "", abilityMethod: "point_buy", hitDice: { die: "d8", total: 1, remaining: 1 }, proficiencies: {}, equipment: [], currency: {}, personality: {} }; }
@@ -1028,7 +1040,7 @@ class Component extends DCLogic {
     seg.push(a.environment ? sc.env + " " + clean(a.environment) + ", a high-fantasy world" : sc.env + " an evocative high-fantasy location");
     if (a.personality) seg.push("mood: " + clean(a.personality));
     seg.push(a.style ? clean(a.style) : "painterly high fantasy");
-    seg.push("full-body fantasy character art, cinematic composition, consistent character design across the set, rich detail, dramatic natural light");
+    seg.push("in the style of Greg Rutkowski and Tyler Jacobson, gritty painterly high-fantasy digital illustration, dramatic cinematic lighting, full-body fantasy character art, cinematic composition, consistent character design across the set, rich detail");
     return "\u201C" + seg.filter(Boolean).join(". ") + ". \u2014 " + this.state.forgeState.toLowerCase() + " variant.\u201D";
   }
 

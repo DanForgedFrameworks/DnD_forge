@@ -61,8 +61,9 @@ KIND_WORDS = {
 }
 
 FIXED_TAIL = (
-    "full-body fantasy character art, cinematic composition, consistent character "
-    "design across the set, rich detail, dramatic natural light"
+    "in the style of Greg Rutkowski and Tyler Jacobson, gritty painterly high-fantasy "
+    "digital illustration, dramatic cinematic lighting, full-body fantasy character art, "
+    "cinematic composition, consistent character design across the set, rich detail"
 )
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
