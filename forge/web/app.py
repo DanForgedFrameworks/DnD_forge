@@ -51,7 +51,7 @@ app = Flask(__name__)
 @app.after_request
 def _cors(resp):
     resp.headers["Access-Control-Allow-Origin"] = "*"
-    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS"
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return resp
 
@@ -183,6 +183,18 @@ def get_character(cid):
     if not path.exists():
         abort(404)
     return jsonify(json.loads(path.read_text(encoding="utf-8")))
+
+
+@app.delete("/character/<cid>")
+def delete_character(cid):
+    path = CHAR_DIR / f"{cid}.json"
+    if not path.exists():
+        abort(404)
+    path.unlink()
+    # also remove any generated portraits for this character (best-effort)
+    import shutil
+    shutil.rmtree(PORTRAIT_DIR / cid, ignore_errors=True)
+    return jsonify({"deleted": cid})
 
 
 @app.post("/character")

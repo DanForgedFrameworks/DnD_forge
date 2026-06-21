@@ -55,13 +55,54 @@
         <select value="{{ rulesetSel }}" onChange="{{ onPickRuleset }}" title="Active ruleset" style="background:#241f19; border:1px solid #3a3227; color:#cabfa9; border-radius:7px; padding:8px 28px 8px 11px; font-size:13px; appearance:none; cursor:pointer;">{{ rulesetEls }}</select>
       </sc-if>
       <div style="{{ bridgeStatusStyle }}" title="{{ bridgeStatusTitle }}">{{ bridgeStatusText }}</div>
-      <button onClick="{{ onAutofill }}" style="display:flex; align-items:center; gap:7px; background:#99502a; color:#fff; border:none; border-radius:7px; padding:9px 14px; font-size:14px; font-weight:600; cursor:pointer;" title="Simulates the agentic auto-fill from your uploaded sheet">⚒ Auto-fill from sheet</button>
+      <button onClick="{{ onSaveCurrent }}" title="Save this creation to My creations" style="display:flex; align-items:center; gap:6px; background:#2d4a32; color:#dff0e2; border:1px solid #3f6147; border-radius:7px; padding:9px 14px; font-size:13.5px; font-weight:600; cursor:pointer;">Save</button>
+      <div style="position:relative;">
+        <button onClick="{{ onToggleLib }}" title="Your saved creations" style="display:flex; align-items:center; gap:7px; background:#241f19; color:#cabfa9; border:1px solid #3a3227; border-radius:7px; padding:9px 13px; font-size:13.5px; cursor:pointer;">My creations <span style="color:#bd7d3f;">({{ libCount }}) &#9662;</span></button>
+        <sc-if value="{{ libOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; right:0; top:48px; width:330px; max-height:64vh; overflow:auto; background:#1f1b15; border:1px solid #3a3227; border-radius:10px; padding:8px; z-index:60; box-shadow:0 14px 34px rgba(0,0,0,0.55);">
+            <sc-if value="{{ hasCreations }}" hint-placeholder-val="{{ true }}">
+              <sc-for list="{{ myCreations }}" as="grp" hint-placeholder-count="2">
+                <div style="font-family:'Cinzel',serif; font-size:10px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; margin:9px 6px 5px;">{{ grp.key }}</div>
+                <sc-for list="{{ grp.items }}" as="it" hint-placeholder-count="2">
+                  <div style="display:flex; align-items:center; gap:4px; border-radius:7px;">
+                    <button onClick="{{ it.onOpen }}" style="flex:1; min-width:0; display:flex; align-items:center; gap:9px; text-align:left; background:transparent; border:none; cursor:pointer; padding:7px 8px; border-radius:6px; color:#e7dcc6;">
+                      <span style="width:30px; height:30px; flex:none; border-radius:6px; background:{{ it.accent }}; display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff8ec;">{{ it.glyph }}</span>
+                      <span style="min-width:0;"><span style="display:block; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ it.name }}</span><span style="display:block; font-size:11.5px; color:#9c8e76;">{{ it.meta }}</span></span>
+                    </button>
+                    <button onClick="{{ it.onDelete }}" title="Delete this creation" style="flex:none; background:transparent; border:none; color:#9a6b5a; cursor:pointer; font-size:12px; padding:7px 9px; border-radius:6px;">Delete</button>
+                  </div>
+                </sc-for>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ noCreations }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:16px 12px; font-size:13px; color:#9c8e76; line-height:1.5;">No saved creations yet. Forge or build one, then press <strong style="color:#cabfa9;">Save</strong>.</div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+      <button onClick="{{ onAutofill }}" style="display:flex; align-items:center; gap:7px; background:#99502a; color:#fff; border:none; border-radius:7px; padding:9px 14px; font-size:14px; font-weight:600; cursor:pointer;" title="Simulates the agentic auto-fill from your uploaded sheet">&#9874; Auto-fill from sheet</button>
     </div>
   </div>
 
+  <sc-if value="{{ hasConfirm }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; background:rgba(8,6,4,0.66); z-index:200; display:flex; align-items:center; justify-content:center;">
+      <div style="background:#241f19; border:1px solid #5a4632; border-radius:12px; padding:24px 26px; width:380px; max-width:90vw; box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+        <div style="font-family:'Cinzel',serif; font-size:17px; color:#efe4cd; margin-bottom:9px;">Delete this creation?</div>
+        <div style="font-size:14px; color:#b09f84; line-height:1.5; margin-bottom:20px;"><strong style="color:#e7dcc6;">{{ confirmName }}</strong> will be permanently removed, along with any portraits you generated. This can't be undone.</div>
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+          <button onClick="{{ onCancelDelete }}" style="background:#2c261e; color:#cabfa9; border:1px solid #4a3f30; border-radius:7px; padding:9px 16px; font-size:14px; cursor:pointer;">Cancel</button>
+          <button onClick="{{ onConfirmDelete }}" style="background:#7a2d2d; color:#fff; border:none; border-radius:7px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer;">Delete</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ savedToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:#2d4a32; color:#dff0e2; border:1px solid #3f6147; border-radius:8px; padding:11px 18px; font-size:14px; z-index:210; box-shadow:0 8px 24px rgba(0,0,0,0.4);">Saved to My creations.</div>
+  </sc-if>
+
   <!-- ===================== STARTER TRAY ===================== -->
   <div class="no-print" style="padding:16px 28px 0;">
-    <div style="font-family:'Cinzel',serif; font-size:12px; letter-spacing:2px; color:#bd7d3f; text-transform:uppercase; margin-bottom:10px;">Start from a creature — or your own</div>
+    <div style="font-family:'Cinzel',serif; font-size:12px; letter-spacing:2px; color:#bd7d3f; text-transform:uppercase; margin-bottom:10px;">Examples — start from one of these</div>
     <div class="pf-scroll" style="display:flex; gap:12px; overflow-x:auto; padding-bottom:14px;">
       <sc-for list="{{ starters }}" as="s" hint-placeholder-count="5">
         <button onClick="{{ s.onClick }}" style="{{ s.style }}">
@@ -514,7 +555,8 @@ class Component extends DCLogic {
       bridge: null, rulesetSlug: "dnd5e-2014", ruleset: null, rulesets: [],
       serverChars: [], forgeBusy: false, forgeWarnings: [], portraitGen: {},
       rulesMode: "relaxed", flavourOpen: false,
-      flavour: { experience: "", origin: "", memory: "" }
+      flavour: { experience: "", origin: "", memory: "" },
+      libOpen: false, confirmDelete: null, savedToast: false
     };
   }
 
@@ -538,6 +580,30 @@ class Component extends DCLogic {
     if (!this.state.bridge) return null;
     try { const res = await this.jpost("/character", { character: this.charPayload() }, 15000); this.refreshLibrary(); return res; }
     catch (e) { return null; }
+  }
+  // ---- My creations: save / open / delete ----
+  toggleLib() { this.setState(s => ({ libOpen: !s.libOpen })); }
+  async saveCurrent() {
+    if (!this.state.bridge) { this.setState({ forgeWarnings: [{ level: "error", message: "Saving needs the bridge running." }] }); return; }
+    const res = await this.saveCharacter();
+    if (res) {
+      const id = res.id || (res.character && res.character.id) || this.charPayload().id;
+      this.setState({ activeId: id, savedToast: true });
+      setTimeout(() => this.setState({ savedToast: false }), 1900);
+    }
+  }
+  askDelete(id, name) { this.setState({ confirmDelete: { id: id, name: name } }); }
+  cancelDelete() { this.setState({ confirmDelete: null }); }
+  async confirmDeleteNow() {
+    const cd = this.state.confirmDelete; if (!cd) return;
+    try { await this.api("/character/" + encodeURIComponent(cd.id), { method: "DELETE" }, 8000); } catch (e) {}
+    this.setState(s => {
+      const wasOpen = s.activeId === cd.id;
+      const next = { confirmDelete: null };
+      if (wasOpen) { next.activeId = "hane"; next.draft = this.clone(this.LIB.hane); next.portraitIndex = 0; }
+      return next;
+    });
+    this.refreshLibrary();
   }
 
   // ===== Bridge adapter — live Flask server, silent fallback to local samples =====
@@ -944,7 +1010,30 @@ class Component extends DCLogic {
         onClick: () => this.loadServer(id), style: starterStyle(active)
       };
     });
-    const starters = localStarters.concat(serverStarters);
+    // Starter tray = built-in examples only (defaults; not deletable).
+    const starters = localStarters;
+
+    // "My creations" = the player's saved characters, grouped into the five buckets.
+    const BUCKETS = [
+      { key: "Player characters", kinds: ["character"] },
+      { key: "NPCs", kinds: ["npc"] },
+      { key: "Monsters", kinds: ["monster", "creature"] },
+      { key: "Companions", kinds: ["companion"] },
+      { key: "Pets", kinds: ["pet"] },
+    ];
+    const myCreations = BUCKETS.map(b => {
+      const items = (this.state.serverChars || []).filter(c => c && (c.id || c.slug) && b.kinds.indexOf(c.kind || "monster") !== -1).map(c => {
+        const id = c.id || c.slug;
+        return {
+          id, name: c.name || id, meta: metaLabel(c.kind, c.challenge), glyph: glyphFor(c.kind || "monster"),
+          accent: c.accent || "#7a5a3a", active: this.state.activeId === id,
+          onOpen: () => { this.loadServer(id); this.setState({ libOpen: false }); },
+          onDelete: () => this.askDelete(id, c.name || id),
+        };
+      });
+      return { key: b.key, items, hasItems: items.length > 0 };
+    }).filter(b => b.hasItems);
+    const hasCreations = myCreations.length > 0;
 
     const forgeStateNames = ["At rest", "In conversation", "In battle", "Travelling"];
     const forgeStates = forgeStateNames.map(label => ({
@@ -995,6 +1084,13 @@ class Component extends DCLogic {
       isStudio: this.state.view === "studio", isForge: this.state.view === "forge", isCodex: this.state.view === "codex",
       onStudio: () => this.setView("studio"), onForge: () => this.setView("forge"), onCodex: () => this.setView("codex"),
       tabStudio: this.tab(this.state.view === "studio"), tabForge: this.tab(this.state.view === "forge"), tabCodex: this.tab(this.state.view === "codex"),
+      // My creations library + Save + delete-confirm
+      myCreations, hasCreations, noCreations: !hasCreations,
+      libOpen: this.state.libOpen, onToggleLib: () => this.toggleLib(),
+      libCount: myCreations.reduce((n, g) => n + g.items.length, 0),
+      onSaveCurrent: () => this.saveCurrent(), savedToast: this.state.savedToast,
+      hasConfirm: !!this.state.confirmDelete, confirmName: (this.state.confirmDelete || {}).name || "",
+      onCancelDelete: () => this.cancelDelete(), onConfirmDelete: () => this.confirmDeleteNow(),
       onMonster: () => this.setMode("monster"), onCharacter: () => this.setMode("character"),
       modeMonster: this.modeBtn(this.state.mode === "monster"), modeCharacter: this.modeBtn(this.state.mode === "character"),
       modeNoun: this.state.mode === "character" ? "player character" : "monster / NPC",
