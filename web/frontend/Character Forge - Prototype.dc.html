@@ -30,15 +30,72 @@
     #codex-sheet { position:absolute !important; left:0; top:0; width:100%; box-shadow:none !important; }
     .no-print { display:none !important; }
   }
+  /* ---- welcome portal doors ---- */
+  @keyframes ffStrike{0%,100%{transform:translateY(0) rotate(0)}28%{transform:translateY(5px) rotate(-1.2deg)}55%{transform:translateY(0)}}
+  @keyframes ffBloom{0%,100%{filter:brightness(1)}50%{filter:brightness(1.4)}}
+  @keyframes ffShine{0%{transform:translateX(-130%)}100%{transform:translateX(130%)}}
+  @keyframes ffRise{0%{transform:translateY(12px);opacity:0}40%{opacity:.95}100%{transform:translateY(-16px);opacity:0}}
+  .ff-door{position:relative;width:240px;background:#1f1b15;border:1px solid #3a3227;border-radius:16px;padding:14px;cursor:pointer;text-align:center;color:#e7dcc6;font-family:'Cinzel','EB Garamond',Georgia,serif;transition:transform .2s,border-color .2s,box-shadow .2s;}
+  .ff-door:hover{transform:translateY(-8px);border-color:#bd7d3f;box-shadow:0 18px 46px rgba(0,0,0,.55);}
+  .ff-door:focus-visible{outline:2px solid #bd7d3f;outline-offset:3px;}
+  .ff-door__frame{position:relative;width:212px;height:212px;border-radius:11px;overflow:hidden;margin:0 auto;}
+  .ff-door__img{width:100%;height:100%;background-size:cover;background-position:center;image-rendering:pixelated;transition:transform .25s;}
+  .ff-door--forge:hover .ff-door__img{animation:ffStrike .55s ease-in-out;}
+  .ff-door--codex:hover .ff-door__img{animation:ffBloom 1s ease-in-out;transform:scale(1.05);}
+  .ff-door--studio:hover .ff-door__img{transform:scale(1.03);}
+  .ff-door__shine{position:absolute;top:0;left:0;width:42%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,225,170,.35),transparent);opacity:0;pointer-events:none;}
+  .ff-door--studio:hover .ff-door__shine{opacity:1;animation:ffShine 1.15s ease-in-out;}
+  .ff-door__mote{position:absolute;width:4px;height:4px;border-radius:50%;background:#ffd9a0;opacity:0;left:50%;top:34%;pointer-events:none;box-shadow:8px 6px 0 #ffcf90,-10px 4px 0 #ffe3b0,2px -6px 0 #ffd9a0;}
+  .ff-door--codex:hover .ff-door__mote{animation:ffRise 1.15s ease-in-out infinite;}
+  .ff-door h2{font-size:18px;color:#f0d9b5;letter-spacing:1px;margin:12px 0 3px;}
+  .ff-door p{font-size:12.5px;color:#9c8e76;margin:0;font-family:'EB Garamond',Georgia,serif;}
+  .ff-door__more{font-size:12px;color:#bd9a6a;margin:8px 2px 0;line-height:1.45;max-height:0;opacity:0;overflow:hidden;transition:max-height .25s,opacity .25s;font-family:'EB Garamond',Georgia,serif;}
+  .ff-door:hover .ff-door__more,.ff-door:focus-visible .ff-door__more{max-height:90px;opacity:1;}
+  @media (prefers-reduced-motion: reduce){.ff-door,.ff-door__img,.ff-door__shine,.ff-door__mote{animation:none !important;transition:none !important;}}
 </style>
 </helmet>
 
 <div style="min-height:100vh; background:#161310; background-image:radial-gradient(120% 80% at 50% -10%, #2a241c, #161310 70%); font-family:'EB Garamond',Georgia,serif; color:#e7dcc6; padding-bottom:60px;">
 
+  <!-- ===================== WELCOME GATEWAY ===================== -->
+  <sc-if value="{{ showWelcome }}" hint-placeholder-val="{{ true }}">
+    <div class="no-print" style="position:fixed; inset:0; z-index:160; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px; background:radial-gradient(120% 90% at 50% -8%, #2c251c, #14110d 72%);">
+      <div style="display:flex; align-items:center; gap:11px; margin-bottom:8px;">
+        <div style="width:34px; height:34px; border-radius:7px; background:#99502a; display:flex; align-items:center; justify-content:center; font-size:18px;">&#9874;</div>
+        <div style="font-family:'Cinzel',serif; font-weight:700; font-size:22px; letter-spacing:1.5px; color:#efe4cd;">Character Forge</div>
+      </div>
+      <div style="font-family:'Cinzel',serif; font-size:15px; letter-spacing:3px; color:#bd7d3f; text-transform:uppercase; margin-bottom:4px;">Choose your path</div>
+      <div style="font-size:14px; color:#9c8e76; margin-bottom:34px;">Three ways in. Hover a door to see what waits beyond it.</div>
+      <div style="display:flex; gap:26px; flex-wrap:wrap; justify-content:center;">
+        <button class="ff-door ff-door--forge" onClick="{{ onEnterForge }}">
+          <div class="ff-door__frame"><div class="ff-door__img" style="background-image:url(./assets/portal-forge.png)"></div></div>
+          <h2>The Forge</h2>
+          <p>Describe a hero &mdash; and conjure them</p>
+          <div class="ff-door__more">Pour in a sentence (or hit Surprise me) and the forge builds a complete, rules-legal character, art and all.</div>
+        </button>
+        <button class="ff-door ff-door--studio" onClick="{{ onEnterStudio }}">
+          <div class="ff-door__frame"><div class="ff-door__img" style="background-image:url(./assets/portal-studio.png)"></div><div class="ff-door__shine"></div></div>
+          <h2>The Studio</h2>
+          <p>Build and refine by hand</p>
+          <div class="ff-door__more">Tweak every stat, spell and trait yourself &mdash; the engine keeps the maths honest as you go.</div>
+        </button>
+        <button class="ff-door ff-door--codex" onClick="{{ onEnterCodex }}">
+          <div class="ff-door__frame"><div class="ff-door__img" style="background-image:url(./assets/portal-codex.png)"></div><div class="ff-door__mote"></div></div>
+          <h2>The Codex</h2>
+          <p>Your sheet, ready for the table</p>
+          <div class="ff-door__more">A printable parchment character sheet with the four-state portrait set.</div>
+        </button>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ entering }}" hint-placeholder-val="{{ false }}">
+    <div id="ff-rain-overlay" class="no-print" style="position:fixed; inset:0; z-index:400; background:#14110d;"><canvas id="ff-rain" style="display:block; width:100%; height:100%;"></canvas></div>
+  </sc-if>
+
   <!-- ===================== TOP BAR ===================== -->
   <div class="no-print" style="position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:18px; padding:14px 28px; background:rgba(22,19,16,0.92); border-bottom:1px solid #3a3227; backdrop-filter:blur(6px);">
-    <div style="display:flex; align-items:center; gap:10px;">
-      <div style="width:32px; height:32px; border-radius:6px; background:#99502a; display:flex; align-items:center; justify-content:center; font-size:17px;">⚒</div>
+    <div onClick="{{ onGoHome }}" title="Back to the gateway" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+      <div style="width:32px; height:32px; border-radius:6px; background:#99502a; display:flex; align-items:center; justify-content:center; font-size:17px;">&#9874;</div>
       <div style="font-family:'Cinzel',serif; font-weight:700; font-size:19px; letter-spacing:1px; color:#efe4cd;">Character Forge</div>
     </div>
     <div style="display:flex; gap:4px; margin-left:14px; background:#241f19; border:1px solid #3a3227; border-radius:8px; padding:4px;">
@@ -582,7 +639,8 @@ class Component extends DCLogic {
       rulesMode: "relaxed", flavourOpen: false,
       flavour: { experience: "", origin: "", memory: "" },
       libOpen: false, confirmDelete: null, savedToast: false,
-      trash: [], trashOpen: false, lightbox: null
+      trash: [], trashOpen: false, lightbox: null,
+      entered: false, entering: null
     };
   }
 
@@ -760,6 +818,40 @@ class Component extends DCLogic {
   }
 
   setView(v) { this.setState({ view: v }); }
+  // ---- welcome portal: enter a stage with the copper glyph-rain cleanse ----
+  enterStage(stage) {
+    let reduce = false; try { reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+    if (reduce) { this.setState({ entered: true, view: stage, entering: null }); return; }
+    this.setState({ entering: stage });
+    setTimeout(() => {
+      this.runRain();
+      setTimeout(() => {
+        this.setState({ entered: true, view: stage });
+        const ov = document.getElementById("ff-rain-overlay");
+        if (ov) { ov.style.transition = "opacity 0.6s ease"; ov.style.opacity = "0"; }
+        setTimeout(() => { this.stopRain(); this.setState({ entering: null }); }, 640);
+      }, 820);
+    }, 40);
+  }
+  goHome() { this.stopRain(); this.setState({ entered: false, entering: null }); }
+  runRain() {
+    const c = document.getElementById("ff-rain"); if (!c) return;
+    const ctx = c.getContext("2d");
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    const glyphs = "FORGEDFRAMEWORKS01<>{}/\\|=+*forging⚒".split("");
+    const fs = 16, cols = Math.floor(c.width / fs), drops = [];
+    for (let i = 0; i < cols; i++) drops[i] = Math.random() * -50;
+    this._rain = setInterval(() => {
+      ctx.fillStyle = "rgba(20,17,13,0.16)"; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.fillStyle = "#bd7d3f"; ctx.font = fs + "px 'JetBrains Mono',monospace";
+      for (let i = 0; i < drops.length; i++) {
+        ctx.fillText(glyphs[Math.floor(Math.random() * glyphs.length)], i * fs, drops[i] * fs);
+        if (drops[i] * fs > c.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i] += 0.9;
+      }
+    }, 45);
+  }
+  stopRain() { if (this._rain) { clearInterval(this._rain); this._rain = null; } }
   pcSkeleton() { return { species: "", subspecies: "", "class": "", subclass: "", level: 1, background: "", abilityMethod: "point_buy", hitDice: { die: "d8", total: 1, remaining: 1 }, proficiencies: {}, equipment: [], currency: {}, personality: {} }; }
   setMode(m) {
     this.setState(s => {
@@ -1167,6 +1259,9 @@ class Component extends DCLogic {
     return {
       isStudio: this.state.view === "studio", isForge: this.state.view === "forge", isCodex: this.state.view === "codex",
       onStudio: () => this.setView("studio"), onForge: () => this.setView("forge"), onCodex: () => this.setView("codex"),
+      showWelcome: !this.state.entered, entering: !!this.state.entering,
+      onEnterForge: () => this.enterStage("forge"), onEnterStudio: () => this.enterStage("studio"), onEnterCodex: () => this.enterStage("codex"),
+      onGoHome: () => this.goHome(),
       tabStudio: this.tab(this.state.view === "studio"), tabForge: this.tab(this.state.view === "forge"), tabCodex: this.tab(this.state.view === "codex"),
       // My creations library + Save + delete-confirm
       myCreations, hasCreations, noCreations: !hasCreations,
