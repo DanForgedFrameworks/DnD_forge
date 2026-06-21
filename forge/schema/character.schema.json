@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dnd-character-forge/character.schema.json",
+  "title": "Character (Forge contract, schemaVersion 1)",
+  "description": "The single object the front-end loads/edits/POSTs. A universal 5e statblock for any `kind` (monster..character), plus the art/portrait pipeline. Engine-added extension fields are marked [ext].",
+  "type": "object",
+  "required": ["id", "schemaVersion", "ruleset", "kind", "name", "abilities"],
+  "properties": {
+    "id": { "type": "string", "description": "stable slug" },
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "ruleset": { "type": "string", "enum": ["dnd5e-2014", "dnd5e-2024"] },
+    "kind": {
+      "type": "string",
+      "enum": ["monster", "npc", "creature", "companion", "pet", "character"]
+    },
+
+    "name": { "type": "string" },
+    "size": { "type": "string" },
+    "type": { "type": "string" },
+    "alignment": { "type": "string" },
+    "flavour": { "type": "string" },
+
+    "ac": { "type": "string", "description": "number + optional parenthetical, e.g. '15 (aerial awareness)'" },
+    "hp": { "type": "string", "description": "average + dice formula, e.g. '110 (13d8 + 52)'" },
+    "speed": { "type": "string" },
+
+    "abilities": {
+      "type": "object",
+      "required": ["STR", "DEX", "CON", "INT", "WIS", "CHA"],
+      "properties": {
+        "STR": { "type": "integer" }, "DEX": { "type": "integer" },
+        "CON": { "type": "integer" }, "INT": { "type": "integer" },
+        "WIS": { "type": "integer" }, "CHA": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+
+    "saves": { "type": "string", "description": "computed/read-only when saveProfs present" },
+    "skills": { "type": "string", "description": "computed/read-only when skillProfs present" },
+    "resist": { "type": "string" },
+    "condImm": { "type": "string" },
+    "senses": { "type": "string", "description": "computed/read-only when skillProfs present" },
+    "languages": { "type": "string" },
+    "challenge": { "type": "string", "description": "'CR (XP)' or '— (level N)'" },
+
+    "saveProfs": {
+      "description": "[ext] structured save proficiencies; source of truth for the `saves` string",
+      "type": "array",
+      "items": { "type": "string", "enum": ["STR", "DEX", "CON", "INT", "WIS", "CHA"] }
+    },
+    "skillProfs": {
+      "description": "[ext] structured skill proficiencies; source of truth for `skills`/`senses`",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["skill"],
+        "properties": {
+          "skill": { "type": "string" },
+          "expertise": { "type": "boolean", "default": false }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "traits": { "$ref": "#/$defs/feature_list" },
+    "actions": { "$ref": "#/$defs/feature_list" },
+    "reactions": { "$ref": "#/$defs/feature_list" },
+    "legendary": { "$ref": "#/$defs/feature_list" },
+
+    "dump": { "type": "string", "description": "freeform art/concept brain-dump" },
+    "art": {
+      "type": "object",
+      "properties": {
+        "appearance": { "type": "string" },
+        "outfit": { "type": "string" },
+        "pose": { "type": "string" },
+        "environment": { "type": "string" },
+        "personality": { "type": "string" },
+        "style": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "portraits": {
+      "type": "object",
+      "description": "fixed four states; `custom` reserved for later",
+      "required": ["at-rest", "in-conversation", "in-battle", "travelling"],
+      "properties": {
+        "at-rest": { "$ref": "#/$defs/portrait" },
+        "in-conversation": { "$ref": "#/$defs/portrait" },
+        "in-battle": { "$ref": "#/$defs/portrait" },
+        "travelling": { "$ref": "#/$defs/portrait" },
+        "custom": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              { "$ref": "#/$defs/portrait" },
+              { "type": "object", "properties": { "key": { "type": "string" } }, "required": ["key"] }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "pc": {
+      "description": "[ext] PC-only data; populated when kind='character'. Additive — schemaVersion stays 1. Only holds what the universal statblock doesn't already cover; abilities/saves/skills/AC/HP/speed/actions/languages stay top-level, and PB/saves/skills/initiative are engine-derived (challenge = '— (level N)').",
+      "type": "object",
+      "properties": {
+        "species": { "type": ["string", "null"] },
+        "subspecies": { "type": ["string", "null"] },
+        "class": { "type": "string" },
+        "subclass": { "type": ["string", "null"] },
+        "level": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "background": { "type": ["string", "null"] },
+        "abilityMethod": { "type": ["string", "null"] },
+        "baseAbilities": { "type": "object" },
+        "abilityAllocation2024": { "type": "object" },
+        "initiativeBonus": { "type": "integer", "description": "extra beyond DEX mod; initiative itself is derived" },
+        "hitDice": {
+          "type": "object",
+          "properties": {
+            "die": { "type": "string" },
+            "total": { "type": "integer" },
+            "remaining": { "type": "integer" }
+          },
+          "additionalProperties": true
+        },
+        "deathSaves": {
+          "type": "object",
+          "properties": {
+            "successes": { "type": "integer", "minimum": 0, "maximum": 3 },
+            "failures": { "type": "integer", "minimum": 0, "maximum": 3 }
+          },
+          "additionalProperties": false
+        },
+        "proficiencies": {
+          "type": "object",
+          "properties": {
+            "armor": { "type": "array", "items": { "type": "string" } },
+            "weapons": { "type": "array", "items": { "type": "string" } },
+            "tools": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": true
+        },
+        "feats": { "type": "array", "items": { "type": "string" } },
+        "equipment": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "qty": { "type": "integer" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "currency": {
+          "type": "object",
+          "properties": {
+            "cp": { "type": "integer" }, "sp": { "type": "integer" },
+            "ep": { "type": "integer" }, "gp": { "type": "integer" }, "pp": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "personality": {
+          "type": "object",
+          "properties": {
+            "traits": { "type": "array", "items": { "type": "string" } },
+            "ideals": { "type": "array", "items": { "type": "string" } },
+            "bonds": { "type": "array", "items": { "type": "string" } },
+            "flaws": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "spellcasting": {
+      "description": "[ext] populated for spellcasters. ability/saveDc/attackBonus + slot TOTALS are engine-derived (class + level); spell lists and `expended` counts are choices/session state.",
+      "type": ["object", "null"],
+      "properties": {
+        "ability": { "type": ["string", "null"] },
+        "saveDc": { "type": ["integer", "null"] },
+        "attackBonus": { "type": ["integer", "null"] },
+        "slots": {
+          "type": "object",
+          "description": "per spell level keyed '1'..'9', e.g. {\"1\": {\"total\": 4, \"expended\": 1}}",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "total": { "type": "integer" },
+              "expended": { "type": "integer" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "cantrips": { "type": "array", "items": { "type": "string" } },
+        "known": { "type": "array", "items": { "type": "string" } },
+        "prepared": { "type": "array", "items": { "type": "string" } },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "provenance": {
+      "description": "[ext] optional field-path -> origin (user|ai|rules)",
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "additionalProperties": true,
+
+  "$defs": {
+    "feature_list": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "text"],
+        "properties": {
+          "name": { "type": "string" },
+          "text": { "type": "string" },
+          "source": {
+            "type": ["string", "null"],
+            "description": "[ext] optional grouping for the PC view, e.g. 'class:Wizard', 'race:Elf', 'background:Sage', 'feat:Lucky'"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "portrait": {
+      "type": "object",
+      "properties": {
+        "prompt": { "type": ["string", "null"] },
+        "imageUrl": { "type": ["string", "null"] },
+        "seed": { "type": ["integer", "string", "null"] }
+      },
+      "additionalProperties": true
+    }
+  }
+}

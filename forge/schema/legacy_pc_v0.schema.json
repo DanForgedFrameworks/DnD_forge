@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dnd-character-forge/character.schema.json",
+  "title": "Forge Character (v0.1)",
+  "description": "A resolved, computed D&D 5e character. The pipeline's single accreting object. v1 = full PC, single-class.",
+  "type": "object",
+  "required": ["meta", "identity", "ability_scores", "derived"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["schema_version", "ruleset"],
+      "properties": {
+        "schema_version": { "type": "string" },
+        "ruleset": { "type": "string", "enum": ["2014", "2024"] },
+        "ability_method": {
+          "type": ["string", "null"],
+          "enum": ["standard_array", "point_buy", "rolled", "manual", null]
+        }
+      },
+      "additionalProperties": true
+    },
+    "identity": {
+      "type": "object",
+      "required": ["species", "class", "level"],
+      "properties": {
+        "name": { "type": ["string", "null"] },
+        "species": { "type": "string" },
+        "subspecies": { "type": ["string", "null"] },
+        "class": { "type": "string" },
+        "level": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "background": { "type": ["string", "null"] },
+        "alignment": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "ability_scores": {
+      "type": "object",
+      "required": ["str", "dex", "con", "int", "wis", "cha"],
+      "patternProperties": {
+        "^(str|dex|con|int|wis|cha)$": {
+          "type": "object",
+          "required": ["base", "total", "modifier"],
+          "properties": {
+            "base": { "type": "integer" },
+            "total": { "type": "integer" },
+            "modifier": { "type": "integer" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "ability_bonuses_applied": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["ability", "bonus", "source"],
+        "properties": {
+          "ability": { "type": "string" },
+          "bonus": { "type": "integer" },
+          "source": { "type": "string" }
+        }
+      }
+    },
+    "derived": {
+      "type": "object",
+      "required": ["proficiency_bonus", "armor_class", "initiative", "saving_throws", "skills"],
+      "properties": {
+        "proficiency_bonus": { "type": "integer" },
+        "max_hp": { "type": ["integer", "null"] },
+        "hit_dice": { "type": ["string", "null"] },
+        "armor_class": { "type": "integer" },
+        "armor_class_note": { "type": "string" },
+        "initiative": { "type": "integer" },
+        "speed": { "type": ["integer", "null"] },
+        "passive_perception": { "type": "integer" },
+        "saving_throws": {
+          "type": "object",
+          "patternProperties": {
+            "^(str|dex|con|int|wis|cha)$": {
+              "type": "object",
+              "required": ["modifier", "proficient"],
+              "properties": {
+                "modifier": { "type": "integer" },
+                "proficient": { "type": "boolean" }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "skills": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["ability", "proficient", "modifier"],
+            "properties": {
+              "ability": { "type": ["string", "null"] },
+              "proficient": { "type": "boolean" },
+              "modifier": { "type": "integer" }
+            }
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "spellcasting": {
+      "type": ["object", "null"],
+      "properties": {
+        "is_spellcaster": { "type": "boolean" },
+        "spellcasting_ability": { "type": ["string", "null"] },
+        "spell_save_dc": { "type": ["integer", "null"] },
+        "spell_attack_bonus": { "type": ["integer", "null"] },
+        "slots": { "type": ["object", "null"] },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "provenance": {
+      "type": "object",
+      "description": "field path -> origin (user | ai | rules | <method>)",
+      "additionalProperties": { "type": "string" }
+    },
+    "legality_issues": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

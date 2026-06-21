@@ -1,0 +1,26 @@
+{
+  "slug": "dnd5e-2024",
+  "label": "D&D 5e (2024)",
+  "extends": null,
+  "srdEdition": "2024",
+  "labels": {
+    "species": "Species",
+    "subspecies": "Subspecies"
+  },
+  "abilityRules": {
+    "asiSource": "background",
+    "pointBuyBudget": 27,
+    "pointBuyRange": [8, 15],
+    "standardArray": [15, 14, 13, 12, 10, 8],
+    "monsterBounds": [1, 30]
+  },
+  "statblock": {
+    "showInitiativeLine": true,
+    "fieldOrder": ["ac", "initiative", "hp", "speed", "saves", "skills", "resist", "condImm", "senses", "languages", "challenge"]
+  },
+  "spells": {
+    "preparedModel": "class-based",
+    "renames": {}
+  },
+  "optionLists": { "source": "srd" }
+}

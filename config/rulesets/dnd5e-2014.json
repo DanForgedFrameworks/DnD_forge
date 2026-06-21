@@ -1,0 +1,26 @@
+{
+  "slug": "dnd5e-2014",
+  "label": "D&D 5e (2014)",
+  "extends": null,
+  "srdEdition": "2014",
+  "labels": {
+    "species": "Race",
+    "subspecies": "Subrace"
+  },
+  "abilityRules": {
+    "asiSource": "species",
+    "pointBuyBudget": 27,
+    "pointBuyRange": [8, 15],
+    "standardArray": [15, 14, 13, 12, 10, 8],
+    "monsterBounds": [1, 30]
+  },
+  "statblock": {
+    "showInitiativeLine": false,
+    "fieldOrder": ["ac", "hp", "speed", "saves", "skills", "resist", "condImm", "senses", "languages", "challenge"]
+  },
+  "spells": {
+    "preparedModel": "class-based",
+    "renames": {}
+  },
+  "optionLists": { "source": "srd" }
+}

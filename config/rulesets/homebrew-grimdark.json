@@ -1,0 +1,11 @@
+{
+  "slug": "homebrew-grimdark",
+  "label": "Grimdark (homebrew)",
+  "extends": "dnd5e-2014",
+  "labels": {
+    "species": "Bloodline"
+  },
+  "abilityRules": {
+    "pointBuyBudget": 32
+  }
+}

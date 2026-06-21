@@ -1,0 +1,105 @@
+{
+  "id": "lyra-emberquill",
+  "schemaVersion": 1,
+  "ruleset": "dnd5e-2014",
+  "kind": "character",
+
+  "name": "Lyra Emberquill",
+  "size": "Medium",
+  "type": "humanoid (elf)",
+  "alignment": "Chaotic Good",
+  "flavour": "A high-elf evoker who chases forbidden fire-lore through every ruin she can find.",
+
+  "ac": "12 (mage armor)",
+  "hp": "32 (5d6 + 10)",
+  "speed": "30 ft.",
+
+  "abilities": { "STR": 8, "DEX": 14, "CON": 14, "INT": 17, "WIS": 12, "CHA": 10 },
+
+  "saveProfs": ["INT", "WIS"],
+  "skillProfs": [
+    { "skill": "Arcana", "expertise": false },
+    { "skill": "Investigation", "expertise": false },
+    { "skill": "History", "expertise": false }
+  ],
+  "saves": "Int +6, Wis +4",
+  "skills": "Arcana +6, Investigation +6, History +6",
+  "senses": "passive Perception 11",
+  "languages": "Common, Elvish, Draconic",
+  "challenge": "— (level 5)",
+
+  "traits": [
+    { "name": "Arcane Recovery", "text": "Once per day on a short rest, recover spell slots totalling up to half your wizard level (rounded up).", "source": "class:Wizard" },
+    { "name": "Fey Ancestry", "text": "Advantage on saves against being charmed; magic can't put you to sleep.", "source": "race:Elf" },
+    { "name": "Researcher", "text": "When you try to learn or recall a piece of lore, you often know where to find it.", "source": "background:Sage" }
+  ],
+  "actions": [
+    { "name": "Quarterstaff", "text": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 3 (1d6) bludgeoning damage." },
+    { "name": "Fire Bolt (cantrip)", "text": "Ranged Spell Attack: +6 to hit, range 120 ft., one target. Hit: 11 (2d10) fire damage." }
+  ],
+  "reactions": [
+    { "name": "Shield (1st-level spell)", "text": "When hit by an attack or targeted by magic missile, raise an invisible barrier: +5 AC until the start of your next turn, and no damage from magic missile.", "source": "class:Wizard" }
+  ],
+
+  "dump": "A driven high-elf evoker, ink-stained and singed, who can't resist a locked archive.",
+  "art": {
+    "appearance": "Slender high elf with ash-blonde hair tied back, faint burn-scars on her fingertips, sharp amber eyes",
+    "outfit": "Travel-worn indigo robes with rolled sleeves, a bandolier of chalk and reagents, a satchel of scrolls",
+    "pose": "One hand wreathed in a small controlled flame, the other holding an open spellbook",
+    "environment": "A candlelit ruined library, shelves leaning, dust hanging in the light",
+    "personality": "Curious, impatient, quietly reckless",
+    "style": "Painterly high fantasy, warm candlelight against deep shadow"
+  },
+
+  "portraits": {
+    "at-rest":         { "prompt": null, "imageUrl": null, "seed": null },
+    "in-conversation": { "prompt": null, "imageUrl": null, "seed": null },
+    "in-battle":       { "prompt": null, "imageUrl": null, "seed": null },
+    "travelling":      { "prompt": null, "imageUrl": null, "seed": null }
+  },
+
+  "pc": {
+    "species": "elf",
+    "subspecies": "high-elf",
+    "class": "wizard",
+    "subclass": "evocation",
+    "level": 5,
+    "background": "sage",
+    "abilityMethod": "point_buy",
+    "hitDice": { "die": "d6", "total": 5, "remaining": 5 },
+    "deathSaves": { "successes": 0, "failures": 0 },
+    "proficiencies": {
+      "armor": [],
+      "weapons": ["daggers", "darts", "slings", "quarterstaffs", "light crossbows"],
+      "tools": []
+    },
+    "feats": [],
+    "equipment": [
+      { "name": "Spellbook" },
+      { "name": "Quarterstaff" },
+      { "name": "Component pouch" },
+      { "name": "Scholar's pack" },
+      { "name": "Potion of healing", "qty": 2 }
+    ],
+    "currency": { "cp": 0, "sp": 0, "ep": 0, "gp": 25, "pp": 0 },
+    "personality": {
+      "traits": ["Quotes obscure texts mid-conversation"],
+      "ideals": ["Knowledge — the path to power and self-improvement"],
+      "bonds": ["My spellbook is my life's work; I would burn for it"],
+      "flaws": ["I overlook the obvious while chasing the arcane"]
+    }
+  },
+
+  "spellcasting": {
+    "ability": "int",
+    "saveDc": 14,
+    "attackBonus": 6,
+    "slots": {
+      "1": { "total": 4, "expended": 0 },
+      "2": { "total": 3, "expended": 0 },
+      "3": { "total": 2, "expended": 0 }
+    },
+    "cantrips": ["fire-bolt", "mage-hand", "prestidigitation", "light"],
+    "prepared": ["magic-missile", "shield", "misty-step", "scorching-ray", "fireball"]
+  }
+}

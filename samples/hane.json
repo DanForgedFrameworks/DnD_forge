@@ -1,0 +1,53 @@
+{
+  "id": "hane",
+  "schemaVersion": 1,
+  "ruleset": "dnd5e-2014",
+  "kind": "monster",
+
+  "name": "Hané Pathfinder",
+  "size": "Medium",
+  "type": "Wind-Kin (Path-Keeper)",
+  "alignment": "Neutral",
+  "flavour": "Hané Pathfinders are wise keepers of the wind-paths…",
+
+  "ac": "15 (aerial awareness)",
+  "hp": "110 (13d8 + 52)",
+  "speed": "10 ft., fly 70 ft. (hover)",
+
+  "abilities": { "STR": 10, "DEX": 18, "CON": 18, "INT": 14, "WIS": 20, "CHA": 16 },
+
+  "saves": "Dex +8, Wis +9",
+  "skills": "Perception +9, Insight +9, Survival +9, Acrobatics +8",
+  "resist": "psychic; bludgeoning from non-magical attacks while airborne",
+  "condImm": "prone (while flying), disoriented",
+  "senses": "passive Perception 19",
+  "languages": "Auran, Common, Wind-Sign",
+  "challenge": "9 (5,000 XP)",
+
+  "traits": [
+    { "name": "Path Stability (Aura)", "text": "Within 60 feet…" }
+  ],
+  "actions": [
+    { "name": "Multiattack", "text": "The Pathfinder makes two Talon Strikes." }
+  ],
+  "reactions": [
+    { "name": "Course Correction", "text": "When a creature within 30 feet…" }
+  ],
+
+  "dump": "A wise falcon-person who keeps the wind-paths…",
+  "art": {
+    "appearance": "Anthropomorphic falcon, slate-grey and cream plumage, amber eyes",
+    "outfit": "Layered blue travelling robes, rope belts",
+    "pose": "Hovering, wings spread",
+    "environment": "Above misty island peaks, soft daylight",
+    "personality": "Calm, watchful, never still",
+    "style": "Painterly high fantasy, soft natural light"
+  },
+
+  "portraits": {
+    "at-rest":         { "prompt": "…", "imageUrl": null, "seed": null },
+    "in-conversation": { "prompt": "…", "imageUrl": null, "seed": null },
+    "in-battle":       { "prompt": "…", "imageUrl": null, "seed": null },
+    "travelling":      { "prompt": "…", "imageUrl": null, "seed": null }
+  }
+}

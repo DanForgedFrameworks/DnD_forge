@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.venv_forge/
+*.egg-info/
+
+# Secrets
+.env
+
+# Pulled canonical data (re-fetchable via scripts/fetch_srd_data.py)
+/data/srd/
+
+# Pipeline working + output artifacts
+/intermediate/
+/output/
+
+# OS
+Thumbs.db
+.DS_Store

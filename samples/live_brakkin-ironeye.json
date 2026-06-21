@@ -1,0 +1,116 @@
+{
+  "ruleset": "dnd5e-2014",
+  "kind": "npc",
+  "name": "Brakkin Ironeye",
+  "size": "Medium",
+  "type": "humanoid (dwarf)",
+  "alignment": "neutral good",
+  "flavour": "A one-eyed dwarf blacksmith who traded the forge for the hunt, his rune-etched warhammer humming whenever the dead walk near.",
+  "ac": "17 (chain mail)",
+  "hp": "104 (16d8 + 32)",
+  "speed": "25 ft.",
+  "abilities": {
+    "STR": 17,
+    "DEX": 11,
+    "CON": 15,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 10
+  },
+  "saveProfs": [
+    "STR",
+    "CON"
+  ],
+  "skillProfs": [
+    {
+      "skill": "Athletics",
+      "expertise": false
+    },
+    {
+      "skill": "Perception",
+      "expertise": false
+    },
+    {
+      "skill": "Survival",
+      "expertise": true
+    }
+  ],
+  "resist": "poison",
+  "condImm": "",
+  "languages": "Common, Dwarvish",
+  "challenge": "5 (1,800 XP)",
+  "traits": [
+    {
+      "name": "Dwarven Resilience",
+      "text": "Brakkin has advantage on saving throws against poison."
+    },
+    {
+      "name": "Monster Hunter's Lore",
+      "text": "Brakkin has advantage on Intelligence and Wisdom checks made to recall information about aberrations, fiends, and undead, and to identify their weaknesses."
+    },
+    {
+      "name": "Tough as Old Boots",
+      "text": "When Brakkin is reduced to 0 hit points but not killed outright, he can drop to 1 hit point instead. He can use this trait once and regains its use after a long rest."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "text": "Brakkin makes two attacks with his rune-etched warhammer."
+    },
+    {
+      "name": "Rune-Etched Warhammer",
+      "text": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 10 (1d8 + 3) bludgeoning damage, or 11 (1d10 + 3) bludgeoning damage if used with two hands. If the target is undead, it takes an extra 7 (2d6) radiant damage and must succeed on a DC 14 Constitution saving throw or be unable to take reactions until the start of Brakkin's next turn."
+    },
+    {
+      "name": "Throwing Hammer",
+      "text": "Ranged Weapon Attack: +6 to hit, range 20/60 ft., one target. Hit: 7 (1d6 + 3) bludgeoning damage."
+    },
+    {
+      "name": "Hunter's Mark (1/Day)",
+      "text": "Brakkin marks one creature he can see within 90 feet. Once per turn, his first hit against that creature deals an extra 3 (1d6) damage. The mark lasts for 1 hour or until the target drops to 0 hit points."
+    }
+  ],
+  "reactions": [
+    {
+      "name": "Forgewarden's Guard",
+      "text": "When a creature Brakkin can see within 5 feet of him hits an ally with an attack, Brakkin imposes disadvantage on that attack roll."
+    }
+  ],
+  "dump": "A grizzled, one-eyed dwarf blacksmith turned monster-hunter with a rune-etched warhammer that hums near the undead; gruff but secretly kind, fond of ale, walking with an old limp.",
+  "art": {
+    "appearance": "Stocky weathered dwarf with a thick iron-grey braided beard, a milky scarred socket where one eye should be, and broad calloused blacksmith's hands",
+    "outfit": "Soot-stained leather apron over dented chain mail, a tankard hooked to his belt, a brace of throwing hammers across his chest",
+    "pose": "Leaning on his glowing rune-etched warhammer, weight off one stiff leg, scanning the dark with his good eye",
+    "environment": "A dim forge-lit smithy at the edge of a haunted moor, anvil cold and hammer ready",
+    "personality": "Gruff and blunt, hiding a warm protective heart beneath the grumbling and ale",
+    "style": "Gritty painterly dark fantasy, warm forge light against cold shadow"
+  },
+  "schemaVersion": 1,
+  "id": "brakkin-ironeye",
+  "saves": "Str +6, Con +5",
+  "skills": "Athletics +6, Perception +5, Survival +8",
+  "senses": "passive Perception 15",
+  "portraits": {
+    "at-rest": {
+      "prompt": null,
+      "imageUrl": null,
+      "seed": null
+    },
+    "in-conversation": {
+      "prompt": null,
+      "imageUrl": null,
+      "seed": null
+    },
+    "in-battle": {
+      "prompt": null,
+      "imageUrl": null,
+      "seed": null
+    },
+    "travelling": {
+      "prompt": null,
+      "imageUrl": null,
+      "seed": null
+    }
+  }
+}

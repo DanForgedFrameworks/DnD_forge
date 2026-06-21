@@ -1,0 +1,18 @@
+# Data fetch + canonical layer use only the Python standard library.
+# The packages below are for later stages (engine validation, LLM, web).
+
+# Structured-output robustness
+jsonschema>=4.20
+json-repair>=0.25
+
+# LLM providers (reused from Catalyst llm_factory pattern)
+anthropic>=0.40
+openai>=1.0
+google-genai>=0.3
+python-dotenv>=1.0
+
+# .docx ingestion for the auto-fill upload path
+python-docx>=1.1
+
+# Web backend
+flask>=3.0
