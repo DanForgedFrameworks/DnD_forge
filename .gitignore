@@ -18,3 +18,6 @@ __pycache__/
 # OS
 Thumbs.db
 .DS_Store
+
+# Local download/extract scratch (the front-end is vendored under frontend/)
+/D&D 5e character generator/

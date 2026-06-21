@@ -158,6 +158,8 @@ def list_characters():
             c = json.loads(p.read_text(encoding="utf-8"))
             out.append({
                 "id": c.get("id", p.stem), "name": c.get("name"), "kind": c.get("kind"),
+                "challenge": c.get("challenge"),          # rail shows CR / level
+                "accent": c.get("accent"),                # optional theme colour (pass-through)
                 "ruleset": c.get("ruleset"), "level": (c.get("pc") or {}).get("level"),
             })
         except Exception:

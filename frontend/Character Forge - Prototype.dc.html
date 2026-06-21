@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:#161310;}
+  ::selection{background:rgba(188,108,60,0.35);}
+  input,textarea,button,select{font-family:inherit;}
+  textarea{resize:vertical;}
+  @keyframes pf-spin{to{transform:rotate(360deg);}}
+  select{background-image:linear-gradient(45deg,transparent 50%,#bd7d3f 50%),linear-gradient(135deg,#bd7d3f 50%,transparent 50%);background-position:calc(100% - 16px) calc(50% - 2px),calc(100% - 11px) calc(50% - 2px);background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+  .pf-scroll::-webkit-scrollbar{height:8px;width:8px;}
+  .pf-scroll::-webkit-scrollbar-thumb{background:#4a3f30;border-radius:8px;}
+  input:focus,textarea:focus,select:focus{outline:none;box-shadow:0 0 0 2px rgba(188,108,60,0.45);}
+  @media print {
+    @page { margin: 12mm; }
+    html,body{ background:#fff !important; }
+    body * { visibility:hidden !important; }
+    #codex-sheet, #codex-sheet * { visibility:visible !important; }
+    #codex-sheet { position:absolute !important; left:0; top:0; width:100%; box-shadow:none !important; }
+    .no-print { display:none !important; }
+  }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:#161310; background-image:radial-gradient(120% 80% at 50% -10%, #2a241c, #161310 70%); font-family:'EB Garamond',Georgia,serif; color:#e7dcc6; padding-bottom:60px;">
+
+  <!-- ===================== TOP BAR ===================== -->
+  <div class="no-print" style="position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:18px; padding:14px 28px; background:rgba(22,19,16,0.92); border-bottom:1px solid #3a3227; backdrop-filter:blur(6px);">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="width:32px; height:32px; border-radius:6px; background:#99502a; display:flex; align-items:center; justify-content:center; font-size:17px;">⚒</div>
+      <div style="font-family:'Cinzel',serif; font-weight:700; font-size:19px; letter-spacing:1px; color:#efe4cd;">Character Forge</div>
+    </div>
+    <div style="display:flex; gap:4px; margin-left:14px; background:#241f19; border:1px solid #3a3227; border-radius:8px; padding:4px;">
+      <button onClick="{{ onStudio }}" style="{{ tabStudio }}">Studio</button>
+      <button onClick="{{ onForge }}" style="{{ tabForge }}">Forge</button>
+      <button onClick="{{ onCodex }}" style="{{ tabCodex }}">Codex</button>
+    </div>
+    <div style="margin-left:auto; display:flex; align-items:center; gap:12px;">
+      <div style="display:flex; gap:4px; background:#241f19; border:1px solid #3a3227; border-radius:8px; padding:4px;">
+        <button onClick="{{ onMonster }}" style="{{ modeMonster }}">Monster / NPC</button>
+        <button onClick="{{ onCharacter }}" style="{{ modeCharacter }}">Player character</button>
+      </div>
+      <sc-if value="{{ showRulesetPicker }}" hint-placeholder-val="{{ false }}">
+        <select value="{{ rulesetSel }}" onChange="{{ onPickRuleset }}" title="Active ruleset" style="background:#241f19; border:1px solid #3a3227; color:#cabfa9; border-radius:7px; padding:8px 28px 8px 11px; font-size:13px; appearance:none; cursor:pointer;">{{ rulesetEls }}</select>
+      </sc-if>
+      <div style="{{ bridgeStatusStyle }}" title="{{ bridgeStatusTitle }}">{{ bridgeStatusText }}</div>
+      <button onClick="{{ onAutofill }}" style="display:flex; align-items:center; gap:7px; background:#99502a; color:#fff; border:none; border-radius:7px; padding:9px 14px; font-size:14px; font-weight:600; cursor:pointer;" title="Simulates the agentic auto-fill from your uploaded sheet">⚒ Auto-fill from sheet</button>
+    </div>
+  </div>
+
+  <!-- ===================== STARTER TRAY ===================== -->
+  <div class="no-print" style="padding:16px 28px 0;">
+    <div style="font-family:'Cinzel',serif; font-size:12px; letter-spacing:2px; color:#bd7d3f; text-transform:uppercase; margin-bottom:10px;">Start from a creature — or your own</div>
+    <div class="pf-scroll" style="display:flex; gap:12px; overflow-x:auto; padding-bottom:14px;">
+      <sc-for list="{{ starters }}" as="s" hint-placeholder-count="5">
+        <button onClick="{{ s.onClick }}" style="{{ s.style }}">
+          <div style="width:46px; height:46px; border-radius:8px; flex:none; background:{{ s.accent }}; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff8ec;">{{ s.glyph }}</div>
+          <div style="min-width:0;">
+            <div style="font-family:'Cinzel',serif; font-size:14px; color:#efe4cd; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ s.name }}</div>
+            <div style="font-size:12.5px; color:#b09f84;">{{ s.kindLabel }} · CR {{ s.cr }}</div>
+          </div>
+        </button>
+      </sc-for>
+      <button onClick="{{ onRandom }}" style="flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:118px; background:#241f19; border:1px dashed #6a5a44; border-radius:10px; padding:10px; cursor:pointer; color:#cabfa9;">
+        <div style="font-size:20px;">🎲</div>
+        <div style="font-family:'Cinzel',serif; font-size:13px; color:#e7dcc6;">Surprise me</div>
+      </button>
+      <button onClick="{{ onBlank }}" style="flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:118px; background:#241f19; border:1px dashed #6a5a44; border-radius:10px; padding:10px; cursor:pointer; color:#cabfa9;">
+        <div style="font-size:20px;">＋</div>
+        <div style="font-family:'Cinzel',serif; font-size:13px; color:#e7dcc6;">Blank sheet</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================== STUDIO ===================== -->
+  <sc-if value="{{ isStudio }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:8px 28px 0; display:grid; grid-template-columns:minmax(380px, 470px) 1fr; gap:24px; align-items:start; max-width:1220px;">
+
+    <!-- EDITOR -->
+    <div style="background:#231e18; border:1px solid #3a3227; border-radius:10px; padding:20px;">
+      <div style="font-family:'Cinzel',serif; font-size:13px; letter-spacing:1.5px; color:#bd7d3f; margin-bottom:4px;">EDIT · {{ modeNoun }}</div>
+      <div style="font-size:13.5px; color:#9c8e76; margin-bottom:18px;">Type on the left — the block on the right updates as you go.</div>
+
+      <sc-if value="{{ hasWarnings }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:16px; display:grid; gap:6px;">
+          <div style="font-family:'Cinzel',serif; font-size:10.5px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase;">Validation</div>
+          <sc-for list="{{ forgeWarnings }}" as="w" hint-placeholder-count="1">
+            <div style="{{ w.style }}">{{ w.message }}</div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ char.isPc }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#2a2218; border:1px solid #4a3f30; border-radius:8px; padding:12px 14px; margin-bottom:18px;">
+        <div style="font-family:'Cinzel',serif; font-size:10.5px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; margin-bottom:9px;">Player character · from sheet</div>
+        <sc-if value="{{ char.pcEditable }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:9px 12px;">
+            <div>
+              <label style="font-size:10px; letter-spacing:1px; color:#8a7c66; text-transform:uppercase; display:block; margin-bottom:4px;">Class</label>
+              <select value="{{ char.pcClassVal }}" onChange="{{ char.onPcClass }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px 10px; font-size:13.5px; color:#e7dcc6; appearance:none; cursor:pointer;">{{ char.pcClassOpts }}</select>
+            </div>
+            <sc-if value="{{ char.pcHasSubclass }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <label style="font-size:10px; letter-spacing:1px; color:#8a7c66; text-transform:uppercase; display:block; margin-bottom:4px;">Subclass</label>
+              <select value="{{ char.pcSubclassVal }}" onChange="{{ char.onPcSubclass }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px 10px; font-size:13.5px; color:#e7dcc6; appearance:none; cursor:pointer;">{{ char.pcSubclassOpts }}</select>
+            </div>
+            </sc-if>
+            <div>
+              <label style="font-size:10px; letter-spacing:1px; color:#8a7c66; text-transform:uppercase; display:block; margin-bottom:4px;">{{ char.speciesLabel }}</label>
+              <select value="{{ char.pcSpeciesVal }}" onChange="{{ char.onPcSpecies }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px 10px; font-size:13.5px; color:#e7dcc6; appearance:none; cursor:pointer;">{{ char.pcSpeciesOpts }}</select>
+            </div>
+            <div>
+              <label style="font-size:10px; letter-spacing:1px; color:#8a7c66; text-transform:uppercase; display:block; margin-bottom:4px;">Background</label>
+              <select value="{{ char.pcBackgroundVal }}" onChange="{{ char.onPcBackground }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px 10px; font-size:13.5px; color:#e7dcc6; appearance:none; cursor:pointer;">{{ char.pcBackgroundOpts }}</select>
+            </div>
+          </div>
+          <div style="font-size:11.5px; color:#7d6f5a; margin-top:10px; line-height:1.45;">Class, {{ char.speciesLabel }} &amp; background define a PC — the creature type below stays Humanoid. Level &amp; derived stats come from the sheet.</div>
+        </sc-if>
+        <sc-if value="{{ char.pcReadonly }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; font-size:13.5px; color:#dccdb2;">
+            <div><span style="color:#8a7c66;">Class&nbsp;&nbsp;</span>{{ char.pcClassLine }}</div>
+            <div><span style="color:#8a7c66;">Level&nbsp;&nbsp;</span>{{ char.pcLevel }}</div>
+            <div><span style="color:#8a7c66;">{{ char.speciesLabel }}&nbsp;&nbsp;</span>{{ char.pcSpeciesLine }}</div>
+            <div><span style="color:#8a7c66;">Background&nbsp;&nbsp;</span>{{ char.pcBackgroundLine }}</div>
+          </div>
+          <div style="font-size:11.5px; color:#7d6f5a; margin-top:10px; line-height:1.45;">A PC's creature type below is usually just Humanoid — class, species &amp; background are what define them. Start the bridge to edit these from the ruleset.</div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <div style="display:grid; gap:14px;">
+        <div>
+          <label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Name</label>
+          <div style="display:flex; gap:8px;">
+            <input value="{{ char.name }}" onInput="{{ H.name }}" style="flex:1; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:9px 11px; font-size:16px; color:#efe4cd;">
+            <button onClick="{{ onRollName }}" title="Roll a random name" style="flex:none; background:#2d271f; border:1px solid #4a3f30; color:#bd7d3f; border-radius:6px; width:44px; cursor:pointer; font-size:17px;">🎲</button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Category</label>
+            <select value="{{ kindSel }}" onChange="{{ onKind }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:9px 11px; font-size:14px; color:#e7dcc6; appearance:none; cursor:pointer;">{{ kindOptionEls }}</select>
+          </div>
+          <div>
+            <label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Size</label>
+            <select value="{{ sizeSel }}" onChange="{{ onSize }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:9px 11px; font-size:14px; color:#e7dcc6; appearance:none; cursor:pointer;">{{ sizeOptionEls }}</select>
+            <sc-if value="{{ sizeIsOther }}" hint-placeholder-val="{{ false }}"><input value="{{ char.size }}" onInput="{{ H.size }}" placeholder="Custom size" style="width:100%; margin-top:6px; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px 10px; font-size:13px; color:#e7dcc6;"></sc-if>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.3fr 1fr; gap:10px;">
+          <div>
+            <label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Type</label>
+            <select value="{{ typeSel }}" onChange="{{ onType }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:9px 11px; font-size:14px; color:#e7dcc6; appearance:none; cursor:pointer;">{{ typeOptionEls }}</select>
+            <sc-if value="{{ typeIsOther }}" hint-placeholder-val="{{ true }}"><input value="{{ char.type }}" onInput="{{ H.type }}" placeholder="Custom type / subtype" style="width:100%; margin-top:6px; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px 10px; font-size:13px; color:#e7dcc6;"></sc-if>
+          </div>
+          <div>
+            <label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Alignment</label>
+            <select value="{{ alignSel }}" onChange="{{ onAlign }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:9px 11px; font-size:14px; color:#e7dcc6; appearance:none; cursor:pointer;">{{ alignOptionEls }}</select>
+            <sc-if value="{{ alignIsOther }}" hint-placeholder-val="{{ false }}"><input value="{{ char.alignment }}" onInput="{{ H.alignment }}" placeholder="Custom alignment" style="width:100%; margin-top:6px; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px 10px; font-size:13px; color:#e7dcc6;"></sc-if>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+          <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Armour Class</label><input value="{{ char.ac }}" onInput="{{ H.ac }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:9px 11px; font-size:14px; color:#e7dcc6;"></div>
+          <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Hit Points</label><input value="{{ char.hp }}" onInput="{{ H.hp }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:9px 11px; font-size:14px; color:#e7dcc6;"></div>
+          <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Speed</label><input value="{{ char.speed }}" onInput="{{ H.speed }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:9px 11px; font-size:14px; color:#e7dcc6;"></div>
+        </div>
+
+        <div>
+          <label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:7px;">Ability scores</label>
+          <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:7px;">
+            <sc-for list="{{ abilityList }}" as="a" hint-placeholder-count="6">
+              <div style="text-align:center;">
+                <div style="font-family:'Cinzel',serif; font-size:11px; color:#bd7d3f; margin-bottom:3px;">{{ a.k }}</div>
+                <button onClick="{{ a.onUp }}" style="display:block; width:100%; background:#332b22; border:1px solid #4a3f30; border-bottom:none; color:#bd7d3f; border-radius:6px 6px 0 0; padding:2px 0; cursor:pointer; font-size:9px; line-height:1.1;">▲</button>
+                <input value="{{ a.score }}" onInput="{{ a.onChange }}" inputmode="numeric" style="width:100%; text-align:center; background:#2d271f; border:1px solid #4a3f30; border-radius:0; padding:5px 2px; font-size:15px; color:#efe4cd;">
+                <button onClick="{{ a.onDown }}" style="display:block; width:100%; background:#332b22; border:1px solid #4a3f30; border-top:none; color:#bd7d3f; border-radius:0 0 6px 6px; padding:2px 0; cursor:pointer; font-size:9px; line-height:1.1;">▼</button>
+                <div style="font-size:13px; color:#9c8e76; margin-top:4px;">{{ a.mod }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex; gap:16px; margin-top:9px; font-size:12.5px; color:#9c8e76;">
+            <span>Total <strong style="color:#cabfa9;">{{ abilityTotal }}</strong></span>
+            <span>Highest <strong style="color:#cabfa9;">{{ abilityMax }}</strong></span>
+            <span>Lowest <strong style="color:#cabfa9;">{{ abilityMin }}</strong></span>
+            <span style="margin-left:auto; font-style:italic; color:#7a6c55;">{{ abilityNote }}</span>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
+            <label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase;">Traits</label>
+            <select value="{{ presetSel }}" onChange="{{ onPickPreset }}" style="margin-left:auto; background:#2d271f; color:#bd7d3f; border:1px solid #4a3f30; border-radius:5px; padding:4px 22px 4px 9px; font-size:12.5px; appearance:none; cursor:pointer;">{{ traitPresetEls }}</select>
+            <button onClick="{{ onAddTrait }}" style="background:#2d271f; color:#bd7d3f; border:1px solid #4a3f30; border-radius:5px; padding:4px 10px; font-size:12.5px; cursor:pointer;">+ Blank</button>
+          </div>
+          <div style="display:grid; gap:9px;">
+            <sc-for list="{{ traitItems }}" as="t" hint-placeholder-count="3">
+              <div style="background:#2a241d; border:1px solid #3d352a; border-radius:7px; padding:9px;">
+                <div style="display:flex; gap:7px; margin-bottom:6px;">
+                  <input value="{{ t.name }}" onInput="{{ t.onName }}" placeholder="Trait name" style="flex:1; background:#2d271f; border:1px solid #4a3f30; border-radius:5px; padding:6px 9px; font-size:13.5px; color:#efe4cd; font-weight:600;">
+                  <button onClick="{{ t.onRemove }}" style="background:none; border:1px solid #4a3f30; color:#a07a6a; border-radius:5px; width:30px; cursor:pointer; font-size:14px;">×</button>
+                </div>
+                <textarea value="{{ t.text }}" onInput="{{ t.onText }}" rows="2" placeholder="Rules text…" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:5px; padding:6px 9px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size:12.5px; color:#7a6c55; margin-top:9px; font-style:italic;">Actions, reactions &amp; the art brain-dump live in the Forge tab.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE BLOCK -->
+    <div style="position:relative; border-radius:10px; padding:28px 30px; color:#2c2419; background-color:#e9dcc2; background-image:radial-gradient(120% 120% at 0% 0%, rgba(255,250,235,0.55), rgba(0,0,0,0) 42%), radial-gradient(120% 120% at 100% 100%, rgba(120,90,50,0.18), rgba(0,0,0,0) 55%), url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27170%27 height=%27170%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.85%27 numOctaves=%273%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23n)%27 opacity=%270.05%27/%3E%3C/svg%3E'); box-shadow:0 18px 50px rgba(0,0,0,0.45), inset 0 0 0 1px #c9b48c;">
+      <div style="position:absolute; top:14px; right:16px; font-family:'Cinzel',serif; font-size:10px; letter-spacing:1.5px; color:#a8906a;">LIVE PREVIEW</div>
+      <div style="font-family:'Cinzel',serif; font-weight:700; font-size:30px; color:#7a3f1e; letter-spacing:0.5px; line-height:1.05;">{{ char.name }}</div>
+      <div style="font-style:italic; font-size:16px; color:#4a3d2c;">{{ char.subtitle }}</div>
+      <p style="font-style:italic; font-size:15.5px; line-height:1.5; color:#3a3026; margin:13px 0 0;">{{ char.flavour }}</p>
+      <div style="display:flex; align-items:center; gap:10px; margin:16px 0;"><div style="flex:1; height:2px; background:linear-gradient(90deg, rgba(154,79,37,0), #9a4f25);"></div><div style="color:#9a4f25; font-size:12px;">◆</div><div style="flex:1; height:2px; background:linear-gradient(90deg, #9a4f25, rgba(154,79,37,0));"></div></div>
+      <div style="font-size:16px; line-height:1.5;"><div><strong style="color:#7a3f1e;">Armor Class</strong> {{ char.ac }}</div><div><strong style="color:#7a3f1e;">Hit Points</strong> {{ char.hp }}</div><div><strong style="color:#7a3f1e;">Speed</strong> {{ char.speed }}</div></div>
+      <div style="height:3px; margin:13px 0; background:linear-gradient(90deg, rgba(154,79,37,0), #9a4f25 8%, #9a4f25 92%, rgba(154,79,37,0)); clip-path:polygon(0 50%,3% 0,97% 0,100% 50%,97% 100%,3% 100%);"></div>
+      <div style="display:grid; grid-template-columns:repeat(6,1fr); text-align:center;">
+        <sc-for list="{{ abilityList }}" as="a" hint-placeholder-count="6">
+          <div><div style="font-family:'Cinzel',serif; font-weight:700; font-size:14px; color:#7a3f1e;">{{ a.k }}</div><div style="font-size:16px;">{{ a.score }}</div><div style="font-size:15px; color:#4a3d2c;">{{ a.mod }}</div></div>
+        </sc-for>
+      </div>
+      <div style="height:3px; margin:13px 0; background:linear-gradient(90deg, rgba(154,79,37,0), #9a4f25 8%, #9a4f25 92%, rgba(154,79,37,0)); clip-path:polygon(0 50%,3% 0,97% 0,100% 50%,97% 100%,3% 100%);"></div>
+      <div style="font-size:15px; line-height:1.5;">
+        <sc-if value="{{ char.showSaves }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Saving Throws</strong> {{ char.saves }}</div></sc-if>
+        <sc-if value="{{ char.showSkills }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Skills</strong> {{ char.skills }}</div></sc-if>
+        <sc-if value="{{ char.showResist }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Damage Resistances</strong> {{ char.resist }}</div></sc-if>
+        <sc-if value="{{ char.showCond }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Condition Immunities</strong> {{ char.condImm }}</div></sc-if>
+        <div><strong style="color:#7a3f1e;">Senses</strong> {{ char.senses }}</div>
+        <sc-if value="{{ char.showLang }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Languages</strong> {{ char.languages }}</div></sc-if>
+        <div><strong style="color:#7a3f1e;">Challenge</strong> {{ char.challenge }}</div>
+      </div>
+      <div style="margin-top:16px;">
+        <sc-for list="{{ char.traits }}" as="t" hint-placeholder-count="3">
+          <p style="font-size:15px; line-height:1.5; margin:0 0 11px;"><strong style="color:#7a3f1e; font-style:italic;">{{ t.name }}.</strong><sc-if value="{{ t.hasSrc }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; color:#8a6f4a; font-style:italic; margin-left:5px;">[{{ t.srcTag }}]</span></sc-if> {{ t.text }}</p>
+        </sc-for>
+      </div>
+      <sc-if value="{{ char.hasActions }}" hint-placeholder-val="{{ true }}">
+        <div style="font-family:'Cinzel',serif; font-size:18px; color:#7a3f1e; letter-spacing:1px; border-bottom:1.5px solid #9a4f25; padding-bottom:2px; margin:10px 0 9px;">Actions</div>
+        <sc-for list="{{ char.actions }}" as="t" hint-placeholder-count="3">
+          <p style="font-size:15px; line-height:1.5; margin:0 0 11px;"><strong style="color:#7a3f1e; font-style:italic;">{{ t.name }}.</strong><sc-if value="{{ t.hasSrc }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; color:#8a6f4a; font-style:italic; margin-left:5px;">[{{ t.srcTag }}]</span></sc-if> {{ t.text }}</p>
+        </sc-for>
+      </sc-if>
+      <sc-if value="{{ char.hasReactions }}" hint-placeholder-val="{{ true }}">
+        <div style="font-family:'Cinzel',serif; font-size:18px; color:#7a3f1e; letter-spacing:1px; border-bottom:1.5px solid #9a4f25; padding-bottom:2px; margin:10px 0 9px;">Reaction</div>
+        <sc-for list="{{ char.reactions }}" as="t" hint-placeholder-count="1">
+          <p style="font-size:15px; line-height:1.5; margin:0 0 11px;"><strong style="color:#7a3f1e; font-style:italic;">{{ t.name }}.</strong><sc-if value="{{ t.hasSrc }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; color:#8a6f4a; font-style:italic; margin-left:5px;">[{{ t.srcTag }}]</span></sc-if> {{ t.text }}</p>
+        </sc-for>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===================== FORGE ===================== -->
+  <sc-if value="{{ isForge }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:8px 28px 0; display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; max-width:1200px;">
+    <div style="background:#231e18; border:1px solid #3a3227; border-radius:10px; padding:20px;">
+      <div style="font-family:'Cinzel',serif; font-size:13px; letter-spacing:1.5px; color:#bd7d3f; margin-bottom:4px;">BRAIN-DUMP → CANON</div>
+      <div style="font-size:13.5px; color:#9c8e76; margin-bottom:16px;">Pour in everything you picture. The forge keeps the canon and turns the rest into art prompts.</div>
+      <label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:6px;">The concept</label>
+      <textarea value="{{ dump }}" onInput="{{ onDump }}" rows="5" placeholder="A wise falcon-person who keeps the wind-paths…" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:7px; padding:11px; font-size:15px; color:#e7dcc6; line-height:1.5; margin-bottom:16px;"></textarea>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Appearance</label><textarea value="{{ art.appearance }}" onInput="{{ AH.appearance }}" rows="2" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea></div>
+        <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Outfit / gear</label><textarea value="{{ art.outfit }}" onInput="{{ AH.outfit }}" rows="2" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea></div>
+        <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Environment</label><textarea value="{{ art.environment }}" onInput="{{ AH.environment }}" rows="2" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea></div>
+        <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Art style</label><textarea value="{{ art.style }}" onInput="{{ AH.style }}" rows="2" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea></div>
+      </div>
+      <button onClick="{{ onForgeBlock }}" disabled="{{ forgeBusy }}" style="{{ forgeBtnStyle }}">{{ forgeBtnLabel }}</button>
+      <sc-if value="{{ hasWarnings }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:14px; display:grid; gap:6px;">
+          <div style="font-family:'Cinzel',serif; font-size:10.5px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase;">Validation</div>
+          <sc-for list="{{ forgeWarnings }}" as="w" hint-placeholder-count="1">
+            <div style="{{ w.style }}">{{ w.message }}</div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="display:grid; gap:18px; align-content:start;">
+      <div style="background:#231e18; border:1px solid #3a3227; border-radius:10px; padding:18px;">
+        <div style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; margin-bottom:10px;">Extracted canon</div>
+        <div style="display:flex; flex-wrap:wrap; gap:7px;">
+          <sc-for list="{{ chips }}" as="c" hint-placeholder-count="5">
+            <span style="font-size:13px; background:#2c261e; border:1px solid #4a3f30; border-radius:999px; padding:4px 12px; color:#d8ccb4;">{{ c }}</span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="background:#231e18; border:1px solid #3a3227; border-radius:10px; padding:18px;">
+        <div style="display:flex; align-items:center; margin-bottom:12px;">
+          <div style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase;">Portrait set</div>
+          <div style="margin-left:auto; display:flex; gap:5px;">
+            <sc-for list="{{ forgeStates }}" as="f" hint-placeholder-count="4">
+              <button onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <sc-for list="{{ states }}" as="s" hint-placeholder-count="4">
+            <div>
+              <div style="position:relative; width:100%; height:116px; border-radius:7px; overflow:hidden; box-shadow:inset 0 0 0 1px #4a3f30;">
+                <sc-if value="{{ s.hasImg }}" hint-placeholder-val="{{ false }}">{{ s.imgEl }}</sc-if>
+                <sc-if value="{{ s.loading }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; background:#221d17; color:#bd7d3f;">
+                    <div style="width:22px; height:22px; border:2px solid #4a3f30; border-top-color:#bd7d3f; border-radius:50%; animation:pf-spin 0.9s linear infinite;"></div>
+                    <div style="font-size:11px; color:#9c8e76;">Forging…</div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ s.showSlot }}" hint-placeholder-val="{{ true }}">
+                  <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="{{ s.id }}" shape="rounded" radius="7" placeholder="Drop image" hint-size="100%,116px" style="width:100%; height:116px; display:block;"></x-import>
+                </sc-if>
+                <sc-if value="{{ s.canGen }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ s.onGen }}" title="Generate this portrait via the bridge" style="position:absolute; bottom:6px; right:6px; background:rgba(153,80,42,0.94); color:#fff; border:none; border-radius:5px; padding:4px 9px; font-size:11px; font-weight:600; cursor:pointer;">{{ s.genLabel }}</button>
+                </sc-if>
+              </div>
+              <div style="font-size:12px; margin-top:4px; text-align:center; color:#b09f84;">{{ s.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="background:#1e1a15; border:1px solid #3a3227; border-radius:10px; padding:18px;">
+        <div style="display:flex; align-items:center; margin-bottom:10px;">
+          <div style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase;">Generated prompt · {{ forgeState }}</div>
+          <button onClick="{{ onCopyPrompt }}" style="margin-left:auto; background:#2d271f; color:#bd7d3f; border:1px solid #4a3f30; border-radius:5px; padding:4px 11px; font-size:12.5px; cursor:pointer;">{{ copyLabel }}</button>
+        </div>
+        <div style="font-size:14px; color:#cfc0a4; line-height:1.55;">{{ prompt }}</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===================== CODEX ===================== -->
+  <sc-if value="{{ isCodex }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:8px 28px 0; max-width:900px; margin:0 auto;">
+    <div class="no-print" style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+      <div style="font-size:13.5px; color:#9c8e76;">Cycle the portrait, then print or save as PDF for the table.</div>
+      <button onClick="{{ onPrint }}" style="margin-left:auto; background:#99502a; color:#fff; border:none; border-radius:7px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer;">⤓ Download / print PDF</button>
+    </div>
+
+    <div id="codex-sheet" style="border-radius:10px; padding:36px 40px; color:#2c2419; background-color:#e9dcc2; background-image:radial-gradient(120% 120% at 0% 0%, rgba(255,250,235,0.55), rgba(0,0,0,0) 42%), radial-gradient(120% 120% at 100% 100%, rgba(120,90,50,0.18), rgba(0,0,0,0) 60%), url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27170%27 height=%27170%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.85%27 numOctaves=%273%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23n)%27 opacity=%270.05%27/%3E%3C/svg%3E'); box-shadow:0 18px 50px rgba(0,0,0,0.5), inset 0 0 0 1px #c9b48c;">
+      <div style="overflow:hidden;">
+        <!-- floated portrait, ~quarter -->
+        <div style="float:left; width:280px; margin:4px 28px 16px 0;">
+          <div style="position:relative;">
+            <sc-if value="{{ codexHasImg }}" hint-placeholder-val="{{ false }}">{{ codexImgEl }}</sc-if>
+            <sc-if value="{{ codexShowSlot }}" hint-placeholder-val="{{ true }}">
+              <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="{{ codexSlotId }}" shape="rounded" radius="8" placeholder="Drop image" hint-size="280px,348px" style="width:280px; height:348px; display:block; box-shadow:inset 0 0 0 1px #c9b48c;"></x-import>
+            </sc-if>
+            <button class="no-print" onClick="{{ onPrev }}" style="position:absolute; top:50%; left:6px; transform:translateY(-50%); width:30px; height:30px; border-radius:50%; border:1px solid #c9b48c; background:rgba(249,243,229,0.92); color:#9a4f25; cursor:pointer; font-size:18px; line-height:1; padding:0 0 2px; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 4px rgba(60,40,20,0.22); transition:background 0.18s, color 0.18s;" style-hover="background:#9a4f25; color:#f7efdd; border-color:#9a4f25;">&lsaquo;</button>
+            <button class="no-print" onClick="{{ onNext }}" style="position:absolute; top:50%; right:6px; transform:translateY(-50%); width:30px; height:30px; border-radius:50%; border:1px solid #c9b48c; background:rgba(249,243,229,0.92); color:#9a4f25; cursor:pointer; font-size:18px; line-height:1; padding:0 0 2px; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 4px rgba(60,40,20,0.22); transition:background 0.18s, color 0.18s;" style-hover="background:#9a4f25; color:#f7efdd; border-color:#9a4f25;">&rsaquo;</button>
+          </div>
+          <div style="text-align:center; margin-top:9px; font-family:'Cinzel',serif; font-size:13px; letter-spacing:0.5px; color:#7a3f1e;">{{ codexLabel }}</div>
+          <div class="no-print" style="display:flex; justify-content:center; gap:7px; margin-top:7px;">
+            <sc-for list="{{ codexDots }}" as="dt" hint-placeholder-count="4">
+              <span onClick="{{ dt.onClick }}" style="{{ dt.style }}"></span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="font-family:'Cinzel',serif; font-weight:700; font-size:32px; color:#7a3f1e; letter-spacing:0.5px; line-height:1.05;">{{ char.name }}</div>
+        <div style="font-style:italic; font-size:16px; color:#4a3d2c;">{{ char.subtitle }}</div>
+        <p style="font-style:italic; font-size:15px; line-height:1.5; color:#3a3026; margin:12px 0 0;">{{ char.flavour }}</p>
+        <div style="display:flex; align-items:center; gap:10px; margin:14px 0;"><div style="flex:1; height:2px; background:linear-gradient(90deg, rgba(154,79,37,0), #9a4f25);"></div><div style="color:#9a4f25; font-size:12px;">◆</div><div style="flex:1; height:2px; background:linear-gradient(90deg, #9a4f25, rgba(154,79,37,0));"></div></div>
+        <div style="font-size:16px; line-height:1.5;"><div><strong style="color:#7a3f1e;">Armor Class</strong> {{ char.ac }}</div><div><strong style="color:#7a3f1e;">Hit Points</strong> {{ char.hp }}</div><div><strong style="color:#7a3f1e;">Speed</strong> {{ char.speed }}</div></div>
+        <div style="height:3px; margin:13px 0; background:linear-gradient(90deg, rgba(154,79,37,0), #9a4f25 8%, #9a4f25 92%, rgba(154,79,37,0)); clip-path:polygon(0 50%,3% 0,97% 0,100% 50%,97% 100%,3% 100%);"></div>
+        <div style="display:grid; grid-template-columns:repeat(6,1fr); text-align:center; max-width:420px;">
+          <sc-for list="{{ abilityList }}" as="a" hint-placeholder-count="6">
+            <div><div style="font-family:'Cinzel',serif; font-weight:700; font-size:14px; color:#7a3f1e;">{{ a.k }}</div><div style="font-size:16px;">{{ a.score }}</div><div style="font-size:15px; color:#4a3d2c;">{{ a.mod }}</div></div>
+          </sc-for>
+        </div>
+        <div style="height:3px; margin:13px 0; background:linear-gradient(90deg, rgba(154,79,37,0), #9a4f25 8%, #9a4f25 92%, rgba(154,79,37,0)); clip-path:polygon(0 50%,3% 0,97% 0,100% 50%,97% 100%,3% 100%);"></div>
+        <div style="font-size:15px; line-height:1.5;">
+          <sc-if value="{{ char.showSaves }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Saving Throws</strong> {{ char.saves }}</div></sc-if>
+          <sc-if value="{{ char.showSkills }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Skills</strong> {{ char.skills }}</div></sc-if>
+          <sc-if value="{{ char.showResist }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Damage Resistances</strong> {{ char.resist }}</div></sc-if>
+          <sc-if value="{{ char.showCond }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Condition Immunities</strong> {{ char.condImm }}</div></sc-if>
+          <div><strong style="color:#7a3f1e;">Senses</strong> {{ char.senses }}</div>
+          <sc-if value="{{ char.showLang }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Languages</strong> {{ char.languages }}</div></sc-if>
+          <sc-if value="{{ char.showChallenge }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Challenge</strong> {{ char.challenge }}</div></sc-if>
+          <sc-if value="{{ char.isPc }}" hint-placeholder-val="{{ false }}"><div><strong style="color:#7a3f1e;">Proficiency Bonus</strong> {{ char.pb }}&nbsp;&nbsp;&middot;&nbsp;&nbsp;<strong style="color:#7a3f1e;">Initiative</strong> {{ char.initiative }}&nbsp;&nbsp;&middot;&nbsp;&nbsp;<strong style="color:#7a3f1e;">Hit Dice</strong> {{ char.hitDiceText }}</div><sc-if value="{{ char.hasSpellcasting }}" hint-placeholder-val="{{ false }}"><div><strong style="color:#7a3f1e;">Spell save DC</strong> {{ char.spellDc }}&nbsp;&nbsp;&middot;&nbsp;&nbsp;<strong style="color:#7a3f1e;">Spell attack</strong> {{ char.spellAtk }}</div></sc-if></sc-if>
+        </div>
+      </div>
+
+      <div style="clear:both; column-count:2; column-gap:36px; margin-top:14px; border-top:1px solid #c9b48c; padding-top:14px;">
+        <sc-for list="{{ char.traits }}" as="t" hint-placeholder-count="3">
+          <p style="font-size:14.5px; line-height:1.5; margin:0 0 11px; break-inside:avoid;"><strong style="color:#7a3f1e; font-style:italic;">{{ t.name }}.</strong><sc-if value="{{ t.hasSrc }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; color:#8a6f4a; font-style:italic; margin-left:5px;">[{{ t.srcTag }}]</span></sc-if> {{ t.text }}</p>
+        </sc-for>
+        <sc-if value="{{ char.hasActions }}" hint-placeholder-val="{{ true }}">
+          <div style="font-family:'Cinzel',serif; font-size:18px; color:#7a3f1e; letter-spacing:1px; border-bottom:1.5px solid #9a4f25; padding-bottom:2px; margin:4px 0 9px; break-inside:avoid;">Actions</div>
+          <sc-for list="{{ char.actions }}" as="t" hint-placeholder-count="3">
+            <p style="font-size:14.5px; line-height:1.5; margin:0 0 11px; break-inside:avoid;"><strong style="color:#7a3f1e; font-style:italic;">{{ t.name }}.</strong><sc-if value="{{ t.hasSrc }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; color:#8a6f4a; font-style:italic; margin-left:5px;">[{{ t.srcTag }}]</span></sc-if> {{ t.text }}</p>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{ char.hasReactions }}" hint-placeholder-val="{{ true }}">
+          <div style="font-family:'Cinzel',serif; font-size:18px; color:#7a3f1e; letter-spacing:1px; border-bottom:1.5px solid #9a4f25; padding-bottom:2px; margin:4px 0 9px; break-inside:avoid;">Reaction</div>
+          <sc-for list="{{ char.reactions }}" as="t" hint-placeholder-count="1">
+            <p style="font-size:14.5px; line-height:1.5; margin:0 0 11px; break-inside:avoid;"><strong style="color:#7a3f1e; font-style:italic;">{{ t.name }}.</strong><sc-if value="{{ t.hasSrc }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; color:#8a6f4a; font-style:italic; margin-left:5px;">[{{ t.srcTag }}]</span></sc-if> {{ t.text }}</p>
+          </sc-for>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ char.isPc }}" hint-placeholder-val="{{ false }}">
+      <div style="clear:both; margin-top:16px; border-top:1px solid #c9b48c; padding-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:32px;">
+        <sc-if value="{{ char.hasSpellcasting }}" hint-placeholder-val="{{ false }}">
+        <div style="break-inside:avoid;">
+          <div style="font-family:'Cinzel',serif; font-size:18px; color:#7a3f1e; letter-spacing:1px; border-bottom:1.5px solid #9a4f25; padding-bottom:2px; margin:0 0 10px;">Spellcasting</div>
+          <div style="font-size:13.5px; color:#4a3d2c; margin-bottom:10px;">{{ char.spellLine }} &middot; save DC {{ char.spellDc }} &middot; attack {{ char.spellAtk }}</div>
+          <div style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
+            <sc-for list="{{ char.spellSlots }}" as="sl" hint-placeholder-count="3">
+              <div style="display:flex; align-items:center; gap:10px; font-size:14px;"><span style="font-family:'Cinzel',serif; color:#7a3f1e; width:64px;">{{ sl.label }}</span><span style="color:#9a4f25; letter-spacing:3px; font-size:13px;">{{ sl.pips }}</span></div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ char.hasCantrips }}" hint-placeholder-val="{{ false }}"><p style="font-size:14px; line-height:1.5; margin:0 0 8px;"><strong style="color:#7a3f1e; font-style:italic;">Cantrips.</strong> {{ char.cantripsText }}</p></sc-if>
+          <sc-if value="{{ char.hasPrepared }}" hint-placeholder-val="{{ false }}"><p style="font-size:14px; line-height:1.5; margin:0;"><strong style="color:#7a3f1e; font-style:italic;">Prepared.</strong> {{ char.preparedText }}</p></sc-if>
+        </div>
+        </sc-if>
+        <div style="break-inside:avoid;">
+          <div style="font-family:'Cinzel',serif; font-size:18px; color:#7a3f1e; letter-spacing:1px; border-bottom:1.5px solid #9a4f25; padding-bottom:2px; margin:0 0 10px;">Equipment</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+            <sc-for list="{{ char.equipment }}" as="eq" hint-placeholder-count="4">
+              <span style="font-size:13px; background:#dccba6; border:1px solid #c9b48c; border-radius:5px; padding:3px 9px; color:#3a3026;">{{ eq.label }}</span>
+            </sc-for>
+          </div>
+          <div style="font-size:14px; color:#4a3d2c; margin-bottom:6px;"><strong style="color:#7a3f1e;">Coin</strong> {{ char.coin }}</div>
+          <sc-if value="{{ char.hasProf }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#5c4f3c; line-height:1.45;">{{ char.profText }}</div></sc-if>
+          <div style="font-family:'Cinzel',serif; font-size:18px; color:#7a3f1e; letter-spacing:1px; border-bottom:1.5px solid #9a4f25; padding-bottom:2px; margin:16px 0 10px;">Personality</div>
+          <sc-if value="{{ char.hasPcTraits }}" hint-placeholder-val="{{ false }}"><p style="font-size:14px; line-height:1.5; margin:0 0 7px;"><strong style="color:#7a3f1e; font-style:italic;">Trait.</strong> {{ char.pcTraitsText }}</p></sc-if>
+          <sc-if value="{{ char.hasIdeals }}" hint-placeholder-val="{{ false }}"><p style="font-size:14px; line-height:1.5; margin:0 0 7px;"><strong style="color:#7a3f1e; font-style:italic;">Ideal.</strong> {{ char.idealsText }}</p></sc-if>
+          <sc-if value="{{ char.hasBonds }}" hint-placeholder-val="{{ false }}"><p style="font-size:14px; line-height:1.5; margin:0 0 7px;"><strong style="color:#7a3f1e; font-style:italic;">Bond.</strong> {{ char.bondsText }}</p></sc-if>
+          <sc-if value="{{ char.hasFlaws }}" hint-placeholder-val="{{ false }}"><p style="font-size:14px; line-height:1.5; margin:0;"><strong style="color:#7a3f1e; font-style:italic;">Flaw.</strong> {{ char.flawsText }}</p></sc-if>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.LIB = this.buildLib();
+    this.state = {
+      view: "studio", mode: "monster", activeId: "hane",
+      draft: this.clone(this.LIB.hane),
+      forgeState: "At rest", copied: false, portraitIndex: 0,
+      bridge: null, rulesetSlug: "dnd5e-2014", ruleset: null, rulesets: [],
+      serverChars: [], forgeBusy: false, forgeWarnings: [], portraitGen: {}
+    };
+  }
+
+  clone(o) { return JSON.parse(JSON.stringify(o)); }
+  fmtMod(n) { n = parseInt(n, 10); if (isNaN(n)) n = 10; const m = Math.floor((n - 10) / 2); return "(" + (m >= 0 ? "+" : "\u2212") + Math.abs(m) + ")"; }
+
+  setPc(k, v) { this.setState(s => ({ draft: Object.assign({}, s.draft, { pc: Object.assign({}, s.draft.pc || {}, { [k]: v }) }) })); }
+
+  // ===== Bridge adapter — live Flask server, silent fallback to local samples =====
+  bridgeBase() {
+    try { const ls = localStorage.getItem("forgeBridgeUrl"); if (ls) return ls.replace(/\/+$/, ""); } catch (e) {}
+    try { const q = new URL(location.href).searchParams.get("bridge"); if (q) return q.replace(/\/+$/, ""); } catch (e) {}
+    return "http://localhost:5000";
+  }
+  bridgeReachableContext() {
+    try { if (localStorage.getItem("forgeBridgeUrl")) return true; } catch (e) {}
+    try { if (new URL(location.href).searchParams.get("bridge")) return true; } catch (e) {}
+    const h = (location.hostname || "").toLowerCase();
+    return location.protocol === "file:" || h === "localhost" || h === "127.0.0.1" || h === "";
+  }
+  resolveUrl(u) { if (!u) return u; if (/^https?:\/\//i.test(u) || u.indexOf("data:") === 0) return u; return this.bridgeBase() + (u.charAt(0) === "/" ? "" : "/") + u; }
+  async api(path, opts, ms) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms || 8000);
+    try {
+      const r = await fetch(this.bridgeBase() + path, Object.assign({ signal: ctrl.signal }, opts || {}));
+      clearTimeout(timer);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const ct = r.headers.get("content-type") || "";
+      return ct.indexOf("json") >= 0 ? await r.json() : await r.text();
+    } catch (e) { clearTimeout(timer); throw e; }
+  }
+  jpost(path, body, ms) { return this.api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }, ms); }
+
+  async componentDidMount() {
+    if (!this.bridgeReachableContext()) { this.setState({ bridge: false }); return; }
+    try {
+      const res = await this.api("/rulesets", null, 2500);
+      const raw = Array.isArray(res) ? res : (res.rulesets || res.slugs || []);
+      const slugs = raw.map(x => (typeof x === "string" ? x : (x.slug || x.id))).filter(Boolean);
+      const initial = slugs.indexOf(this.state.rulesetSlug) >= 0 ? this.state.rulesetSlug : (slugs[0] || this.state.rulesetSlug);
+      this.setState({ bridge: true, rulesets: slugs, rulesetSlug: initial });
+      this.loadRuleset(initial);
+      this.refreshLibrary();
+    } catch (e) { this.setState({ bridge: false }); }
+  }
+  async loadRuleset(slug) {
+    try { const cfg = await this.api("/ruleset/" + encodeURIComponent(slug), null, 5000); this.setState({ ruleset: cfg, rulesetSlug: slug }); } catch (e) {}
+  }
+  pickRuleset(e) { const slug = e.target.value; this.setState({ rulesetSlug: slug }); this.loadRuleset(slug); }
+  async refreshLibrary() {
+    try { const res = await this.api("/character", null, 5000); const list = Array.isArray(res) ? res : (res.characters || res.items || []); this.setState({ serverChars: list }); } catch (e) {}
+  }
+  async loadServer(id) {
+    try {
+      const c = await this.api("/character/" + encodeURIComponent(id), null, 6000);
+      const ch = c.character || c;
+      this.setState({ activeId: id, draft: ch, mode: ch.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0 });
+    } catch (e) { this.load(id); }
+  }
+  async forgeViaBridge() {
+    if (!this.state.bridge) { this.setView("studio"); return; }
+    this.setState({ forgeBusy: true, forgeWarnings: [] });
+    try {
+      const res = await this.jpost("/forge", { dump: this.state.draft.dump || "", ruleset: this.state.rulesetSlug, kind: this.state.draft.kind }, 90000);
+      const ch = res.character || res;
+      const warnings = (res.warnings || []).map(w => (typeof w === "string" ? { level: "info", message: w } : w));
+      this.setState({ draft: ch, mode: ch.kind === "character" ? "character" : "monster", forgeBusy: false, forgeWarnings: warnings, view: "studio", portraitIndex: 0 });
+    } catch (e) {
+      this.setState({ forgeBusy: false, forgeWarnings: [{ level: "error", message: "Forge unavailable — is the bridge running? (" + e.message + ")" }] });
+    }
+  }
+  artKeyFor(label) { return { "At rest": "at-rest", "In conversation": "in-conversation", "In battle": "in-battle", "Travelling": "travelling" }[label] || "at-rest"; }
+  artSlot(id, key) { return this.state.portraitGen[id + "/" + key] || null; }
+  setArtSlot(id, key, patch) { this.setState(s => { const pg = Object.assign({}, s.portraitGen); pg[id + "/" + key] = Object.assign({}, pg[id + "/" + key], patch); return { portraitGen: pg }; }); }
+  async genArt(label) {
+    if (!this.state.bridge) return;
+    const id = this.state.activeId, key = this.artKeyFor(label);
+    this.setArtSlot(id, key, { loading: true, error: false });
+    try {
+      const res = await this.jpost("/art", { id: id, character: this.state.draft, state: key }, 90000);
+      this.setArtSlot(id, key, { loading: false, url: res.imageUrl, seed: res.seed });
+    } catch (e) { this.setArtSlot(id, key, { loading: false, error: true }); }
+  }
+  portraitUrl(key) {
+    const g = this.artSlot(this.state.activeId, key);
+    if (g && g.url) return this.resolveUrl(g.url);
+    const p = (this.state.draft.portraits || {})[key];
+    if (p && p.imageUrl) return this.resolveUrl(p.imageUrl);
+    return null;
+  }
+
+  setView(v) { this.setState({ view: v }); }
+  setMode(m) { this.setState({ mode: m }); }
+  load(id) { const c = this.LIB[id]; if (!c) return; this.setState({ activeId: id, draft: this.clone(c), mode: c.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0 }); }
+  random() { const ids = Object.keys(this.LIB).filter(i => i !== this.state.activeId && i !== "blank"); const pick = ids[Math.floor(Math.random() * ids.length)]; this.load(pick); }
+  blank() { this.setState({ activeId: "blank", draft: this.clone(this.LIB.blank), portraitIndex: 0 }); }
+  autofill() { this.load("hane"); }
+
+  setField(k, v) { this.setState(s => ({ draft: { ...s.draft, [k]: v } })); }
+  selField(k, e) { const v = e.target.value; this.setField(k, v === "__other__" ? "" : v); }
+  setAbility(k, v) { this.setState(s => ({ draft: { ...s.draft, abilities: { ...s.draft.abilities, [k]: v } } })); }
+  stepAbility(k, delta) { this.setState(s => { let n = (parseInt(s.draft.abilities[k], 10) || 10) + delta; n = Math.max(1, Math.min(30, n)); return { draft: { ...s.draft, abilities: { ...s.draft.abilities, [k]: n } } }; }); }
+  setArt(k, v) { this.setState(s => ({ draft: { ...s.draft, art: { ...s.draft.art, [k]: v } } })); }
+  setDump(v) { this.setState(s => ({ draft: { ...s.draft, dump: v } })); }
+  setTrait(i, k, v) { this.setState(s => { const tr = s.draft.traits.slice(); tr[i] = { ...tr[i], [k]: v }; return { draft: { ...s.draft, traits: tr } }; }); }
+  addTrait() { this.setState(s => ({ draft: { ...s.draft, traits: [...s.draft.traits, { name: "New trait", text: "" }] } })); }
+  removeTrait(i) { this.setState(s => { const tr = s.draft.traits.slice(); tr.splice(i, 1); return { draft: { ...s.draft, traits: tr } }; }); }
+  pickPreset(e) { const i = e.target.value; e.target.value = ""; if (i === "") return; const p = this.traitPresets()[+i]; if (!p) return; this.setState(s => ({ draft: { ...s.draft, traits: [...s.draft.traits, { name: p.name, text: p.text }] } })); }
+  copyPrompt() {
+    const text = this.computePrompt();
+    let ok = false;
+    // execCommand path works inside sandboxed iframes where the async
+    // Clipboard API is blocked; try the modern API too but never depend on it.
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", "");
+      ta.style.position = "fixed"; ta.style.top = "0"; ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select(); ta.setSelectionRange(0, text.length);
+      ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+    } catch (e) {}
+    if (!ok && navigator.clipboard && navigator.clipboard.writeText) {
+      try { navigator.clipboard.writeText(text); ok = true; } catch (e) {}
+    }
+    this.setState({ copied: ok ? "Copied" : "Press Ctrl/Cmd+C" });
+    setTimeout(() => this.setState({ copied: false }), 1600);
+  }
+  cyclePortrait(d) { this.setState(s => ({ portraitIndex: (s.portraitIndex + d + 4) % 4 })); }
+
+  computePrompt() {
+    const d = this.state.draft, a = d.art || {};
+    const clean = s => (s || "").trim().replace(/\.$/, "");
+    // Each state varies action + CAMERA + LIGHTING (mod) and REFRAMES the same
+    // world (env) so the four portraits read as distinct scenes of one subject.
+    // act = generic per-state action (overridden by a character-specific art.stateBeats[state]);
+    // cam = camera+lighting (always kept, for consistency); env = per-state world reframe.
+    const scenes = {
+      "At rest": { act: "calm and at ease in a quiet, unguarded moment, relaxed candid posture", cam: "intimate close framing, soft warm ambient light", env: "in a sheltered, still corner of" },
+      "In conversation": { act: "mid-conversation, expressive and gesturing toward a companion just off-frame", cam: "eye-level medium shot, warm even daylight", env: "in a lived-in, occupied part of" },
+      "In battle": { act: "in the thick of combat, caught mid-action with real weight and motion", cam: "dramatic low angle, harsh rim light, dust and embers, high tension", env: "amid the chaos and wreckage of" },
+      "Travelling": { act: "on the move and mid-stride, covering ground", cam: "wide establishing shot, big sky and shifting weather, long golden-hour light", env: "crossing the open expanse of" }
+    };
+    const stateKey = { "At rest": "at-rest", "In conversation": "in-conversation", "In battle": "in-battle", "Travelling": "travelling" }[this.state.forgeState] || "at-rest";
+    const kindWord = ({ monster: "monster", npc: "NPC", creature: "creature", companion: "animal companion", pet: "pet familiar", character: "hero adventurer" })[d.kind] || "character";
+    const nameTag = d.name ? " named \u201C" + d.name + "\u201D" : "";
+    const seg = [];
+    if (d.kind === "character" && d.pc) {
+      // PC framing: subject = species + class (+ subclass) from pc{}, not size/type.
+      const cap = s => s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : "";
+      const tc = s => String(s || "").split(/[-_\s]+/).filter(Boolean).map(cap).join(" ");
+      const sp = d.pc.subspecies ? tc(d.pc.subspecies) : tc(d.pc.species);
+      const sub = d.pc.subclass ? " (" + tc(d.pc.subclass) + ")" : "";
+      const ident = (sp + " " + tc(d.pc.class)).trim();
+      seg.push("a Dungeons & Dragons player character, a " + ident + sub + nameTag);
+    } else {
+      const subject = [d.size, d.type].filter(Boolean).join(" ");
+      seg.push((subject ? subject + " \u2014 " : "") + "a Dungeons & Dragons " + kindWord + nameTag);
+    }
+    if (a.appearance) seg.push(clean(a.appearance));
+    if (a.outfit) seg.push("wearing " + clean(a.outfit));
+    if (a.pose) seg.push("characteristic pose: " + clean(a.pose));
+    const sc = scenes[this.state.forgeState] || scenes["At rest"];
+    // Character-specific beat (engine writes these from class/alignment/race at forge time)
+    // replaces the generic action; the camera/lighting clause stays for set consistency.
+    const beat = (a.stateBeats || {})[stateKey];
+    seg.push((beat ? clean(beat) : sc.act) + "; " + sc.cam);
+    seg.push(a.environment ? sc.env + " " + clean(a.environment) + ", a high-fantasy world" : sc.env + " an evocative high-fantasy location");
+    if (a.personality) seg.push("mood: " + clean(a.personality));
+    seg.push(a.style ? clean(a.style) : "painterly high fantasy");
+    seg.push("full-body fantasy character art, cinematic composition, consistent character design across the set, rich detail, dramatic natural light");
+    return "\u201C" + seg.filter(Boolean).join(". ") + ". \u2014 " + this.state.forgeState.toLowerCase() + " variant.\u201D";
+  }
+
+  randomName() {
+    const a = ["Vor", "Sel", "Thar", "Quil", "Mar", "Dre", "Yse", "Kor", "Fen", "Bram", "Ort", "Sab", "Garr", "Lio", "Eun", "Hael", "Nim", "Cor", "Wren", "Ash"];
+    const b = ["ane", "wen", "dor", "ith", "ara", "oss", "yle", "une", "ric", "est", "ow", "vane", "mir", "eth", "ix", "el"];
+    const e = ["the Pathfinder", "Stormcaller", "of the Fen", "Dawnward", "Emberkin", "the Quiet", "Windreader", "Hollowborn", "the Unseen", "Tidewalker"];
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+    const nm = pick(a) + pick(b);
+    return Math.random() < 0.55 ? nm : nm + " " + pick(e);
+  }
+
+  traitPresets() {
+    return [
+      { name: "Pack Tactics", text: "The creature has advantage on attack rolls against a creature if at least one of the creature's allies is within 5 feet of it and isn't incapacitated." },
+      { name: "Keen Senses", text: "The creature has advantage on Wisdom (Perception) checks that rely on sight, hearing, or smell." },
+      { name: "Amphibious", text: "The creature can breathe air and water." },
+      { name: "Magic Resistance", text: "The creature has advantage on saving throws against spells and other magical effects." },
+      { name: "Spider Climb", text: "The creature can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check." },
+      { name: "Sunlight Sensitivity", text: "While in sunlight, the creature has disadvantage on attack rolls and on Wisdom (Perception) checks that rely on sight." },
+      { name: "Regeneration", text: "The creature regains 10 hit points at the start of its turn if it has at least 1 hit point." },
+      { name: "Flyby", text: "The creature doesn't provoke opportunity attacks when it flies out of an enemy's reach." },
+      { name: "Legendary Resistance (3/Day)", text: "If the creature fails a saving throw, it can choose to succeed instead." },
+      { name: "False Appearance", text: "While the creature remains motionless, it is indistinguishable from an ordinary object." }
+    ];
+  }
+
+  tab(active) { return "border:none;border-radius:5px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:0.3px;" + (active ? "background:#99502a;color:#fff;" : "background:transparent;color:#b09f84;"); }
+  modeBtn(active) { return "border:none;border-radius:5px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;" + (active ? "background:#3d342a;color:#efe4cd;" : "background:transparent;color:#9c8e76;"); }
+
+  renderVals() {
+    const d = this.state.draft;
+    const live = this.state.bridge === true;
+    const order = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+    const abilityList = order.map(k => ({
+      k, score: String(d.abilities[k]), mod: this.fmtMod(d.abilities[k]),
+      onChange: e => this.setAbility(k, e.target.value),
+      onUp: () => this.stepAbility(k, 1), onDown: () => this.stepAbility(k, -1)
+    }));
+    const scoreNums = order.map(k => parseInt(d.abilities[k], 10) || 0);
+    const abilityTotal = scoreNums.reduce((a, b) => a + b, 0);
+    const abilityMax = Math.max.apply(null, scoreNums);
+    const abilityMin = Math.min.apply(null, scoreNums);
+    const abilityNote = this.state.mode === "character" ? "point-buy: scores 8\u201315, 27 pts" : "monsters may exceed 20";
+
+    const OL = (this.state.ruleset && this.state.ruleset.optionLists) || {};
+    const olList = (arr, fb) => (Array.isArray(arr) && arr.length) ? arr.map(o => (typeof o === "string" ? o : (o.label || o.name || o.value || ""))).filter(Boolean) : fb;
+    const SIZES = olList(OL.sizes, ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]);
+    const TYPES = olList(OL.creatureTypes, ["Aberration", "Beast", "Celestial", "Construct", "Dragon", "Elemental", "Fey", "Fiend", "Giant", "Humanoid", "Monstrosity", "Ooze", "Plant", "Undead"]);
+    const ALIGNS = olList(OL.alignments, ["Lawful Good", "Neutral Good", "Chaotic Good", "Lawful Neutral", "Neutral", "Chaotic Neutral", "Lawful Evil", "Neutral Evil", "Chaotic Evil", "Unaligned", "Any alignment"]);
+    const KINDS = [{ value: "monster", label: "Monster" }, { value: "npc", label: "NPC" }, { value: "creature", label: "Creature" }, { value: "companion", label: "Companion" }, { value: "pet", label: "Pet" }, { value: "character", label: "Player character" }];
+    const sizeIsOther = !SIZES.includes(d.size);
+    const typeIsOther = !TYPES.some(t => t.toLowerCase() === (d.type || "").toLowerCase());
+    const alignIsOther = !ALIGNS.includes(d.alignment);
+    const mkOpts = (arr, withOther) => { const els = arr.map(v => React.createElement("option", { key: v, value: v }, v)); if (withOther) els.push(React.createElement("option", { key: "__other__", value: "__other__" }, "Other\u2026")); return els; };
+    const kindOptionEls = KINDS.map(o => React.createElement("option", { key: o.value, value: o.value }, o.label));
+    const traitPresetEls = [React.createElement("option", { key: "__none__", value: "" }, "+ From booklet\u2026")].concat(this.traitPresets().map((p, i) => React.createElement("option", { key: i, value: String(i) }, p.name)));
+
+    const char = {
+      name: d.name, size: d.size, type: d.type, alignment: d.alignment,
+      subtitle: [d.size, d.type].filter(Boolean).join(" ") + (d.alignment ? ", " + d.alignment : ""),
+      flavour: d.flavour, ac: d.ac, hp: d.hp, speed: d.speed,
+      saves: d.saves, skills: d.skills, resist: d.resist, condImm: d.condImm,
+      senses: d.senses, languages: d.languages, challenge: d.challenge,
+      traits: d.traits, actions: d.actions, reactions: d.reactions,
+      showSaves: !!d.saves, showSkills: !!d.skills, showResist: !!d.resist,
+      showCond: !!d.condImm, showLang: !!d.languages,
+      hasActions: d.actions && d.actions.length > 0, hasReactions: d.reactions && d.reactions.length > 0
+    };
+
+    // ---- enrich features with source tags (PCs carry feature.source) ----
+    const srcPretty = s => { if (!s) return ""; const p = String(s).split(":"); return p[1] || p[0]; };
+    const enrich = arr => (arr || []).map(t => ({ name: t.name, text: t.text, hasSrc: !!t.source, srcTag: srcPretty(t.source) }));
+    char.traits = enrich(d.traits); char.actions = enrich(d.actions); char.reactions = enrich(d.reactions);
+
+    // ---- PC layer: pc{} + spellcasting{} (engine-derived numbers shown read-only) ----
+    const pc = d.pc, spc = d.spellcasting;
+    const cap = s => s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : "";
+    const titleCase = s => String(s || "").split(/[-_\s]+/).filter(Boolean).map(cap).join(" ");
+    char.isPc = !!pc;
+    char.showChallenge = !pc;
+    if (pc) {
+      const lvl = pc.level || 1;
+      const dexMod = Math.floor(((parseInt(d.abilities.DEX, 10) || 10) - 10) / 2);
+      char.pb = "+" + (Math.ceil(lvl / 4) + 1);
+      char.initiative = (dexMod >= 0 ? "+" : "\u2212") + Math.abs(dexMod);
+      const species = pc.subspecies ? titleCase(pc.subspecies) : titleCase(pc.species);
+      const sub = pc.subclass ? " (" + titleCase(pc.subclass) + ")" : "";
+      char.subtitle = "Level " + lvl + " " + species + " " + titleCase(pc.class) + sub + (d.alignment ? " \u00b7 " + d.alignment : "");
+      char.pcLevel = lvl;
+      char.pcClassLine = (titleCase(pc.class) + sub).trim() || "\u2014";
+      char.pcSpeciesLine = species || "\u2014";
+      char.pcBackgroundLine = titleCase(pc.background) || "\u2014";
+      char.hitDiceText = pc.hitDice ? pc.hitDice.total + pc.hitDice.die : "\u2014";
+      char.equipment = (pc.equipment || []).map(e => ({ label: (e.qty && e.qty > 1) ? e.name + " \u00d7" + e.qty : e.name }));
+      const cur = pc.currency || {};
+      char.coin = ["pp", "gp", "ep", "sp", "cp"].filter(k => cur[k]).map(k => cur[k] + " " + k).join(", ") || "\u2014";
+      const per = pc.personality || {};
+      const join = a => (a && a.length ? a.join("; ") : "");
+      char.idealsText = join(per.ideals); char.bondsText = join(per.bonds);
+      char.flawsText = join(per.flaws); char.pcTraitsText = join(per.traits);
+      char.hasIdeals = !!char.idealsText; char.hasBonds = !!char.bondsText;
+      char.hasFlaws = !!char.flawsText; char.hasPcTraits = !!char.pcTraitsText;
+      const prof = pc.proficiencies || {};
+      const profParts = [];
+      if ((prof.weapons || []).length) profParts.push("Weapons \u2014 " + prof.weapons.map(titleCase).join(", "));
+      if ((prof.armor || []).length) profParts.push("Armour \u2014 " + prof.armor.map(titleCase).join(", "));
+      if ((prof.tools || []).length) profParts.push("Tools \u2014 " + prof.tools.map(titleCase).join(", "));
+      char.profText = profParts.join(" \u00b7 ");
+      char.hasProf = profParts.length > 0;
+      // --- editable PC dropdowns from ruleset optionLists (read-only until bridge up) ---
+      const pairList = (arr) => (Array.isArray(arr) ? arr.map(o => (typeof o === "string" ? { value: o, label: titleCase(o) } : { value: (o.value || o.slug || o.id || o.name), label: (o.label || o.name || titleCase(o.value || o.slug || "")) })) : []);
+      const classPairs = pairList(OL.class);
+      const subByClass = OL.subclassByClass || {};
+      const subPairs = pairList(subByClass[pc.class] || []);
+      const mkPcSel = pairs => pairs.map(p => React.createElement("option", { key: String(p.value), value: p.value }, p.label));
+      char.pcEditable = live && classPairs.length > 0;
+      char.pcReadonly = !char.pcEditable;
+      char.speciesLabel = (this.state.ruleset && this.state.ruleset.labels && this.state.ruleset.labels.species) || "Species";
+      char.pcClassOpts = mkPcSel(classPairs); char.pcClassVal = String(pc.class || "");
+      char.pcSpeciesOpts = mkPcSel(pairList(OL.species)); char.pcSpeciesVal = String(pc.subspecies || pc.species || "");
+      char.pcBackgroundOpts = mkPcSel(pairList(OL.background)); char.pcBackgroundVal = String(pc.background || "");
+      char.pcSubclassOpts = mkPcSel(subPairs); char.pcSubclassVal = String(pc.subclass || ""); char.pcHasSubclass = subPairs.length > 0;
+      char.onPcClass = e => this.setPc("class", e.target.value);
+      char.onPcSpecies = e => this.setPc("species", e.target.value);
+      char.onPcBackground = e => this.setPc("background", e.target.value);
+      char.onPcSubclass = e => this.setPc("subclass", e.target.value);
+    }
+    char.hasSpellcasting = !!spc;
+    if (spc) {
+      const ord = n => ({ "1": "1st", "2": "2nd", "3": "3rd", "4": "4th", "5": "5th", "6": "6th", "7": "7th", "8": "8th", "9": "9th" }[String(n)] || n + "th");
+      char.spellAbility = (spc.ability || "").toUpperCase();
+      char.spellDc = spc.saveDc;
+      char.spellAtk = (spc.attackBonus >= 0 ? "+" : "") + spc.attackBonus;
+      char.spellLine = char.spellAbility + "-based caster";
+      char.spellSlots = Object.keys(spc.slots || {}).sort().map(k => {
+        const t = spc.slots[k].total || 0, x = spc.slots[k].expended || 0;
+        return { label: ord(k), pips: "\u25CF".repeat(Math.max(0, t - x)) + "\u25CB".repeat(x) };
+      });
+      char.cantripsText = (spc.cantrips || []).map(titleCase).join(", ");
+      char.preparedText = (spc.prepared || []).map(titleCase).join(", ");
+      char.hasCantrips = (spc.cantrips || []).length > 0;
+      char.hasPrepared = (spc.prepared || []).length > 0;
+    }
+
+    const H = {};
+    ["name", "size", "type", "alignment", "ac", "hp", "speed"].forEach(k => { H[k] = e => this.setField(k, e.target.value); });
+    const AH = {};
+    ["appearance", "outfit", "pose", "environment", "personality", "style"].forEach(k => { AH[k] = e => this.setArt(k, e.target.value); });
+
+    const traitItems = (d.traits || []).map((t, i) => ({
+      name: t.name, text: t.text,
+      onName: e => this.setTrait(i, "name", e.target.value),
+      onText: e => this.setTrait(i, "text", e.target.value),
+      onRemove: () => this.removeTrait(i)
+    }));
+
+    const glyphFor = k => ({ monster: "\u25C6", npc: "\u265F", creature: "\u2756", companion: "\u2741", pet: "\u273F", character: "\u265F" }[k] || "\u25C6");
+    const kindLabelFor = k => ({ monster: "Monster", npc: "NPC", creature: "Creature", companion: "Companion", pet: "Pet", character: "Character" }[k] || "Monster");
+    const starterStyle = active => "flex:none;display:flex;align-items:center;gap:11px;width:212px;text-align:left;background:" + (active ? "#33291f" : "#241f19") + ";border:1px solid " + (active ? "#99502a" : "#3a3227") + ";border-radius:10px;padding:10px 12px;cursor:pointer;";
+    const localStarters = Object.keys(this.LIB).filter(id => id !== "blank").map(id => {
+      const c = this.LIB[id]; const active = this.state.activeId === id;
+      return {
+        id, name: c.name, accent: c.accent, glyph: glyphFor(c.kind),
+        kindLabel: kindLabelFor(c.kind), cr: c.challenge ? String(c.challenge).split(" ")[0] : "\u2014",
+        onClick: () => this.load(id), style: starterStyle(active)
+      };
+    });
+    const localIds = {}; Object.keys(this.LIB).forEach(k => { localIds[k] = true; });
+    const serverStarters = (this.state.serverChars || []).filter(c => c && (c.id || c.slug) && !localIds[c.id || c.slug]).map(c => {
+      const id = c.id || c.slug; const active = this.state.activeId === id; const kind = c.kind || "monster";
+      return {
+        id, name: c.name || id, accent: c.accent || "#7a5a3a", glyph: glyphFor(kind),
+        kindLabel: kindLabelFor(kind), cr: c.challenge ? String(c.challenge).split(" ")[0] : "\u2014",
+        onClick: () => this.loadServer(id), style: starterStyle(active)
+      };
+    });
+    const starters = localStarters.concat(serverStarters);
+
+    const forgeStateNames = ["At rest", "In conversation", "In battle", "Travelling"];
+    const forgeStates = forgeStateNames.map(label => ({
+      label: label.replace("In conversation", "Talking").replace("In battle", "Battle"),
+      onClick: () => this.setState({ forgeState: label }),
+      style: "border:none;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;" + (this.state.forgeState === label ? "background:#99502a;color:#fff;" : "background:#2c261e;color:#b09f84;")
+    }));
+
+    const chips = ["CR " + (d.challenge ? String(d.challenge).split(" ")[0] : "?"), d.size + " " + d.type, "HP " + d.hp, "AC " + d.ac, "WIS " + d.abilities.WIS, d.speed].filter(x => x && x.trim());
+
+    // Namespace portrait slots per character so each creature keeps its own set
+    // (Forge fills them, Codex shows them — both share the active character's ids).
+    const pfx = "pf-" + this.state.activeId + "-";
+    const portraits = [{ id: pfx + "rest", label: "At rest" }, { id: pfx + "talk", label: "In conversation" }, { id: pfx + "battle", label: "In battle" }, { id: pfx + "travel", label: "Travelling" }];
+    portraits.forEach(p => {
+      const key = this.artKeyFor(p.label);
+      const slot = this.artSlot(this.state.activeId, key);
+      const url = this.portraitUrl(key);
+      p.imgUrl = url || "";
+      p.hasImg = !!url && !(slot && slot.loading);
+      p.loading = !!(slot && slot.loading);
+      p.showSlot = !url && !(slot && slot.loading);
+      p.canGen = live && !(slot && slot.loading);
+      p.genLabel = url ? "Regenerate" : "Generate";
+      p.imgEl = url ? React.createElement("img", { src: url, alt: p.label, style: { width: "100%", height: "116px", objectFit: "cover", display: "block" } }) : null;
+      p.onGen = () => this.genArt(p.label);
+    });
+    const cur = portraits[this.state.portraitIndex] || portraits[0];
+    const codexUrl = this.portraitUrl(this.artKeyFor(cur.label));
+    const codexImgEl = codexUrl ? React.createElement("img", { src: codexUrl, alt: cur.label, style: { width: "280px", height: "348px", objectFit: "cover", borderRadius: "8px", display: "block", boxShadow: "inset 0 0 0 1px #c9b48c" } }) : null;
+    const codexDots = portraits.map((p, i) => ({
+      onClick: () => this.setState({ portraitIndex: i }),
+      style: "width:8px;height:8px;border-radius:50%;cursor:pointer;background:" + (i === this.state.portraitIndex ? "#99502a" : "#c4ad84") + ";"
+    }));
+
+    // ---- bridge status pill + ruleset picker + validation warnings ----
+    let bst = "Connecting\u2026", bstyle = "color:#7a6c55;", bridgeStatusTitle = "Looking for the local forge bridge\u2026";
+    if (this.state.bridge === true) { bst = "\u25CF Bridge live"; bstyle = "color:#48b06a;"; bridgeStatusTitle = "Connected to " + this.bridgeBase(); }
+    else if (this.state.bridge === false) { bst = "\u25CB Local preview"; bstyle = "color:#9c8e76;"; bridgeStatusTitle = "Start the Flask bridge (python -m forge.web.app) to enable forge, rulesets & live portraits."; }
+    const bridgeStatusStyle = "font-size:12.5px; font-weight:600; letter-spacing:0.3px; white-space:nowrap; " + bstyle;
+    const rulesetLabel = s => ({ "dnd5e-2014": "D&D 5e (2014)", "dnd5e-2024": "D&D 5e (2024)" }[s] || s);
+    const rulesetEls = (this.state.rulesets || []).map(s => React.createElement("option", { key: s, value: s }, rulesetLabel(s)));
+    const warnColor = { error: "#c0392b", warning: "#d6892f", info: "#8a6f4a" };
+    const forgeWarnings = (this.state.forgeWarnings || []).map(w => ({ message: w.message, style: "border-left:3px solid " + (warnColor[w.level] || warnColor.info) + "; padding:7px 10px; background:#2a241d; border-radius:0 4px 4px 0; font-size:13px; color:#d8ccb4; line-height:1.45;" }));
+    const hasWarnings = forgeWarnings.length > 0;
+
+    return {
+      isStudio: this.state.view === "studio", isForge: this.state.view === "forge", isCodex: this.state.view === "codex",
+      onStudio: () => this.setView("studio"), onForge: () => this.setView("forge"), onCodex: () => this.setView("codex"),
+      tabStudio: this.tab(this.state.view === "studio"), tabForge: this.tab(this.state.view === "forge"), tabCodex: this.tab(this.state.view === "codex"),
+      onMonster: () => this.setMode("monster"), onCharacter: () => this.setMode("character"),
+      modeMonster: this.modeBtn(this.state.mode === "monster"), modeCharacter: this.modeBtn(this.state.mode === "character"),
+      modeNoun: this.state.mode === "character" ? "player character" : "monster / NPC",
+      onAutofill: () => this.autofill(), onRandom: () => this.random(), onBlank: () => this.blank(),
+      starters, char, abilityList, H, AH, traitItems,
+      abilityTotal, abilityMax, abilityMin, abilityNote,
+      sizeOptionEls: mkOpts(SIZES, true), typeOptionEls: mkOpts(TYPES, true), alignOptionEls: mkOpts(ALIGNS, true), kindOptionEls, traitPresetEls, presetSel: "",
+      sizeSel: sizeIsOther ? "__other__" : d.size, typeSel: typeIsOther ? "__other__" : (TYPES.find(t => t.toLowerCase() === (d.type || "").toLowerCase()) || "__other__"), alignSel: alignIsOther ? "__other__" : d.alignment, kindSel: d.kind,
+      onSize: e => this.selField("size", e), onType: e => this.selField("type", e), onAlign: e => this.selField("alignment", e), onKind: e => this.setField("kind", e.target.value),
+      sizeIsOther, typeIsOther, alignIsOther,
+      onRollName: () => this.setField("name", this.randomName()),
+      onPickPreset: e => this.pickPreset(e),
+      onAddTrait: () => this.addTrait(),
+      dump: d.dump || "", onDump: e => this.setDump(e.target.value), art: d.art || {},
+      chips, forgeState: this.state.forgeState, forgeStates,
+      prompt: this.computePrompt(), onCopyPrompt: () => this.copyPrompt(), copyLabel: this.state.copied || "Copy",
+      onForgeBlock: () => this.forgeViaBridge(),
+      forgeBusy: this.state.forgeBusy,
+      forgeBtnLabel: this.state.forgeBusy ? "Forging\u2026" : "\u2692 Forge & review statblock",
+      forgeBtnStyle: "margin-top:16px; width:100%; border:none; border-radius:7px; padding:12px; font-family:'Cinzel',serif; font-size:15px; letter-spacing:1px; " + (this.state.forgeBusy ? "background:#5d4632; color:#cbb89c; cursor:wait;" : "background:#99502a; color:#fff; cursor:pointer;"),
+      forgeWarnings, hasWarnings,
+      bridgeStatusStyle, bridgeStatusText: bst, bridgeStatusTitle,
+      showRulesetPicker: live && (this.state.rulesets || []).length > 1, rulesetEls, rulesetSel: this.state.rulesetSlug, onPickRuleset: e => this.pickRuleset(e),
+      states: portraits,
+      codexSlotId: cur.id, codexLabel: cur.label, codexDots,
+      codexHasImg: !!codexUrl, codexImgEl, codexShowSlot: !codexUrl,
+      onPrev: () => this.cyclePortrait(-1), onNext: () => this.cyclePortrait(1), onPrint: () => window.print()
+    };
+  }
+
+  buildLib() {
+    return {
+      hane: {
+        name: "Hané Pathfinder", kind: "monster", accent: "#6b7f8c",
+        size: "Medium", type: "Wind-Kin (Path-Keeper)", alignment: "Neutral",
+        flavour: "Hané Pathfinders are wise keepers of the wind-paths that all Wind-Kin and many others rely upon. They read the currents of air and spirit, verify the truth of routes, and ensure that movement remains possible across the Isles.",
+        ac: "15 (aerial awareness)", hp: "110 (13d8 + 52)", speed: "10 ft., fly 70 ft. (hover)",
+        abilities: { STR: 10, DEX: 18, CON: 18, INT: 14, WIS: 20, CHA: 16 },
+        saves: "Dex +8, Wis +9", skills: "Perception +9, Insight +9, Survival +9, Acrobatics +8",
+        resist: "psychic; bludgeoning from non-magical attacks while airborne",
+        condImm: "prone (while flying), disoriented (see Path Stability)",
+        senses: "passive Perception 19", languages: "Auran, Common (rarely spoken), Wind-Sign", challenge: "9 (5,000 XP)",
+        traits: [
+          { name: "Anchor of Motion", text: "While airborne, it cannot be knocked prone. If forcibly grounded or restrained for more than 1 minute, it gains 1 level of exhaustion every minute thereafter." },
+          { name: "Path Stability (Aura)", text: "Within 60 feet, creatures have advantage on navigation, tracking, and orientation checks. Magical teleportation or forced movement must succeed on a DC 16 Wisdom saving throw or fail." },
+          { name: "Living Cartography", text: "The Pathfinder perfectly remembers any route it has traversed under correct conditions and can retrace it without error." }
+        ],
+        actions: [
+          { name: "Multiattack", text: "The Pathfinder makes two Talon Strikes." },
+          { name: "Talon Strike", text: "Melee Weapon Attack: +8 to hit, reach 5 ft., one target. Hit: 10 (1d10 + 5) slashing damage." },
+          { name: "Corrective Pass (Recharge 5\u20136)", text: "Flies through a 30-foot line. Each creature must succeed on a DC 16 Wisdom save or be repositioned up to 15 feet along a valid path and be disoriented until the end of its next turn." }
+        ],
+        reactions: [{ name: "Course Correction", text: "When a creature within 30 feet would be forced to move against its will, the Pathfinder imposes advantage or disadvantage on the effect (its choice)." }],
+        art: { appearance: "Anthropomorphic falcon, slate-grey and cream plumage, sharp amber eyes", outfit: "Layered blue travelling robes, rope belts, a small navigator's charm", pose: "Hovering, wings spread", environment: "Above misty island peaks, soft daylight", personality: "Calm, watchful, never still", style: "Painterly high fantasy, soft natural light", stateBeats: { "at-rest": "perched on a wind-worn crag, head tilted, reading the drift of the air", "in-conversation": "wings half-folded, gesturing a lost traveller toward the true path with one taloned hand", "in-battle": "diving through a gale on a corrective pass, talons spread, feathers streaming", "travelling": "riding a high thermal between island peaks, a living compass against the clouds" } },
+        dump: "A wise falcon-person who keeps the wind-paths. Reads air currents like a living map. Calm and watchful, always aloft, wrapped in blue travelling robes."
+      },
+      brindle: {
+        name: "Brindle, Hearth-Cat", kind: "companion", accent: "#b9743a",
+        size: "Tiny", type: "Beast", alignment: "Neutral Good",
+        flavour: "A warm-blooded hearth spirit in the shape of a stout tabby. Brindle finds the safest corner of any room and purrs courage into those nearby.",
+        ac: "13", hp: "18 (4d6 + 4)", speed: "40 ft., climb 30 ft.",
+        abilities: { STR: 6, DEX: 16, CON: 12, INT: 6, WIS: 14, CHA: 12 },
+        saves: "", skills: "Perception +4, Stealth +5", resist: "fire", condImm: "",
+        senses: "darkvision 60 ft., passive Perception 14", languages: "understands Common", challenge: "1/2 (100 XP)",
+        traits: [
+          { name: "Hearth-Warmth", text: "An ally that ends its rest within 5 feet of Brindle regains 1 extra Hit Die worth of healing." },
+          { name: "Keen Senses", text: "Brindle has advantage on Wisdom (Perception) checks that rely on hearing or smell." }
+        ],
+        actions: [{ name: "Claw", text: "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 4 (1d4 + 3) slashing damage." }],
+        reactions: [],
+        art: { appearance: "Stout tabby cat with ember-orange markings and faintly glowing eyes", outfit: "A small woven collar with a brass bell", pose: "Curled, alert, tail flicking", environment: "By a crackling fireplace, warm low light", personality: "Aloof but loyal, brave in a pinch", style: "Cozy storybook illustration, warm palette" },
+        dump: "A cosy hearth-cat companion. Ember markings, glowing eyes, gives courage by its side. Brave little thing."
+      },
+      gravemoss: {
+        name: "Gravemoss Lurker", kind: "monster", accent: "#5d6b3a",
+        size: "Large", type: "Plant", alignment: "Unaligned",
+        flavour: "A mound of bog and root that waits, motionless, until warmth passes too close. Then the moss opens and the marsh takes its due.",
+        ac: "14 (natural armour)", hp: "76 (8d10 + 32)", speed: "20 ft., swim 20 ft.",
+        abilities: { STR: 18, DEX: 8, CON: 18, INT: 4, WIS: 12, CHA: 6 },
+        saves: "", skills: "Stealth +4 (in swamp)", resist: "bludgeoning, piercing", condImm: "blinded, deafened, frightened",
+        senses: "tremorsense 30 ft., passive Perception 11", languages: "", challenge: "5 (1,800 XP)",
+        traits: [
+          { name: "False Appearance", text: "While motionless, the Lurker is indistinguishable from an ordinary mound of moss and bog." },
+          { name: "Swamp Camouflage", text: "Advantage on Dexterity (Stealth) checks made in swampy terrain." }
+        ],
+        actions: [
+          { name: "Multiattack", text: "The Lurker makes two Tendril attacks." },
+          { name: "Tendril", text: "Melee Weapon Attack: +7 to hit, reach 15 ft., one target. Hit: 11 (2d6 + 4) bludgeoning damage and the target is grappled (escape DC 14)." }
+        ],
+        reactions: [],
+        art: { appearance: "Hulking mound of dripping moss, roots and bog-water, hidden maw", outfit: "", pose: "Half-submerged, rising from the marsh", environment: "Misty fenland at dusk, reeds and still water", personality: "Patient, ambush predator", style: "Moody naturalist fantasy painting" },
+        dump: "A bog ambush predator made of moss and root. Looks like a harmless mound until it strikes with grasping tendrils."
+      },
+      pip: {
+        name: "Pip, Sprite-Moth", kind: "pet", accent: "#8a6db0",
+        size: "Tiny", type: "Fey", alignment: "Chaotic Good",
+        flavour: "A palm-sized moth-fey that scatters faint dust of courage and curiosity wherever it flutters.",
+        ac: "14", hp: "7 (3d4)", speed: "10 ft., fly 40 ft.",
+        abilities: { STR: 2, DEX: 18, CON: 10, INT: 10, WIS: 14, CHA: 16 },
+        saves: "", skills: "Perception +4, Stealth +6", resist: "", condImm: "",
+        senses: "darkvision 60 ft., passive Perception 14", languages: "Sylvan", challenge: "1/8 (25 XP)",
+        traits: [{ name: "Dust of Heart", text: "As a bonus action, an ally within 5 feet gains advantage on its next saving throw against being frightened." }],
+        actions: [{ name: "Glittering Touch", text: "Melee Spell Attack: +4 to hit, reach 5 ft., one target. Hit: 3 (1d4 + 1) radiant damage." }],
+        reactions: [],
+        art: { appearance: "Palm-sized moth with luminous violet wings and a tiny humanoid face", outfit: "Dusting of glowing pollen", pose: "Mid-flutter, trailing light", environment: "Moonlit glade, fireflies", personality: "Curious, flighty, kind", style: "Delicate luminous fairy-tale art" },
+        dump: "A tiny moth-fairy pet. Glowing violet wings, scatters courage dust. Curious and flighty."
+      },
+      vale: {
+        name: "Vale Duskvane", kind: "character", accent: "#4f6d8c",
+        size: "Medium", type: "Humanoid (Wind Acolyte), level 5", alignment: "Lawful Neutral",
+        flavour: "A junior path-acolyte trained by the Hané. Vale reads the wind for a living and is learning to trust what it says.",
+        ac: "15 (studded leather)", hp: "38 (5d8 + 10)", speed: "30 ft.",
+        abilities: { STR: 10, DEX: 16, CON: 14, INT: 12, WIS: 17, CHA: 11 },
+        saves: "Wis +6, Con +5", skills: "Survival +6, Perception +6, Insight +6", resist: "", condImm: "",
+        senses: "passive Perception 16", languages: "Common, Auran", challenge: "\u2014 (level 5)",
+        traits: [
+          { name: "Wind-Reader", text: "Vale can spend 1 minute reading local air currents to learn the general direction of the nearest settlement, water source, or storm." },
+          { name: "Spellcasting", text: "Wisdom-based caster (save DC 14). Knows guidance, gust, and zephyr step." }
+        ],
+        actions: [{ name: "Wind-Glaive", text: "Melee Weapon Attack: +6 to hit, reach 10 ft., one target. Hit: 8 (1d10 + 3) slashing damage." }],
+        reactions: [{ name: "Read the Gust", text: "When a creature Vale can see makes a ranged attack against an ally within 30 feet, Vale can grant the ally +2 AC against it." }],
+        art: { appearance: "Young human acolyte, wind-tousled hair, weather-worn cloak", outfit: "Studded leather, a long glaive, navigator's tools at the belt", pose: "Bracing against the wind, glaive planted", environment: "A high cliff path, gathering clouds", personality: "Earnest, careful, eager to prove themself", style: "Grounded character-portrait fantasy art" },
+        dump: "A young wind-acolyte trained by the Hané. Learning to read the air. Earnest and careful, carries a long wind-glaive."
+      },
+      lyra: {
+        name: "Lyra Emberquill", kind: "character", accent: "#a8572f",
+        size: "Medium", type: "humanoid (elf)", alignment: "Chaotic Good",
+        flavour: "A high-elf evoker who chases forbidden fire-lore through every ruin she can find.",
+        ac: "12 (mage armor)", hp: "32 (5d6 + 10)", speed: "30 ft.",
+        abilities: { STR: 8, DEX: 14, CON: 14, INT: 17, WIS: 12, CHA: 10 },
+        saveProfs: ["INT", "WIS"],
+        skillProfs: [{ skill: "Arcana", expertise: false }, { skill: "Investigation", expertise: false }, { skill: "History", expertise: false }],
+        saves: "Int +6, Wis +4", skills: "Arcana +6, Investigation +6, History +6", resist: "", condImm: "",
+        senses: "passive Perception 11", languages: "Common, Elvish, Draconic", challenge: "\u2014 (level 5)",
+        traits: [
+          { name: "Arcane Recovery", text: "Once per day on a short rest, recover spell slots totalling up to half your wizard level (rounded up).", source: "class:Wizard" },
+          { name: "Fey Ancestry", text: "Advantage on saves against being charmed; magic can't put you to sleep.", source: "race:Elf" },
+          { name: "Researcher", text: "When you try to learn or recall a piece of lore, you often know where to find it.", source: "background:Sage" }
+        ],
+        actions: [
+          { name: "Quarterstaff", text: "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 3 (1d6) bludgeoning damage." },
+          { name: "Fire Bolt (cantrip)", text: "Ranged Spell Attack: +6 to hit, range 120 ft., one target. Hit: 11 (2d10) fire damage." }
+        ],
+        reactions: [
+          { name: "Shield (1st-level spell)", text: "When hit by an attack or targeted by magic missile, raise an invisible barrier: +5 AC until the start of your next turn, and no damage from magic missile.", source: "class:Wizard" }
+        ],
+        art: { appearance: "Slender high elf with ash-blonde hair tied back, faint burn-scars on her fingertips, sharp amber eyes", outfit: "Travel-worn indigo robes with rolled sleeves, a bandolier of chalk and reagents, a satchel of scrolls", pose: "One hand wreathed in a small controlled flame, the other holding an open spellbook", environment: "A candlelit ruined library, shelves leaning, dust hanging in the light", personality: "Curious, impatient, quietly reckless", style: "Painterly high fantasy, warm candlelight against deep shadow", stateBeats: { "at-rest": "seated cross-legged in meditation over an open spellbook, a small flame hovering above one upturned palm", "in-conversation": "leaning across a cluttered worktable mid-argument about a point of fire-lore, an ink-stained finger raised", "in-battle": "hurling a roaring gout of flame, robes snapping back in the heat, eyes lit by the blaze", "travelling": "picking a careful path through the ruin at dusk, a conjured light bobbing ahead to read the way" } },
+        dump: "A driven high-elf evoker, ink-stained and singed, who can't resist a locked archive.",
+        pc: {
+          species: "elf", subspecies: "high-elf", class: "wizard", subclass: "evocation", level: 5, background: "sage",
+          abilityMethod: "point_buy",
+          hitDice: { die: "d6", total: 5, remaining: 5 },
+          deathSaves: { successes: 0, failures: 0 },
+          proficiencies: { armor: [], weapons: ["daggers", "darts", "slings", "quarterstaffs", "light crossbows"], tools: [] },
+          feats: [],
+          equipment: [{ name: "Spellbook" }, { name: "Quarterstaff" }, { name: "Component pouch" }, { name: "Scholar's pack" }, { name: "Potion of healing", qty: 2 }],
+          currency: { cp: 0, sp: 0, ep: 0, gp: 25, pp: 0 },
+          personality: { traits: ["Quotes obscure texts mid-conversation"], ideals: ["Knowledge \u2014 the path to power and self-improvement"], bonds: ["My spellbook is my life's work; I would burn for it"], flaws: ["I overlook the obvious while chasing the arcane"] }
+        },
+        spellcasting: {
+          ability: "int", saveDc: 14, attackBonus: 6,
+          slots: { "1": { total: 4, expended: 0 }, "2": { total: 3, expended: 0 }, "3": { total: 2, expended: 0 } },
+          cantrips: ["fire-bolt", "mage-hand", "prestidigitation", "light"],
+          prepared: ["magic-missile", "shield", "misty-step", "scorching-ray", "fireball"]
+        }
+      },
+      blank: {
+        name: "New creature", kind: "monster", accent: "#6a5a44",
+        size: "Medium", type: "Humanoid", alignment: "Unaligned",
+        flavour: "",
+        ac: "10", hp: "1 (1d8)", speed: "30 ft.",
+        abilities: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+        saves: "", skills: "", resist: "", condImm: "", senses: "passive Perception 10", languages: "", challenge: "0",
+        traits: [], actions: [], reactions: [],
+        art: { appearance: "", outfit: "", pose: "", environment: "", personality: "", style: "" },
+        dump: ""
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

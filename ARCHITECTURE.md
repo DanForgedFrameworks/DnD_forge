@@ -151,6 +151,12 @@ Skeleton lifted from `..\Python - Test\Catalyst - Agent`:
 - [x] **FULL PIPELINE proven end-to-end:** brain-dump → autofill (Claude) → engine-derived
       rules-legal statblock → per-state art prompts → image (Gemini) → served URL → stored
       Character, all via the Flask bridge. A–E + bridge + images all green.
+- [x] Front-end adapter (`web/forge-bridge.js`): live-first, offline-fallback; uses the page's
+      `computePrompt()` offline. Bundled fallback data `web/fallback-data.js`
+      (`scripts/build_fallback.py`); integration guide `web/README.md`.
+- [x] Published (public): https://github.com/DanForgedFrameworks/DnD_forge. NEXT: get Design's
+      prototype HTML → wire the two `<script>` tags → enable GitHub Pages (fallback-mode preview).
+      (HTTPS Pages stays in fallback; live mode needs the HTML local / Flask-served.)
 - [ ] PC follow-ups: widen autofill output for kind=character (emit pc/spellcasting);
       PC Codex view; deeper PC ability-rule validation (point-buy/array via ruleset config)
 - [ ] Choice-resolution + randomisation (emits the contract shape)
