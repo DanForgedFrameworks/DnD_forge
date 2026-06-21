@@ -68,7 +68,7 @@
           <div style="width:46px; height:46px; border-radius:8px; flex:none; background:{{ s.accent }}; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff8ec;">{{ s.glyph }}</div>
           <div style="min-width:0;">
             <div style="font-family:'Cinzel',serif; font-size:14px; color:#efe4cd; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ s.name }}</div>
-            <div style="font-size:12.5px; color:#b09f84;">{{ s.kindLabel }} · CR {{ s.cr }}</div>
+            <div style="font-size:12.5px; color:#b09f84;">{{ s.kindLabel }} · {{ s.meta }}</div>
           </div>
         </button>
       </sc-for>
@@ -269,7 +269,8 @@
         <sc-if value="{{ char.showCond }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Condition Immunities</strong> {{ char.condImm }}</div></sc-if>
         <div><strong style="color:#7a3f1e;">Senses</strong> {{ char.senses }}</div>
         <sc-if value="{{ char.showLang }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Languages</strong> {{ char.languages }}</div></sc-if>
-        <div><strong style="color:#7a3f1e;">Challenge</strong> {{ char.challenge }}</div>
+        <sc-if value="{{ char.showChallenge }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Challenge</strong> {{ char.challenge }}</div></sc-if>
+        <sc-if value="{{ char.isPc }}" hint-placeholder-val="{{ false }}"><div><strong style="color:#7a3f1e;">Level</strong> {{ char.levelLine }}</div></sc-if>
       </div>
       <div style="margin-top:16px;">
         <sc-for list="{{ char.traits }}" as="t" hint-placeholder-count="3">
@@ -419,6 +420,7 @@
           </div>
         </div>
 
+        <div style="overflow:hidden; min-width:0;">
         <div style="font-family:'Cinzel',serif; font-weight:700; font-size:32px; color:#7a3f1e; letter-spacing:0.5px; line-height:1.05;">{{ char.name }}</div>
         <div style="font-style:italic; font-size:16px; color:#4a3d2c;">{{ char.subtitle }}</div>
         <p style="font-style:italic; font-size:15px; line-height:1.5; color:#3a3026; margin:12px 0 0;">{{ char.flavour }}</p>
@@ -439,7 +441,8 @@
           <div><strong style="color:#7a3f1e;">Senses</strong> {{ char.senses }}</div>
           <sc-if value="{{ char.showLang }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Languages</strong> {{ char.languages }}</div></sc-if>
           <sc-if value="{{ char.showChallenge }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Challenge</strong> {{ char.challenge }}</div></sc-if>
-          <sc-if value="{{ char.isPc }}" hint-placeholder-val="{{ false }}"><div><strong style="color:#7a3f1e;">Proficiency Bonus</strong> {{ char.pb }}&nbsp;&nbsp;&middot;&nbsp;&nbsp;<strong style="color:#7a3f1e;">Initiative</strong> {{ char.initiative }}&nbsp;&nbsp;&middot;&nbsp;&nbsp;<strong style="color:#7a3f1e;">Hit Dice</strong> {{ char.hitDiceText }}</div><sc-if value="{{ char.hasSpellcasting }}" hint-placeholder-val="{{ false }}"><div><strong style="color:#7a3f1e;">Spell save DC</strong> {{ char.spellDc }}&nbsp;&nbsp;&middot;&nbsp;&nbsp;<strong style="color:#7a3f1e;">Spell attack</strong> {{ char.spellAtk }}</div></sc-if></sc-if>
+          <sc-if value="{{ char.isPc }}" hint-placeholder-val="{{ false }}"><div><strong style="color:#7a3f1e;">Level</strong> {{ char.levelLine }}</div><div><strong style="color:#7a3f1e;">Proficiency Bonus</strong> {{ char.pb }}&nbsp;&nbsp;&middot;&nbsp;&nbsp;<strong style="color:#7a3f1e;">Initiative</strong> {{ char.initiative }}&nbsp;&nbsp;&middot;&nbsp;&nbsp;<strong style="color:#7a3f1e;">Hit Dice</strong> {{ char.hitDiceText }}</div><sc-if value="{{ char.hasSpellcasting }}" hint-placeholder-val="{{ false }}"><div><strong style="color:#7a3f1e;">Spell save DC</strong> {{ char.spellDc }}&nbsp;&nbsp;&middot;&nbsp;&nbsp;<strong style="color:#7a3f1e;">Spell attack</strong> {{ char.spellAtk }}</div></sc-if></sc-if>
+        </div>
         </div>
       </div>
 
@@ -823,6 +826,7 @@ class Component extends DCLogic {
     char.isPc = !!pc;
     char.showTypeRow = !pc;
     char.showChallenge = !pc;
+    char.levelLine = pc ? String(pc.level || 1) : "";
     if (pc) {
       const lvl = pc.level || 1;
       const dexMod = Math.floor(((parseInt(d.abilities.DEX, 10) || 10) - 10) / 2);
@@ -918,13 +922,16 @@ class Component extends DCLogic {
     }));
 
     const glyphFor = k => ({ monster: "\u25C6", npc: "\u265F", creature: "\u2756", companion: "\u2741", pet: "\u273F", character: "\u265F" }[k] || "\u25C6");
-    const kindLabelFor = k => ({ monster: "Monster", npc: "NPC", creature: "Creature", companion: "Companion", pet: "Pet", character: "Character" }[k] || "Monster");
+    const kindLabelFor = k => ({ monster: "Monster", npc: "NPC", creature: "Creature", companion: "Companion", pet: "Pet", character: "Player character" }[k] || "Monster");
+    // Player characters have a LEVEL, never a Challenge Rating; everything else shows CR.
+    const levelOf = ch => { const m = /level\s+(\d+)/i.exec(ch || ""); return m ? m[1] : null; };
+    const metaLabel = (k, ch) => { if (k === "character") { const lv = levelOf(ch); return lv ? ("Level " + lv) : "Level —"; } return "CR " + (ch ? String(ch).split(" ")[0] : "—"); };
     const starterStyle = active => "flex:none;display:flex;align-items:center;gap:11px;width:212px;text-align:left;background:" + (active ? "#33291f" : "#241f19") + ";border:1px solid " + (active ? "#99502a" : "#3a3227") + ";border-radius:10px;padding:10px 12px;cursor:pointer;";
     const localStarters = Object.keys(this.LIB).filter(id => id !== "blank").map(id => {
       const c = this.LIB[id]; const active = this.state.activeId === id;
       return {
         id, name: c.name, accent: c.accent, glyph: glyphFor(c.kind),
-        kindLabel: kindLabelFor(c.kind), cr: c.challenge ? String(c.challenge).split(" ")[0] : "\u2014",
+        kindLabel: kindLabelFor(c.kind), meta: metaLabel(c.kind, c.challenge),
         onClick: () => this.load(id), style: starterStyle(active)
       };
     });
@@ -933,7 +940,7 @@ class Component extends DCLogic {
       const id = c.id || c.slug; const active = this.state.activeId === id; const kind = c.kind || "monster";
       return {
         id, name: c.name || id, accent: c.accent || "#7a5a3a", glyph: glyphFor(kind),
-        kindLabel: kindLabelFor(kind), cr: c.challenge ? String(c.challenge).split(" ")[0] : "\u2014",
+        kindLabel: kindLabelFor(kind), meta: metaLabel(kind, c.challenge),
         onClick: () => this.loadServer(id), style: starterStyle(active)
       };
     });
@@ -946,7 +953,7 @@ class Component extends DCLogic {
       style: "border:none;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;" + (this.state.forgeState === label ? "background:#99502a;color:#fff;" : "background:#2c261e;color:#b09f84;")
     }));
 
-    const chips = ["CR " + (d.challenge ? String(d.challenge).split(" ")[0] : "?"), d.size + " " + d.type, "HP " + d.hp, "AC " + d.ac, "WIS " + d.abilities.WIS, d.speed].filter(x => x && x.trim());
+    const chips = [metaLabel(d.kind, d.challenge), d.size + " " + d.type, "HP " + d.hp, "AC " + d.ac, "WIS " + d.abilities.WIS, d.speed].filter(x => x && x.trim());
 
     // Namespace portrait slots per character so each creature keeps its own set
     // (Forge fills them, Codex shows them — both share the active character's ids).
