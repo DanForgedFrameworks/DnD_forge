@@ -174,10 +174,17 @@ names into the default house style. (Pixel-art is ONLY the UI portal doors — d
 1. **Dice transition rework:** make it a **fountain UP from the bottom** that arcs over and **falls back down**
    to cleanse; **lots** of dice, varied sizes; **run LONGER** (current ~820ms reveal is too short — dice never
    cross the screen). In `runRain()` + `enterStage()` timing in the .dc.html.
-2. **Surprise Me → re-rollable CONCEPT flow:** it should **populate** concept + appearance/outfit/gear/
-   environment/art-style with random picks the user can **re-roll cheaply a few times**; a **scribble/"…"
-   animation** plays while rolling, nothing else clickable. Only when happy → **Forge**, which shows a
-   **confirmation** (token spend) + a **rules-mode confirm** (Rule-of-Cool vs by-the-book).
+2. **Surprise Me → re-rollable CONCEPT flow — DESIGN CONFIRMED (hybrid):**
+   - Re-roll = **engine-rolled BONES only** (PC: class · subclass · species · subspecies · background · level,
+     all legal from `ruleset.optionLists`; monster: type/size/CR). **Free + instant, NO AI** — re-roll freely;
+     show the rolled bones in a concept panel; scribble/"…" micro-anim on roll.
+   - The **look** (appearance/outfit/gear/environment/art-style) + stat block + spells are written by the AI
+     **only at the confirmed Forge step**, which is TOLD the locked bones ("you ARE a level N {species} {class}
+     ({subclass}) with {background} background — flesh out the rest"). Pass the bones to `/forge` (ideally as
+     explicit `pc.*` constraints, not just prose).
+   - Then **Forge** shows a **confirmation** (token spend) + a **rules-mode confirm** (Rule-of-Cool vs by-book).
+   - Five-step flow CONFIRMED: Start (kind+rules) → re-roll bones → Forge (confirm + grey-out) → review stat
+     block + generate portrait set → go to Studio.
 3. **Forge UX:** while forging, **grey-out/lock** the whole UI + loading animation; afterwards **STAY in the
    Forge** (no auto-jump to Studio) and show a progression strip: *"Happy with the concept? Happy with the
    art?" → go to Studio*.
