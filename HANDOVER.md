@@ -171,9 +171,11 @@ Lighting/palette **follow the subject** (frost druid = cold blue, fire = ember; 
 names into the default house style. (Pixel-art is ONLY the UI portal doors — deliberately a different style.)
 
 ### PENDING BACKLOG — build in this order (these are the live to-dos)
-1. **Dice transition rework:** make it a **fountain UP from the bottom** that arcs over and **falls back down**
-   to cleanse; **lots** of dice, varied sizes; **run LONGER** (current ~820ms reveal is too short — dice never
-   cross the screen). In `runRain()` + `enterStage()` timing in the .dc.html.
+1. ~~Dice transition rework~~ — **DONE** (commit 285ea11): fountain up from bottom, gravity arc, lots of dice,
+   ~1.5s. Also DONE: **house art style** now in `FIXED_TAIL` (art.py) + front-end `computePrompt` = "in the
+   style of Greg Rutkowski and Tyler Jacobson, gritty painterly…". The **re-rollable Surprise-me bones concept**
+   (item 2 below) is also DONE (commit 83076ce) — panel + Re-roll + Forge-this; only the forge-confirm/grey-out
+   half (item 3) remains. **Next live item = #3 (Forge UX: confirm + grey-out + progression).**
 2. **Surprise Me → re-rollable CONCEPT flow — DESIGN CONFIRMED (hybrid):**
    - Re-roll = **engine-rolled BONES only** (PC: class · subclass · species · subspecies · background · level,
      all legal from `ruleset.optionLists`; monster: type/size/CR). **Free + instant, NO AI** — re-roll freely;
