@@ -419,6 +419,20 @@
       </div>
     </sc-if>
   </div>
+  <sc-if value="{{ hasConcept }}" hint-placeholder-val="{{ false }}">
+    <div class="no-print" style="padding:14px 28px 0; max-width:1200px;">
+      <div style="background:#241f19; border:1px solid #6a5a44; border-radius:10px; padding:16px 18px;">
+        <div style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase; margin-bottom:6px;">Your surprise concept</div>
+        <div style="font-size:18px; color:#f0d9b5; margin-bottom:4px;">{{ conceptLine }}</div>
+        <div style="font-size:12.5px; color:#9c8e76; margin-bottom:14px; font-style:italic;">Re-roll as much as you like — it's free. Forge writes the name, look, personality and spells (that's the part that generates).</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <button onClick="{{ onReRoll }}" style="display:flex; align-items:center; gap:7px; background:#241f19; border:1px solid #6a5a44; border-radius:8px; padding:10px 14px; font-size:13.5px; color:#f0d9b5; cursor:pointer;">&#127922; Re-roll the dice</button>
+          <button onClick="{{ onForgeConcept }}" style="display:flex; align-items:center; gap:7px; background:#99502a; border:none; border-radius:8px; padding:10px 16px; font-size:14px; font-weight:600; color:#fff; cursor:pointer;">&#9874; Forge this character</button>
+          <button onClick="{{ onDiscardConcept }}" style="background:transparent; border:none; color:#9c8e76; font-size:12.5px; cursor:pointer; padding:10px 6px;">Discard</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
   <div style="padding:8px 28px 0; display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; max-width:1200px;">
     <div style="background:#231e18; border:1px solid #3a3227; border-radius:10px; padding:20px;">
       <div style="font-family:'Cinzel',serif; font-size:13px; letter-spacing:1.5px; color:#bd7d3f; margin-bottom:4px;">BRAIN-DUMP → CANON</div>
@@ -641,7 +655,7 @@ class Component extends DCLogic {
       flavour: { experience: "", origin: "", memory: "" },
       libOpen: false, confirmDelete: null, savedToast: false,
       trash: [], trashOpen: false, lightbox: null,
-      entered: false, entering: null, exampleBarOpen: false, freshStart: true
+      entered: false, entering: null, exampleBarOpen: false, freshStart: true, concept: null
     };
   }
 
@@ -889,22 +903,45 @@ class Component extends DCLogic {
     this.setState({ activeId: "blank", draft: d, portraitIndex: 0, freshStart: true, exampleBarOpen: false });
   }
   toggleExamples() { this.setState(s => ({ exampleBarOpen: !s.exampleBarOpen })); }
-  surpriseMe() {
-    if (!this.state.bridge) { this.setState({ forgeWarnings: [{ level: "error", message: "Surprise me needs the bridge running." }] }); return; }
+  surpriseMe() { this.setState({ exampleBarOpen: false }); this.rollConcept(); }
+  rollConcept() {
+    // CHEAP + FREE: engine-rolled bones only (no AI). The look/spells come at the confirmed Forge.
     const ol = (this.state.ruleset && this.state.ruleset.optionLists) || {};
-    const pick = arr => (arr && arr.length) ? arr[Math.floor(Math.random() * arr.length)] : null;
-    const isPc = this.state.mode === "character";
-    let dump;
-    if (isPc) {
-      const cls = pick(ol.classes), sp = pick(ol.species), bg = pick(ol.backgrounds), lvl = 1 + Math.floor(Math.random() * 8);
-      dump = "Surprise me with a completely original level " + lvl + " " + (sp ? sp.name : "") + " " + (cls ? cls.name : "adventurer") +
-        (bg ? (" with the " + bg.name + " background") : "") + ". Give them an unexpected, vivid personality and look.";
+    const pick = a => (a && a.length) ? a[Math.floor(Math.random() * a.length)] : null;
+    let concept;
+    if (this.state.mode === "character") {
+      const cls = pick(ol.classes);
+      const sub = cls ? pick((ol.subclassesByClass || {})[cls.index]) : null;
+      const sp = pick(ol.species);
+      const subsp = sp ? pick((ol.subspeciesBySpecies || {})[sp.index]) : null;
+      const bg = pick(ol.backgrounds);
+      concept = { kind: "character", level: 1 + Math.floor(Math.random() * 8),
+        cls: cls && cls.name, sub: sub && sub.name, sp: sp && sp.name, subsp: subsp && subsp.name, bg: bg && bg.name };
     } else {
-      const kinds = ["beast", "aberration", "undead", "fiend", "fey", "dragon", "elemental", "construct", "monstrosity", "ooze"];
-      const t = kinds[Math.floor(Math.random() * kinds.length)];
-      dump = "Surprise me with an original " + t + " of a random challenge. Give it a strong theme, memorable abilities and a striking look.";
+      const r = a => a[Math.floor(Math.random() * a.length)];
+      concept = { kind: "monster",
+        type: r(["beast", "aberration", "undead", "fiend", "fey", "dragon", "elemental", "construct", "monstrosity", "ooze", "giant", "celestial"]),
+        size: r(["Tiny", "Small", "Medium", "Large", "Huge"]), cr: r(["1/4", "1/2", "1", "2", "3", "5", "8"]) };
     }
-    this.setState(s => ({ freshStart: true, exampleBarOpen: false, draft: Object.assign({}, s.draft, { dump: dump, kind: isPc ? "character" : "monster" }) }), () => this.forgeViaBridge());
+    this.setState({ concept: concept, freshStart: true });
+  }
+  conceptLine() {
+    const c = this.state.concept; if (!c) return "";
+    if (c.kind === "character") return "Level " + c.level + " " + (c.subsp || c.sp || "") + " " + (c.cls || "") + (c.sub ? (" (" + c.sub + ")") : "") + (c.bg ? (" · " + c.bg + " background") : "");
+    return c.size + " " + c.type + " · around CR " + c.cr;
+  }
+  discardConcept() { this.setState({ concept: null }); }
+  forgeFromConcept() {
+    const c = this.state.concept; if (!c) return;
+    let dump;
+    if (c.kind === "character") {
+      dump = "You ARE a level " + c.level + " " + (c.subsp || c.sp || "") + " " + (c.cls || "adventurer") +
+        (c.sub ? (" (" + c.sub + ")") : "") + (c.bg ? (" with the " + c.bg + " background") : "") +
+        ". Flesh out everything else: a fitting name, a vivid and unexpected personality, appearance, outfit and gear, environment, and (if a caster) spells. Make them memorable.";
+    } else {
+      dump = "You ARE an original " + c.size + " " + c.type + " of about challenge rating " + c.cr + ". Give it a strong theme, a striking look, and memorable abilities.";
+    }
+    this.setState(s => ({ draft: Object.assign({}, s.draft, { dump: dump, kind: c.kind }), concept: null }), () => this.forgeViaBridge());
   }
   autofill() { this.load("hane"); }
 
@@ -1313,6 +1350,8 @@ class Component extends DCLogic {
       onToggleExamples: () => this.toggleExamples(), exampleBarOpen: this.state.exampleBarOpen,
       exampleToggleLabel: (this.state.exampleBarOpen ? "▾ " : "▸ ") + "Start from an example",
       onSurprise: () => this.surpriseMe(), showKindToggle: this.state.freshStart,
+      hasConcept: !!this.state.concept, conceptLine: this.conceptLine(),
+      onReRoll: () => this.rollConcept(), onForgeConcept: () => this.forgeFromConcept(), onDiscardConcept: () => this.discardConcept(),
       starters, char, abilityList, H, AH, traitItems,
       abilityTotal, abilityMax, abilityMin, abilityNote,
       sizeOptionEls: mkOpts(SIZES, true), typeOptionEls: mkOpts(TYPES, true), alignOptionEls: mkOpts(ALIGNS, true), kindOptionEls, traitPresetEls, presetSel: "",
