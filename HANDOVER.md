@@ -75,8 +75,28 @@ entries `{index,name}` except sizes/creatureTypes plain strings) · `POST /forge
 `{characters:[{id,name,kind,challenge,accent,ruleset,level}]}` · `GET /character/<id>` → full Character ·
 `POST /character` → save (runs `apply_derived`) · `GET /art/<id>/<state>.png` → PNG bytes.
 
-## 7. NEXT deliverable — the PC batch (awaiting user greenlight; they had questions first)
-Build in one batch, then push + pin the new `main` SHA for Design:
+## 7. The PC batch — BUILT (engine + front-end), local commits only (not pushed yet)
+Status 2026-06-21: the user took over BOTH design and coding (Design is stepping back).
+All four engine jobs + the front-end jobs are done and verified; only optional polish + a
+push to GitHub remain. What shipped this batch:
+- (B) Proficiency grants on `optionLists` + `engine/grants.resolve_pc_proficiencies` — DONE.
+- (§5c) `optionLists.subspeciesBySpecies` — DONE.
+- (A) PC forge path `POST /forge {kind:"character"}` → full PC — DONE, verified LIVE (Claude
+  forge + Gemini 4-state portrait set on a kender rogue). PC object overflows the strict
+  structured-output grammar → PC path uses loose JSON (`LLMClient.complete_json_loose`,
+  template + repair). Homebrew species grounded to nearest SRD, flavour name kept.
+- NEW product decision (user): **Rules mode** — `strict` vs `relaxed` (default relaxed),
+  stored at `pc.rulesMode`, passed to `/forge` as `rulesMode`. `engine/rules_mode.py`:
+  per-class spell lists, prepared/known + cantrip limits, by-the-book gear. Strict corrects+
+  errors; relaxed notes only. BOTH fully built.
+- NEW: the Forge is reframed as the "surprise me with a great character" door — `/forge` takes
+  optional `details` (flavour notes). Front-end (`web/frontend/`, the re-vendored v2) gained a
+  Strict/Relaxed toggle + a collapsible "Add some flavour" panel (age/experience, origin,
+  memory). Verified live in a browser against the bridge (`.claude/launch.json` runs both).
+- Cleanup: v2 re-vendored to `web/frontend/`. Still TODO: retire `web/forge-bridge.js` +
+  `web/fallback-data.js` + the v1 `frontend/` (user to confirm deletion); push to GitHub.
+
+Original spec (now satisfied) kept below for reference:
 
 **(B) Proficiency grants — ENGINE derives (agreed with Design).**
 - Enrich `optionLists`: `classes[]` += `{saves:[ABBR], skillChoose:N, skillFrom:[index], armor:[], weapons:[], tools:[]}`;

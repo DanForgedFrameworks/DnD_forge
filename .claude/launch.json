@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "forge-bridge",
+      "runtimeExecutable": ".venv_forge/Scripts/python.exe",
+      "runtimeArgs": ["-m", "forge.web.app"],
+      "port": 5000
+    },
+    {
+      "name": "forge-frontend",
+      "runtimeExecutable": ".venv_forge/Scripts/python.exe",
+      "runtimeArgs": ["-m", "http.server", "8000", "--directory", "web/frontend"],
+      "port": 8000
+    }
+  ]
+}
