@@ -139,7 +139,74 @@ Cite the engine `main` SHA before the front-end binds live. An engine shape chan
 exact key**. A front-end change is **one re-exported `.dc.html`**. Live mode = open the front-end `.dc.html`
 locally (`file://`) with the bridge running (CORS handles it); an HTTPS-hosted copy stays in fallback (mixed content).
 
-## 9. Immediate context at handover
+## 9. Immediate context at handover (Session 1)
 The user asked for (1) this handover, (2) a plain-English answer to "what does forge a PC from a sentence look
-like?", then to step back from Design. After that they'll likely greenlight the PC batch in §7 — but wanted
-questions answered first. Nothing in §7 is built yet.
+like?", then to step back from Design. The PC batch in §7 is now BUILT (see §7 status + §10).
+
+---
+
+## 10. Session 2 — front-end UX overhaul (IN PROGRESS — RESUME HERE)
+The user took over BOTH design + coding (Design stepped back). Heavy front-end work done; large backlog queued.
+**Run locally:** `.claude/launch.json` defines two servers — `forge-bridge` (Flask :5000) + `forge-frontend`
+(`python -m http.server 8000 --directory web/frontend`). Start both via the Preview MCP, then open
+`http://127.0.0.1:8000` (welcome gateway). Canonical front-end = `web/frontend/Character Forge - Prototype.dc.html`
+(+ `support.js`, `image-slot.js`, `assets/portal-*.png`). All work committed LOCALLY (not pushed — user's choice).
+
+### DONE + committed this session
+- **Engine (committed):** proficiency grants on optionLists; `engine/grants.resolve_pc_proficiencies`;
+  `engine/rules_mode.py` (Strict/Relaxed: per-class spell lists, prepared/known + cantrip limits, by-book gear);
+  PC forge path `POST /forge {kind:character}` (loose-JSON `complete_json_loose` — strict grammar overflowed);
+  soft-delete/restore/purge endpoints; `web/forge_log.py` (every /forge → `output/forge_log/`, interrogatable).
+- **Front-end (web/frontend/):** Strict/Relaxed toggle + collapsible flavour box in Forge; CR→**Level** for PCs
+  everywhere; Codex portrait no longer crosses the stat lines; **"My creations" library** (5 buckets PCs/NPCs/
+  Monsters/Companions/Pets, Save+toast, reopen restores art, **soft-delete→Recently deleted→Restore**,
+  Delete-forever, **Copy/duplicate**, click-to-enlarge **lightbox**); **welcome portal** (3 pixel-art doors,
+  hover shimmer run-once, **dice-rain cleanse**, logo→gateway); **in-Forge entry chooser** (Start-from-example
+  collapsible bar / Surprise me / Blank; kind toggle only when `freshStart`); **Surprise me (interim)** rolls
+  legal options from `ruleset.optionLists` + forges.
+
+### Art style — LOCKED (from user's reference images)
+Primary **Greg Rutkowski**, secondary **Tyler Jacobson**. Gritty, painterly, atmospheric, **figure-in-scene**.
+Lighting/palette **follow the subject** (frost druid = cold blue, fire = ember; not always warm). Bake those two
+names into the default house style. (Pixel-art is ONLY the UI portal doors — deliberately a different style.)
+
+### PENDING BACKLOG — build in this order (these are the live to-dos)
+1. **Dice transition rework:** make it a **fountain UP from the bottom** that arcs over and **falls back down**
+   to cleanse; **lots** of dice, varied sizes; **run LONGER** (current ~820ms reveal is too short — dice never
+   cross the screen). In `runRain()` + `enterStage()` timing in the .dc.html.
+2. **Surprise Me → re-rollable CONCEPT flow:** it should **populate** concept + appearance/outfit/gear/
+   environment/art-style with random picks the user can **re-roll cheaply a few times**; a **scribble/"…"
+   animation** plays while rolling, nothing else clickable. Only when happy → **Forge**, which shows a
+   **confirmation** (token spend) + a **rules-mode confirm** (Rule-of-Cool vs by-the-book).
+3. **Forge UX:** while forging, **grey-out/lock** the whole UI + loading animation; afterwards **STAY in the
+   Forge** (no auto-jump to Studio) and show a progression strip: *"Happy with the concept? Happy with the
+   art?" → go to Studio*.
+4. **Examples redesign:** **vertical** list (not horizontal scroll), grouped **Monster / NPC / Player
+   characters**, with a clear **active highlight** so the user always knows where they are.
+5. **Portrait controls:** surface **"Generate all"** + **individual** per-state generate (currently hidden).
+6. **Portrait-set consistency (the gender-drift fix):** generate as a **SET** — first (at-rest) = reference,
+   condition the other 3 on that image (Gemini 2.5-flash is multimodal/image-input) + lock a tight appearance
+   incl. explicit gender. Regenerate lets the user pick which image/prompt is the anchor. Engine: `art.py`
+   backend accepts a reference image + a `generate_portrait_set()`.
+7. **House art style + class-aware scenes:** lock the Rutkowski/Jacobson default; make per-state beats
+   **contextual by class/role** (rogue whispers, wizard confers with a familiar, barbarian roars) — extend
+   `art.stateBeats`. Atmosphere/depth/props tied to outfit/gear/appearance/environment.
+8. **Studio editing + consolidation:** show & edit the **spell list** (cantrips/prepared by level), **actions**,
+   **reactions** (validate via `rules_mode`); **LOCK the category (`kind`)** in Studio (set at creation only —
+   shouldn't flip PC↔monster mid-edit); **consolidate** the scattered edit fields (category/type/alignment/etc).
+9. **From-sheet upload:** real upload of a Word/PDF sheet → engine reads it (`autofill` already accepts
+   `docx_text`) → character. Add a bridge endpoint + front-end file input + docx/pdf text extraction.
+10. **DATA decision — fuller options:** SRD ships only 1 subclass/class, ~4 subraces, 1 background (2014) /
+    4 (2024). **2024 does NOT add subclasses or dwarf subraces** (same limit; only more backgrounds). Full PHB
+    content is copyrighted (no legal free dataset). Route = build **homebrew/enrichment data packs**
+    (`source`-tagged) the user hand-populates with the options they use; build a pack loader + starter pack.
+    Until then, consider a small UI note "SRD options only" so sparse dropdowns don't confuse.
+
+### Way of working with this user (CRITICAL)
+Non-coder — **plain English, no jargon**. Keep turns **TIGHT** and work strictly **IN ORDER** (user explicitly
+flagged that long/slow turns make them deviate). Ship one thing → verify → commit → check in. Make engineering
+calls yourself; only ask genuine product choices. **Commit locally; do NOT push unless asked.** Verify the
+front-end via the **Preview MCP** (`preview_start` the two launch.json servers; screenshots time out on
+image-heavy views — probe the DOM with `preview_eval` instead). The .dc.html is a template engine (`<sc-if>`,
+`<sc-for>`, `{{ }}`) — app logic is a React-like class IN the .dc.html (state/handlers/`render()` props);
+`support.js` is just the runtime (don't edit it).
