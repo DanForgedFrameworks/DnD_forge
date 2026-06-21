@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Portal art preview — Character Forge</title>
+<style>
+  body { margin:0; min-height:100vh; background:radial-gradient(120% 120% at 50% 0%, #2a2118, #14110d 60%); color:#e7dcc6; font-family:Georgia, serif; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; }
+  h1 { font-size:26px; letter-spacing:1px; color:#efe4cd; margin:0 0 6px; }
+  p.sub { color:#9c8e76; margin:0 0 36px; font-size:15px; }
+  .row { display:flex; gap:28px; flex-wrap:wrap; justify-content:center; }
+  .door { width:240px; background:#1f1b15; border:1px solid #3a3227; border-radius:14px; padding:14px; text-align:center; transition:transform .18s, border-color .18s, box-shadow .18s; }
+  .door:hover { transform:translateY(-6px); border-color:#bd7d3f; box-shadow:0 14px 40px rgba(0,0,0,.5); }
+  .door img { width:212px; height:212px; image-rendering:pixelated; border-radius:10px; display:block; }
+  .door h2 { font-family:'Cinzel', Georgia, serif; font-size:18px; color:#f0d9b5; letter-spacing:1px; margin:12px 0 4px; }
+  .door span { font-size:13px; color:#9c8e76; }
+  .note { margin-top:34px; color:#7a6c55; font-size:13px; max-width:560px; text-align:center; }
+</style>
+</head>
+<body>
+  <h1>Choose your path</h1>
+  <p class="sub">Preview of the three welcome-portal doors (pixel art)</p>
+  <div class="row">
+    <div class="door"><img src="./assets/portal-forge.png" alt="Forge"><h2>The Forge</h2><span>Describe a hero, let the forge conjure them</span></div>
+    <div class="door"><img src="./assets/portal-studio.png" alt="Studio"><h2>The Studio</h2><span>Build or refine by hand</span></div>
+    <div class="door"><img src="./assets/portal-codex.png" alt="Codex"><h2>The Codex</h2><span>Your finished sheet, ready for the table</span></div>
+  </div>
+  <p class="note">This is just an art check — hover a door for a taste of the lift. The real screen will add the animated hover (hammer strike, quill scrawl, book bloom) and the copper glyph-rain transition.</p>
+</body>
+</html>
