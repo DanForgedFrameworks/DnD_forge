@@ -170,23 +170,30 @@ Primary **Greg Rutkowski**, secondary **Tyler Jacobson**. Gritty, painterly, atm
 Lighting/palette **follow the subject** (frost druid = cold blue, fire = ember; not always warm). Bake those two
 names into the default house style. (Pixel-art is ONLY the UI portal doors — deliberately a different style.)
 
-### PENDING BACKLOG — build in this order (these are the live to-dos)
-1. ~~Dice transition rework~~ — **DONE** (commit 285ea11): fountain up from bottom, gravity arc, lots of dice,
-   ~1.5s. Also DONE: **house art style** now in `FIXED_TAIL` (art.py) + front-end `computePrompt` = "in the
-   style of Greg Rutkowski and Tyler Jacobson, gritty painterly…". The **re-rollable Surprise-me bones concept**
-   (item 2 below) is also DONE (commit 83076ce) — panel + Re-roll + Forge-this; only the forge-confirm/grey-out
-   half (item 3) remains. **Next live item = #3 (Forge UX: confirm + grey-out + progression).**
-2. **Surprise Me → re-rollable CONCEPT flow — DESIGN CONFIRMED (hybrid):**
-   - Re-roll = **engine-rolled BONES only** (PC: class · subclass · species · subspecies · background · level,
-     all legal from `ruleset.optionLists`; monster: type/size/CR). **Free + instant, NO AI** — re-roll freely;
-     show the rolled bones in a concept panel; scribble/"…" micro-anim on roll.
-   - The **look** (appearance/outfit/gear/environment/art-style) + stat block + spells are written by the AI
-     **only at the confirmed Forge step**, which is TOLD the locked bones ("you ARE a level N {species} {class}
-     ({subclass}) with {background} background — flesh out the rest"). Pass the bones to `/forge` (ideally as
-     explicit `pc.*` constraints, not just prose).
-   - Then **Forge** shows a **confirmation** (token spend) + a **rules-mode confirm** (Rule-of-Cool vs by-book).
-   - Five-step flow CONFIRMED: Start (kind+rules) → re-roll bones → Forge (confirm + grey-out) → review stat
-     block + generate portrait set → go to Studio.
+### PENDING BACKLOG — build in this order
+**Latest commit: `3d29ae9`** (everything below is committed locally; nothing pushed). The full-5e-**DATA** work
+(all subclasses/backgrounds/species/spells from the owner's owned PDFs) is **DELEGATED to a SEPARATE chat** —
+see `docs/PDF-RULES-EXTRACTION-BRIEF.md` (decided: 2024 primary + leave 2014 alone; PC options first; extend the
+existing `data/srd/2024/*.json` shape; that data stays gitignored/**LOCAL, never committed**). **Do NOT do the
+data extraction in this build chat.**
+
+DONE since last handover update: dice **fountain** cleanse (285ea11); **house art style** (Greg Rutkowski + Tyler
+Jacobson) baked into `art.py` `FIXED_TAIL` + the front-end `computePrompt` (engine == live preview); **Surprise Me
+re-rollable bones concept** (83076ce) — Surprise me now rolls FREE legal bones (class/subclass/species/subspecies/
+background/level) into a "Your surprise concept" panel (Re-roll / Forge-this / Discard); the AI look + stat block
+only happen when you press **Forge this character** (`forgeFromConcept()`).
+
+**>>> NEXT LIVE ITEM = item 3 below (Forge UX) — it closes the create→sheet loop. <<<**
+
+1–2. (Done — see the DONE paragraph above.)
+3. **Forge UX (NEXT):** add a **confirm dialog** before the token-spending forge + a **rules-mode confirm**
+   (Rule-of-Cool vs by-book); while forging, **grey-out/lock** the whole UI + a loading/scribble animation;
+   afterwards **STAY in the Forge** (no auto-jump) and show a progression strip *"Happy with the concept? Happy
+   with the art? → go to Studio"*. Gate BOTH forge entry points behind the confirm: Surprise's
+   `forgeFromConcept()` and the brain-dump `forgeViaBridge()`.
+   PLUS (robustness): when the bridge is DOWN, "My creations" looks empty + scary — show a **"reconnecting…"**
+   state instead of an empty library (saved files are safe on disk in `output/characters/`; the bridge just
+   wasn't running). Distinguish "bridge offline" from "no creations".
 3. **Forge UX:** while forging, **grey-out/lock** the whole UI + loading animation; afterwards **STAY in the
    Forge** (no auto-jump to Studio) and show a progression strip: *"Happy with the concept? Happy with the
    art?" → go to Studio*.
