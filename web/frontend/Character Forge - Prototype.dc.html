@@ -56,6 +56,7 @@
       </sc-if>
       <div style="{{ bridgeStatusStyle }}" title="{{ bridgeStatusTitle }}">{{ bridgeStatusText }}</div>
       <button onClick="{{ onSaveCurrent }}" title="Save this creation to My creations" style="display:flex; align-items:center; gap:6px; background:#2d4a32; color:#dff0e2; border:1px solid #3f6147; border-radius:7px; padding:9px 14px; font-size:13.5px; font-weight:600; cursor:pointer;">Save</button>
+      <button onClick="{{ onDuplicateCurrent }}" title="Save an editable copy of this one" style="background:#241f19; color:#cabfa9; border:1px solid #3a3227; border-radius:7px; padding:9px 12px; font-size:13.5px; cursor:pointer;">Duplicate</button>
       <div style="position:relative;">
         <button onClick="{{ onToggleLib }}" title="Your saved creations" style="display:flex; align-items:center; gap:7px; background:#241f19; color:#cabfa9; border:1px solid #3a3227; border-radius:7px; padding:9px 13px; font-size:13.5px; cursor:pointer;">My creations <span style="color:#bd7d3f;">({{ libCount }}) &#9662;</span></button>
         <sc-if value="{{ libOpen }}" hint-placeholder-val="{{ false }}">
@@ -69,13 +70,31 @@
                       <span style="width:30px; height:30px; flex:none; border-radius:6px; background:{{ it.accent }}; display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff8ec;">{{ it.glyph }}</span>
                       <span style="min-width:0;"><span style="display:block; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ it.name }}</span><span style="display:block; font-size:11.5px; color:#9c8e76;">{{ it.meta }}</span></span>
                     </button>
-                    <button onClick="{{ it.onDelete }}" title="Delete this creation" style="flex:none; background:transparent; border:none; color:#9a6b5a; cursor:pointer; font-size:12px; padding:7px 9px; border-radius:6px;">Delete</button>
+                    <button onClick="{{ it.onDuplicate }}" title="Duplicate (copy &amp; edit)" style="flex:none; background:transparent; border:none; color:#7f93a3; cursor:pointer; font-size:12px; padding:7px 7px; border-radius:6px;">Copy</button>
+                    <button onClick="{{ it.onDelete }}" title="Move to Recently deleted" style="flex:none; background:transparent; border:none; color:#9a6b5a; cursor:pointer; font-size:12px; padding:7px 9px; border-radius:6px;">Delete</button>
                   </div>
                 </sc-for>
               </sc-for>
             </sc-if>
             <sc-if value="{{ noCreations }}" hint-placeholder-val="{{ false }}">
               <div style="padding:16px 12px; font-size:13px; color:#9c8e76; line-height:1.5;">No saved creations yet. Forge or build one, then press <strong style="color:#cabfa9;">Save</strong>.</div>
+            </sc-if>
+            <sc-if value="{{ hasTrash }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:10px; border-top:1px solid #3a3227; padding-top:6px;">
+                <button onClick="{{ onToggleTrash }}" style="width:100%; text-align:left; background:transparent; border:none; cursor:pointer; font-family:'Cinzel',serif; font-size:10px; letter-spacing:1.5px; color:#9a6b5a; text-transform:uppercase; padding:5px 6px;">Recently deleted ({{ trashCount }})</button>
+                <sc-if value="{{ trashOpen }}" hint-placeholder-val="{{ false }}">
+                  <sc-for list="{{ trashItems }}" as="it" hint-placeholder-count="1">
+                    <div style="display:flex; align-items:center; gap:4px;">
+                      <span style="flex:1; min-width:0; display:flex; align-items:center; gap:9px; padding:6px 8px; color:#9c8e76;">
+                        <span style="width:26px; height:26px; flex:none; border-radius:6px; background:{{ it.accent }}; display:flex; align-items:center; justify-content:center; font-size:13px; color:#fff8ec; opacity:0.65;">{{ it.glyph }}</span>
+                        <span style="min-width:0; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ it.name }}</span>
+                      </span>
+                      <button onClick="{{ it.onRestore }}" title="Restore" style="flex:none; background:transparent; border:none; color:#7faf86; cursor:pointer; font-size:12px; padding:6px 8px;">Restore</button>
+                      <button onClick="{{ it.onPurge }}" title="Delete forever" style="flex:none; background:transparent; border:none; color:#9a5a5a; cursor:pointer; font-size:12px; padding:6px 7px;">Forever</button>
+                    </div>
+                  </sc-for>
+                </sc-if>
+              </div>
             </sc-if>
           </div>
         </sc-if>
@@ -87,11 +106,11 @@
   <sc-if value="{{ hasConfirm }}" hint-placeholder-val="{{ false }}">
     <div style="position:fixed; inset:0; background:rgba(8,6,4,0.66); z-index:200; display:flex; align-items:center; justify-content:center;">
       <div style="background:#241f19; border:1px solid #5a4632; border-radius:12px; padding:24px 26px; width:380px; max-width:90vw; box-shadow:0 24px 60px rgba(0,0,0,0.6);">
-        <div style="font-family:'Cinzel',serif; font-size:17px; color:#efe4cd; margin-bottom:9px;">Delete this creation?</div>
-        <div style="font-size:14px; color:#b09f84; line-height:1.5; margin-bottom:20px;"><strong style="color:#e7dcc6;">{{ confirmName }}</strong> will be permanently removed, along with any portraits you generated. This can't be undone.</div>
+        <div style="font-family:'Cinzel',serif; font-size:17px; color:#efe4cd; margin-bottom:9px;">{{ confirmTitle }}</div>
+        <div style="font-size:14px; color:#b09f84; line-height:1.5; margin-bottom:20px;"><strong style="color:#e7dcc6;">{{ confirmName }}</strong> {{ confirmBody }}</div>
         <div style="display:flex; gap:10px; justify-content:flex-end;">
           <button onClick="{{ onCancelDelete }}" style="background:#2c261e; color:#cabfa9; border:1px solid #4a3f30; border-radius:7px; padding:9px 16px; font-size:14px; cursor:pointer;">Cancel</button>
-          <button onClick="{{ onConfirmDelete }}" style="background:#7a2d2d; color:#fff; border:none; border-radius:7px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer;">Delete</button>
+          <button onClick="{{ onConfirmDelete }}" style="{{ confirmBtnStyle }}">{{ confirmBtn }}</button>
         </div>
       </div>
     </div>
@@ -556,7 +575,8 @@ class Component extends DCLogic {
       serverChars: [], forgeBusy: false, forgeWarnings: [], portraitGen: {},
       rulesMode: "relaxed", flavourOpen: false,
       flavour: { experience: "", origin: "", memory: "" },
-      libOpen: false, confirmDelete: null, savedToast: false
+      libOpen: false, confirmDelete: null, savedToast: false,
+      trash: [], trashOpen: false
     };
   }
 
@@ -592,18 +612,53 @@ class Component extends DCLogic {
       setTimeout(() => this.setState({ savedToast: false }), 1900);
     }
   }
-  askDelete(id, name) { this.setState({ confirmDelete: { id: id, name: name } }); }
+  // soft-delete (move to Recently deleted) vs purge (delete forever) via confirmDelete.mode
+  askDelete(id, name) { this.setState({ confirmDelete: { id: id, name: name, mode: "soft" } }); }
+  askPurge(id, name) { this.setState({ confirmDelete: { id: id, name: name, mode: "forever" } }); }
   cancelDelete() { this.setState({ confirmDelete: null }); }
+  toggleTrash() { this.setState(s => ({ trashOpen: !s.trashOpen })); }
   async confirmDeleteNow() {
     const cd = this.state.confirmDelete; if (!cd) return;
-    try { await this.api("/character/" + encodeURIComponent(cd.id), { method: "DELETE" }, 8000); } catch (e) {}
-    this.setState(s => {
-      const wasOpen = s.activeId === cd.id;
-      const next = { confirmDelete: null };
-      if (wasOpen) { next.activeId = "hane"; next.draft = this.clone(this.LIB.hane); next.portraitIndex = 0; }
-      return next;
-    });
+    if (cd.mode === "forever") {
+      try { await this.api("/trash/" + encodeURIComponent(cd.id), { method: "DELETE" }, 8000); } catch (e) {}
+      this.setState({ confirmDelete: null });
+    } else {
+      try { await this.api("/character/" + encodeURIComponent(cd.id), { method: "DELETE" }, 8000); } catch (e) {}
+      this.setState(s => {
+        const next = { confirmDelete: null };
+        if (s.activeId === cd.id) { next.activeId = "hane"; next.draft = this.clone(this.LIB.hane); next.portraitIndex = 0; }
+        return next;
+      });
+    }
     this.refreshLibrary();
+  }
+  async restoreChar(id) {
+    try { await this.jpost("/trash/" + encodeURIComponent(id) + "/restore", {}, 8000); } catch (e) {}
+    this.refreshLibrary();
+  }
+  uniqueId(name) {
+    const base = (name || "creature").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "creature";
+    const taken = {}; (this.state.serverChars || []).forEach(c => { taken[c.id || c.slug] = 1; });
+    (this.state.trash || []).forEach(c => { taken[c.id || c.slug] = 1; });
+    if (!taken[base]) return base;
+    let i = 2; while (taken[base + "-" + i]) i++; return base + "-" + i;
+  }
+  async duplicateFrom(source) {
+    const d = this.clone(source);
+    d.name = (d.name || "Creature") + " (copy)";
+    d.id = this.uniqueId(d.name);
+    delete d.portraits;  // the copy starts fresh on art (its own id)
+    this.setState({ draft: d, activeId: d.id, libOpen: false });
+    const res = await this.jpost("/character", { character: d }, 15000).catch(() => null);
+    const id = (res && (res.id || (res.character && res.character.id))) || d.id;
+    this.setState({ activeId: id, savedToast: true });
+    setTimeout(() => this.setState({ savedToast: false }), 1900);
+    this.refreshLibrary();
+  }
+  duplicateCurrent() { this.duplicateFrom(this.charPayload()); }
+  async duplicateById(id) {
+    try { const c = await this.api("/character/" + encodeURIComponent(id), null, 6000); this.duplicateFrom(c.character || c); }
+    catch (e) {}
   }
 
   // ===== Bridge adapter — live Flask server, silent fallback to local samples =====
@@ -651,6 +706,7 @@ class Component extends DCLogic {
   pickRuleset(e) { const slug = e.target.value; this.setState({ rulesetSlug: slug }); this.loadRuleset(slug); }
   async refreshLibrary() {
     try { const res = await this.api("/character", null, 5000); const list = Array.isArray(res) ? res : (res.characters || res.items || []); this.setState({ serverChars: list }); } catch (e) {}
+    try { const t = await this.api("/trash", null, 5000); this.setState({ trash: (t && (t.characters || t.items)) || [] }); } catch (e) {}
   }
   async loadServer(id) {
     try {
@@ -1028,12 +1084,34 @@ class Component extends DCLogic {
           id, name: c.name || id, meta: metaLabel(c.kind, c.challenge), glyph: glyphFor(c.kind || "monster"),
           accent: c.accent || "#7a5a3a", active: this.state.activeId === id,
           onOpen: () => { this.loadServer(id); this.setState({ libOpen: false }); },
+          onDuplicate: () => this.duplicateById(id),
           onDelete: () => this.askDelete(id, c.name || id),
         };
       });
       return { key: b.key, items, hasItems: items.length > 0 };
     }).filter(b => b.hasItems);
     const hasCreations = myCreations.length > 0;
+
+    // Recently deleted (trash) — flat list with restore / delete-forever.
+    const trashItems = (this.state.trash || []).filter(c => c && (c.id || c.slug)).map(c => {
+      const id = c.id || c.slug;
+      return {
+        id, name: c.name || id, meta: metaLabel(c.kind, c.challenge), glyph: glyphFor(c.kind || "monster"),
+        accent: c.accent || "#5a4a3a",
+        onRestore: () => this.restoreChar(id),
+        onPurge: () => this.askPurge(id, c.name || id),
+      };
+    });
+    const hasTrash = trashItems.length > 0;
+
+    // confirm-modal copy depends on soft vs forever
+    const cd = this.state.confirmDelete || {};
+    const isForever = cd.mode === "forever";
+    const confirmTitle = isForever ? "Delete forever?" : "Move to Recently deleted?";
+    const confirmBody = isForever
+      ? "will be permanently removed, along with its portraits. This cannot be undone."
+      : "will move to Recently deleted. You can restore it any time.";
+    const confirmBtn = isForever ? "Delete forever" : "Move to trash";
 
     const forgeStateNames = ["At rest", "In conversation", "In battle", "Travelling"];
     const forgeStates = forgeStateNames.map(label => ({
@@ -1088,8 +1166,13 @@ class Component extends DCLogic {
       myCreations, hasCreations, noCreations: !hasCreations,
       libOpen: this.state.libOpen, onToggleLib: () => this.toggleLib(),
       libCount: myCreations.reduce((n, g) => n + g.items.length, 0),
-      onSaveCurrent: () => this.saveCurrent(), savedToast: this.state.savedToast,
-      hasConfirm: !!this.state.confirmDelete, confirmName: (this.state.confirmDelete || {}).name || "",
+      onSaveCurrent: () => this.saveCurrent(), onDuplicateCurrent: () => this.duplicateCurrent(),
+      savedToast: this.state.savedToast,
+      trashItems, hasTrash, trashCount: trashItems.length,
+      trashOpen: this.state.trashOpen, onToggleTrash: () => this.toggleTrash(),
+      hasConfirm: !!this.state.confirmDelete, confirmName: cd.name || "",
+      confirmTitle, confirmBody, confirmBtn,
+      confirmBtnStyle: (isForever ? "background:#7a2d2d;" : "background:#99502a;") + " color:#fff; border:none; border-radius:7px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer;",
       onCancelDelete: () => this.cancelDelete(), onConfirmDelete: () => this.confirmDeleteNow(),
       onMonster: () => this.setMode("monster"), onCharacter: () => this.setMode("character"),
       modeMonster: this.modeBtn(this.state.mode === "monster"), modeCharacter: this.modeBtn(this.state.mode === "character"),

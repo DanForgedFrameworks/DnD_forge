@@ -42,6 +42,7 @@ from forge.ruleset import Ruleset                                 # noqa: E402
 from forge.web.forge_log import log_forge                         # noqa: E402
 
 CHAR_DIR = _REPO_ROOT / "output" / "characters"
+TRASH_DIR = CHAR_DIR / "_trash"          # soft-deleted characters (recoverable)
 PORTRAIT_DIR = _REPO_ROOT / "output" / "portraits"
 RULESET_DIR = _REPO_ROOT / "config" / "rulesets"
 
@@ -159,22 +160,34 @@ def serve_portrait(cid, state):
 
 
 # -- characters ---------------------------------------------------------------
-@app.get("/character")
-def list_characters():
-    CHAR_DIR.mkdir(parents=True, exist_ok=True)
+def _char_summary(c: dict, stem: str) -> dict:
+    return {
+        "id": c.get("id", stem), "name": c.get("name"), "kind": c.get("kind"),
+        "challenge": c.get("challenge"),          # rail shows CR / level
+        "accent": c.get("accent"),                # optional theme colour (pass-through)
+        "ruleset": c.get("ruleset"), "level": (c.get("pc") or {}).get("level"),
+    }
+
+
+def _list_summaries(directory: Path) -> list:
+    directory.mkdir(parents=True, exist_ok=True)
     out = []
-    for p in sorted(CHAR_DIR.glob("*.json")):
+    for p in sorted(directory.glob("*.json")):
         try:
-            c = json.loads(p.read_text(encoding="utf-8"))
-            out.append({
-                "id": c.get("id", p.stem), "name": c.get("name"), "kind": c.get("kind"),
-                "challenge": c.get("challenge"),          # rail shows CR / level
-                "accent": c.get("accent"),                # optional theme colour (pass-through)
-                "ruleset": c.get("ruleset"), "level": (c.get("pc") or {}).get("level"),
-            })
+            out.append(_char_summary(json.loads(p.read_text(encoding="utf-8")), p.stem))
         except Exception:
             continue
-    return jsonify({"characters": out})
+    return out
+
+
+@app.get("/character")
+def list_characters():
+    return jsonify({"characters": _list_summaries(CHAR_DIR)})  # _trash is a subdir, excluded
+
+
+@app.get("/trash")
+def list_trash():
+    return jsonify({"characters": _list_summaries(TRASH_DIR)})
 
 
 @app.get("/character/<cid>")
@@ -187,14 +200,39 @@ def get_character(cid):
 
 @app.delete("/character/<cid>")
 def delete_character(cid):
+    """Soft-delete: move the character into _trash (recoverable). Portraits stay put."""
+    import shutil
+
     path = CHAR_DIR / f"{cid}.json"
     if not path.exists():
         abort(404)
-    path.unlink()
-    # also remove any generated portraits for this character (best-effort)
+    TRASH_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(path), str(TRASH_DIR / f"{cid}.json"))
+    return jsonify({"trashed": cid})
+
+
+@app.post("/trash/<cid>/restore")
+def restore_character(cid):
     import shutil
+
+    src = TRASH_DIR / f"{cid}.json"
+    if not src.exists():
+        abort(404)
+    CHAR_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(src), str(CHAR_DIR / f"{cid}.json"))
+    return jsonify({"restored": cid})
+
+
+@app.delete("/trash/<cid>")
+def purge_character(cid):
+    """Permanent delete from the trash, including the generated portraits."""
+    import shutil
+
+    src = TRASH_DIR / f"{cid}.json"
+    if src.exists():
+        src.unlink()
     shutil.rmtree(PORTRAIT_DIR / cid, ignore_errors=True)
-    return jsonify({"deleted": cid})
+    return jsonify({"purged": cid})
 
 
 @app.post("/character")
