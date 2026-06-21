@@ -1,4 +1,4 @@
-"""The Flask bridge: the engine ↔ front-end meeting point.
+r"""The Flask bridge: the engine ↔ front-end meeting point.
 
 Endpoints (all JSON unless noted), synchronous, permissive CORS for local dev:
   GET  /rulesets                  -> {rulesets:[{slug,label,extends}]}
@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import time
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -38,6 +39,7 @@ from forge.agents.art import FIXED_PORTRAIT_STATES               # noqa: E402
 from forge.contract import apply_derived                          # noqa: E402
 from forge.engine import resolve_pc_proficiencies                 # noqa: E402
 from forge.ruleset import Ruleset                                 # noqa: E402
+from forge.web.forge_log import log_forge                         # noqa: E402
 
 CHAR_DIR = _REPO_ROOT / "output" / "characters"
 PORTRAIT_DIR = _REPO_ROOT / "output" / "portraits"
@@ -89,14 +91,19 @@ def get_ruleset(slug):
 @app.post("/forge")
 def forge():
     body = request.get_json(force=True) or {}
-    dump = body.get("dump", "")
-    result = autofill(
-        dump,
-        ruleset=body.get("ruleset", "dnd5e-2014"),
-        kind=body.get("kind"),
-        rules_mode=body.get("rulesMode", "relaxed"),   # strict | relaxed (PC only)
-        details=body.get("details"),                   # optional Forge flavour notes (PC)
-    )
+    started = time.time()
+    try:
+        result = autofill(
+            body.get("dump", ""),
+            ruleset=body.get("ruleset", "dnd5e-2014"),
+            kind=body.get("kind"),
+            rules_mode=body.get("rulesMode", "relaxed"),   # strict | relaxed (PC only)
+            details=body.get("details"),                   # optional Forge flavour notes (PC)
+        )
+    except Exception as e:  # log the failure too, then surface it as JSON (not a 500 page)
+        log_forge(body, None, started=started, error=repr(e))
+        return jsonify({"error": "forge_failed", "message": str(e)}), 502
+    log_forge(body, result, started=started)
     return jsonify(result)  # {character, warnings:[{level,message}]}
 
 
