@@ -104,10 +104,6 @@
       <button onClick="{{ onCodex }}" style="{{ tabCodex }}">Codex</button>
     </div>
     <div style="margin-left:auto; display:flex; align-items:center; gap:12px;">
-      <div style="display:flex; gap:4px; background:#241f19; border:1px solid #3a3227; border-radius:8px; padding:4px;">
-        <button onClick="{{ onMonster }}" style="{{ modeMonster }}">Monster / NPC</button>
-        <button onClick="{{ onCharacter }}" style="{{ modeCharacter }}">Player character</button>
-      </div>
       <sc-if value="{{ showRulesetPicker }}" hint-placeholder-val="{{ false }}">
         <select value="{{ rulesetSel }}" onChange="{{ onPickRuleset }}" title="Active ruleset" style="background:#241f19; border:1px solid #3a3227; color:#cabfa9; border-radius:7px; padding:8px 28px 8px 11px; font-size:13px; appearance:none; cursor:pointer;">{{ rulesetEls }}</select>
       </sc-if>
@@ -181,30 +177,6 @@
       <div style="position:fixed; top:18px; right:24px; color:#cabfa9; font-size:14px;">Click anywhere to close</div>
     </div>
   </sc-if>
-
-  <!-- ===================== STARTER TRAY ===================== -->
-  <div class="no-print" style="padding:16px 28px 0;">
-    <div style="font-family:'Cinzel',serif; font-size:12px; letter-spacing:2px; color:#bd7d3f; text-transform:uppercase; margin-bottom:10px;">Examples — start from one of these</div>
-    <div class="pf-scroll" style="display:flex; gap:12px; overflow-x:auto; padding-bottom:14px;">
-      <sc-for list="{{ starters }}" as="s" hint-placeholder-count="5">
-        <button onClick="{{ s.onClick }}" style="{{ s.style }}">
-          <div style="width:46px; height:46px; border-radius:8px; flex:none; background:{{ s.accent }}; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff8ec;">{{ s.glyph }}</div>
-          <div style="min-width:0;">
-            <div style="font-family:'Cinzel',serif; font-size:14px; color:#efe4cd; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ s.name }}</div>
-            <div style="font-size:12.5px; color:#b09f84;">{{ s.kindLabel }} · {{ s.meta }}</div>
-          </div>
-        </button>
-      </sc-for>
-      <button onClick="{{ onRandom }}" style="flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:118px; background:#241f19; border:1px dashed #6a5a44; border-radius:10px; padding:10px; cursor:pointer; color:#cabfa9;">
-        <div style="font-size:20px;">🎲</div>
-        <div style="font-family:'Cinzel',serif; font-size:13px; color:#e7dcc6;">Surprise me</div>
-      </button>
-      <button onClick="{{ onBlank }}" style="flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:118px; background:#241f19; border:1px dashed #6a5a44; border-radius:10px; padding:10px; cursor:pointer; color:#cabfa9;">
-        <div style="font-size:20px;">＋</div>
-        <div style="font-family:'Cinzel',serif; font-size:13px; color:#e7dcc6;">Blank sheet</div>
-      </button>
-    </div>
-  </div>
 
   <!-- ===================== STUDIO ===================== -->
   <sc-if value="{{ isStudio }}" hint-placeholder-val="{{ true }}">
@@ -418,6 +390,35 @@
 
   <!-- ===================== FORGE ===================== -->
   <sc-if value="{{ isForge }}" hint-placeholder-val="{{ true }}">
+  <div class="no-print" style="padding:14px 28px 0; max-width:1200px;">
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+      <button onClick="{{ onToggleExamples }}" style="display:flex; align-items:center; gap:7px; background:#241f19; border:1px solid #3a3227; border-radius:8px; padding:10px 14px; font-size:13.5px; color:#e7dcc6; cursor:pointer;">{{ exampleToggleLabel }}</button>
+      <button onClick="{{ onSurprise }}" style="display:flex; align-items:center; gap:7px; background:#3a2e1f; border:1px solid #6a5a44; border-radius:8px; padding:10px 14px; font-size:13.5px; color:#f0d9b5; cursor:pointer;">&#127922; Surprise me</button>
+      <button onClick="{{ onBlank }}" style="display:flex; align-items:center; gap:7px; background:#241f19; border:1px solid #3a3227; border-radius:8px; padding:10px 14px; font-size:13.5px; color:#cabfa9; cursor:pointer;">&#65291; Blank sheet</button>
+      <sc-if value="{{ showKindToggle }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+          <span style="font-size:12px; color:#9c8e76;">Make a</span>
+          <div style="display:flex; gap:4px; background:#241f19; border:1px solid #3a3227; border-radius:8px; padding:4px;">
+            <button onClick="{{ onMonster }}" style="{{ modeMonster }}">Monster / NPC</button>
+            <button onClick="{{ onCharacter }}" style="{{ modeCharacter }}">Player character</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+    <sc-if value="{{ exampleBarOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="pf-scroll" style="display:flex; gap:12px; overflow-x:auto; padding:14px 0 4px;">
+        <sc-for list="{{ starters }}" as="s" hint-placeholder-count="5">
+          <button onClick="{{ s.onClick }}" style="{{ s.style }}">
+            <div style="width:46px; height:46px; border-radius:8px; flex:none; background:{{ s.accent }}; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff8ec;">{{ s.glyph }}</div>
+            <div style="min-width:0;">
+              <div style="font-family:'Cinzel',serif; font-size:14px; color:#efe4cd; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ s.name }}</div>
+              <div style="font-size:12.5px; color:#b09f84;">{{ s.kindLabel }} · {{ s.meta }}</div>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
   <div style="padding:8px 28px 0; display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; max-width:1200px;">
     <div style="background:#231e18; border:1px solid #3a3227; border-radius:10px; padding:20px;">
       <div style="font-family:'Cinzel',serif; font-size:13px; letter-spacing:1.5px; color:#bd7d3f; margin-bottom:4px;">BRAIN-DUMP → CANON</div>
@@ -640,7 +641,7 @@ class Component extends DCLogic {
       flavour: { experience: "", origin: "", memory: "" },
       libOpen: false, confirmDelete: null, savedToast: false,
       trash: [], trashOpen: false, lightbox: null,
-      entered: false, entering: null
+      entered: false, entering: null, exampleBarOpen: false, freshStart: true
     };
   }
 
@@ -776,7 +777,7 @@ class Component extends DCLogic {
     try {
       const c = await this.api("/character/" + encodeURIComponent(id), null, 6000);
       const ch = c.character || c;
-      this.setState({ activeId: id, draft: ch, mode: ch.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0 });
+      this.setState({ activeId: id, draft: ch, mode: ch.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0, freshStart: false });
     } catch (e) { this.load(id); }
   }
   async forgeViaBridge() {
@@ -880,12 +881,30 @@ class Component extends DCLogic {
       return { draft: d, mode: v === "character" ? "character" : "monster" };
     });
   }
-  load(id) { const c = this.LIB[id]; if (!c) return; this.setState({ activeId: id, draft: this.clone(c), mode: c.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0 }); }
+  load(id) { const c = this.LIB[id]; if (!c) return; this.setState({ activeId: id, draft: this.clone(c), mode: c.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0, freshStart: false, exampleBarOpen: false }); }
   random() { const ids = Object.keys(this.LIB).filter(i => i !== this.state.activeId && i !== "blank"); const pick = ids[Math.floor(Math.random() * ids.length)]; this.load(pick); }
   blank() {
     const d = this.clone(this.LIB.blank);
     if (this.state.mode === "character") { d.kind = "character"; d.pc = this.pcSkeleton(); d.name = "New character"; }
-    this.setState({ activeId: "blank", draft: d, portraitIndex: 0 });
+    this.setState({ activeId: "blank", draft: d, portraitIndex: 0, freshStart: true, exampleBarOpen: false });
+  }
+  toggleExamples() { this.setState(s => ({ exampleBarOpen: !s.exampleBarOpen })); }
+  surpriseMe() {
+    if (!this.state.bridge) { this.setState({ forgeWarnings: [{ level: "error", message: "Surprise me needs the bridge running." }] }); return; }
+    const ol = (this.state.ruleset && this.state.ruleset.optionLists) || {};
+    const pick = arr => (arr && arr.length) ? arr[Math.floor(Math.random() * arr.length)] : null;
+    const isPc = this.state.mode === "character";
+    let dump;
+    if (isPc) {
+      const cls = pick(ol.classes), sp = pick(ol.species), bg = pick(ol.backgrounds), lvl = 1 + Math.floor(Math.random() * 8);
+      dump = "Surprise me with a completely original level " + lvl + " " + (sp ? sp.name : "") + " " + (cls ? cls.name : "adventurer") +
+        (bg ? (" with the " + bg.name + " background") : "") + ". Give them an unexpected, vivid personality and look.";
+    } else {
+      const kinds = ["beast", "aberration", "undead", "fiend", "fey", "dragon", "elemental", "construct", "monstrosity", "ooze"];
+      const t = kinds[Math.floor(Math.random() * kinds.length)];
+      dump = "Surprise me with an original " + t + " of a random challenge. Give it a strong theme, memorable abilities and a striking look.";
+    }
+    this.setState(s => ({ freshStart: true, exampleBarOpen: false, draft: Object.assign({}, s.draft, { dump: dump, kind: isPc ? "character" : "monster" }) }), () => this.forgeViaBridge());
   }
   autofill() { this.load("hane"); }
 
@@ -1291,6 +1310,9 @@ class Component extends DCLogic {
       modeMonster: this.modeBtn(this.state.mode === "monster"), modeCharacter: this.modeBtn(this.state.mode === "character"),
       modeNoun: this.state.mode === "character" ? "player character" : "monster / NPC",
       onAutofill: () => this.autofill(), onRandom: () => this.random(), onBlank: () => this.blank(),
+      onToggleExamples: () => this.toggleExamples(), exampleBarOpen: this.state.exampleBarOpen,
+      exampleToggleLabel: (this.state.exampleBarOpen ? "▾ " : "▸ ") + "Start from an example",
+      onSurprise: () => this.surpriseMe(), showKindToggle: this.state.freshStart,
       starters, char, abilityList, H, AH, traitItems,
       abilityTotal, abilityMax, abilityMin, abilityNote,
       sizeOptionEls: mkOpts(SIZES, true), typeOptionEls: mkOpts(TYPES, true), alignOptionEls: mkOpts(ALIGNS, true), kindOptionEls, traitPresetEls, presetSel: "",
