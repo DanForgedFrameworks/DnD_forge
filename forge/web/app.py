@@ -36,6 +36,7 @@ from flask import Flask, jsonify, request, send_file, abort  # noqa: E402
 from forge.agents import autofill, build_prompt, generate_portrait  # noqa: E402
 from forge.agents.art import FIXED_PORTRAIT_STATES               # noqa: E402
 from forge.contract import apply_derived                          # noqa: E402
+from forge.engine import resolve_pc_proficiencies                 # noqa: E402
 from forge.ruleset import Ruleset                                 # noqa: E402
 
 CHAR_DIR = _REPO_ROOT / "output" / "characters"
@@ -93,6 +94,8 @@ def forge():
         dump,
         ruleset=body.get("ruleset", "dnd5e-2014"),
         kind=body.get("kind"),
+        rules_mode=body.get("rulesMode", "relaxed"),   # strict | relaxed (PC only)
+        details=body.get("details"),                   # optional Forge flavour notes (PC)
     )
     return jsonify(result)  # {character, warnings:[{level,message}]}
 
@@ -180,6 +183,7 @@ def save_character():
     body = request.get_json(force=True) or {}
     character = body.get("character") or body
     character["id"] = character.get("id") or _slug(character.get("name"))
+    resolve_pc_proficiencies(character)  # PC: derive saveProfs/skillProfs/proficiencies from class+bg
     apply_derived(character)  # keep saves/skills/senses + spell DC/attack consistent on disk
     CHAR_DIR.mkdir(parents=True, exist_ok=True)
     (CHAR_DIR / f"{character['id']}.json").write_text(

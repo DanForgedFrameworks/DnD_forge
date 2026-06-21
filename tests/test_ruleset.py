@@ -68,6 +68,28 @@ def main() -> int:
     if not opts["subclassesByClass"].get("wizard"):
         failures.append("subclassesByClass should include wizard subclasses")
 
+    # --- enriched proficiency grants (Job 1: classes/backgrounds/subspecies) ----
+    rogue = next((c for c in opts["classes"] if c["index"] == "rogue"), {})
+    if rogue.get("saves") != ["DEX", "INT"]:
+        failures.append(f"rogue saves should be [DEX, INT], got {rogue.get('saves')}")
+    if rogue.get("skillChoose") != 4 or "stealth" not in (rogue.get("skillFrom") or []):
+        failures.append(f"rogue skill choice wrong: {rogue.get('skillChoose')} from {rogue.get('skillFrom')}")
+    if rogue.get("armor") != ["Light Armor"]:
+        failures.append(f"rogue armor should be ['Light Armor'], got {rogue.get('armor')}")
+    acolyte = next((b for b in opts["backgrounds"] if b["index"] == "acolyte"), {})
+    if sorted(acolyte.get("skills") or []) != ["insight", "religion"]:
+        failures.append(f"acolyte skills should be [insight, religion], got {acolyte.get('skills')}")
+    if acolyte.get("languages") != 2:  # 2014 acolyte grants 2 language choices
+        failures.append(f"2014 acolyte should grant 2 languages, got {acolyte.get('languages')}")
+    if "high-elf" not in [s["index"] for s in opts["subspeciesBySpecies"].get("elf", [])]:
+        failures.append("subspeciesBySpecies['elf'] should include high-elf (2014)")
+
+    # 2024 backgrounds carry ability options + a feat
+    o24 = r2024.option_lists()
+    ac24 = next((b for b in o24["backgrounds"] if b["index"] == "acolyte"), {})
+    if ac24.get("abilityOptions") != ["INT", "WIS", "CHA"] or ac24.get("feat") != "magic-initiate":
+        failures.append(f"2024 acolyte ability/feat wrong: {ac24.get('abilityOptions')} / {ac24.get('feat')}")
+
     # --- PC maths (initiative, spell DC/attack) ----------------------------
     d = derive_modifiers(pc_char)["derived"]
     print(f"\nPC derived: initiative {d.get('initiative')}, "

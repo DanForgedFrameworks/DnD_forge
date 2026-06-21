@@ -28,6 +28,11 @@ CREATURE_TYPES = [
 ]
 SIZES = ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]
 
+# SRD proficiency `type` values that count as a "tool" on a PC sheet (everything that
+# isn't Armor / Weapons / Skills / Saving Throws). "Other" covers thieves' tools,
+# navigator's tools, kits, etc.
+_TOOL_PROF_TYPES = {"Artisan's Tools", "Gaming Sets", "Musical Instruments", "Vehicles", "Other"}
+
 
 def _read(slug: str) -> dict | None:
     path = _RULESET_DIR / f"{slug}.json"
@@ -88,8 +93,23 @@ class Ruleset:
     def statblock(self) -> dict:
         return self.config.get("statblock", {})
 
+    def skill_names(self) -> dict:
+        """{skill_index: canonical_name} for this edition (e.g. sleight-of-hand -> 'Sleight of Hand')."""
+        from ..canon import SRDRepository
+
+        repo = SRDRepository(self.config.get("srdEdition", "2014"), data_root=_DATA_ROOT)
+        try:
+            return {s.get("index"): s.get("name") for s in repo.all("skills")}
+        except Exception:
+            return {}
+
     def option_lists(self) -> dict:
-        """Dropdown option lists derived from the canonical SRD for this edition."""
+        """Dropdown option lists derived from the canonical SRD for this edition.
+
+        `classes[]` and `backgrounds[]` are ENRICHED with the proficiency grants the
+        engine needs (and the front-end's skill-choice picker reads) so the front-end
+        never has to know the rules — the engine derives saveProfs/skillProfs from them.
+        """
         from ..canon import SRDRepository
 
         repo = SRDRepository(self.config.get("srdEdition", "2014"), data_root=_DATA_ROOT)
@@ -99,6 +119,12 @@ class Ruleset:
                 return [{"index": e.get("index"), "name": e.get("name")} for e in repo.all(category)]
             except Exception:
                 return []
+
+        # index -> SRD proficiency `type`, used to bucket class/background profs.
+        try:
+            prof_type = {p.get("index"): p.get("type") for p in repo.all("proficiencies")}
+        except Exception:
+            prof_type = {}
 
         subclasses_by_class: dict[str, list] = {}
         try:
@@ -112,13 +138,98 @@ class Ruleset:
             pass
 
         return {
-            "classes": names("classes"),
+            "classes": self._classes_enriched(repo, prof_type),
             "subclassesByClass": subclasses_by_class,
             "species": names("species"),
             "subspecies": names("subspecies"),
-            "backgrounds": names("backgrounds"),
+            "subspeciesBySpecies": self._subspecies_by_species(repo),
+            "backgrounds": self._backgrounds_enriched(repo, prof_type),
             "feats": names("feats"),
             "conditions": names("conditions"),
             "creatureTypes": CREATURE_TYPES,
             "sizes": SIZES,
         }
+
+    @staticmethod
+    def _classes_enriched(repo, prof_type: dict) -> list:
+        """classes[] += {saves, skillChoose, skillFrom, armor, weapons, tools}."""
+        from ..engine.derive import class_skill_choice
+
+        out = []
+        try:
+            classes = repo.all("classes")
+        except Exception:
+            return out
+        for cls in classes:
+            armor, weapons, tools = [], [], []
+            for p in cls.get("proficiencies", []) or []:
+                t = prof_type.get(p.get("index"))
+                if t == "Armor":
+                    armor.append(p.get("name"))
+                elif t == "Weapons":
+                    weapons.append(p.get("name"))
+                elif t in _TOOL_PROF_TYPES:
+                    tools.append(p.get("name"))
+            choice = class_skill_choice(cls)
+            skill_choose, skill_from = (0, [])
+            if choice:
+                n, allowed = choice
+                skill_choose = n or 0
+                skill_from = sorted(allowed)
+            out.append({
+                "index": cls.get("index"),
+                "name": cls.get("name"),
+                "saves": [s.get("index", "").upper() for s in cls.get("saving_throws", []) or []],
+                "skillChoose": skill_choose,
+                "skillFrom": skill_from,
+                "armor": armor,
+                "weapons": weapons,
+                "tools": tools,
+            })
+        return out
+
+    @staticmethod
+    def _backgrounds_enriched(repo, prof_type: dict) -> list:
+        """backgrounds[] += {skills, tools, languages, abilityOptions, feat}.
+
+        2014 backgrounds carry `starting_proficiencies` + `language_options`; 2024
+        backgrounds carry `proficiencies` + `ability_scores` + `feat`. Absorb both.
+        """
+        out = []
+        try:
+            backgrounds = repo.all("backgrounds")
+        except Exception:
+            return out
+        for bg in backgrounds:
+            skills, tools = [], []
+            for p in (bg.get("starting_proficiencies") or bg.get("proficiencies") or []):
+                idx = p.get("index", "") or ""
+                if idx.startswith("skill-"):
+                    skills.append(idx[len("skill-"):])
+                elif idx.startswith("tool-"):
+                    tools.append(idx[len("tool-"):])
+                elif prof_type.get(idx) in _TOOL_PROF_TYPES:
+                    tools.append(idx)
+            out.append({
+                "index": bg.get("index"),
+                "name": bg.get("name"),
+                "skills": skills,
+                "tools": tools,
+                "languages": int((bg.get("language_options") or {}).get("choose", 0) or 0),
+                "abilityOptions": [a.get("index", "").upper() for a in bg.get("ability_scores", []) or []],
+                "feat": (bg.get("feat") or {}).get("index"),
+            })
+        return out
+
+    @staticmethod
+    def _subspecies_by_species(repo) -> dict:
+        """{<speciesIndex>: [{index,name}]} — 2014 subraces ref `.race`, 2024 `.species`."""
+        out: dict[str, list] = {}
+        try:
+            for s in repo.all("subspecies"):
+                ref = (s.get("species") or s.get("race") or {}).get("index")
+                if ref:
+                    out.setdefault(ref, []).append({"index": s.get("index"), "name": s.get("name")})
+        except Exception:
+            pass
+        return out

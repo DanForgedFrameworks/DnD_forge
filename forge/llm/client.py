@@ -26,6 +26,25 @@ DEFAULT_MODEL = "claude-opus-4-8"
 DEFAULT_MAX_TOKENS = 8000
 
 
+def _loads_tolerant(text: str) -> dict:
+    """Parse a JSON object out of model text: strip fences, isolate the outer {...},
+    and forgive trailing commas."""
+    import re
+
+    s = (text or "").strip()
+    if s.startswith("```"):
+        s = re.sub(r"^```[a-zA-Z]*\n?", "", s).rstrip("`").strip()
+    try:
+        return json.loads(s)
+    except Exception:
+        pass
+    start, end = s.find("{"), s.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        s = s[start:end + 1]
+    s = re.sub(r",(\s*[}\]])", r"\1", s)  # drop trailing commas
+    return json.loads(s)
+
+
 def _llm_config() -> dict:
     try:
         return json.loads(_CONFIG.read_text(encoding="utf-8")).get("llm", {})
@@ -43,7 +62,12 @@ class LLMClient:
         self.max_tokens = max_tokens or cfg.get("max_tokens", DEFAULT_MAX_TOKENS)
 
     def complete_json(self, system: str, user: str, schema: dict) -> dict:
-        """Return a JSON object constrained to `schema` via structured outputs."""
+        """Return a JSON object constrained to `schema` via STRICT structured outputs.
+
+        Use for small/medium schemas. Large, deeply-nested schemas overflow the
+        structured-output grammar compiler ('compiled grammar is too large') — use
+        `complete_json_loose` for those.
+        """
         resp = self.client.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
@@ -58,3 +82,33 @@ class LLMClient:
         if not text:
             raise RuntimeError("no text block returned by the model")
         return json.loads(text)
+
+    def complete_json_loose(self, system: str, user: str, *, repair: bool = True) -> dict:
+        """Return a JSON object WITHOUT the strict grammar (no schema constraint).
+
+        For large objects whose schema can't compile to a structured-output grammar.
+        The shape is anchored by an embedded JSON template in the prompt instead; the
+        response is tolerantly extracted and parsed, with one model-side repair retry.
+        Validate the result yourself (jsonschema) downstream.
+        """
+        def _call(extra_user: str | None = None) -> str:
+            msgs = [{"role": "user", "content": user}]
+            if extra_user:
+                msgs.append({"role": "user", "content": extra_user})
+            resp = self.client.messages.create(
+                model=self.model, max_tokens=self.max_tokens, thinking={"type": "adaptive"},
+                system=system + "\n\nReturn ONLY a single JSON object. No prose, no code fences.",
+                messages=msgs,
+            )
+            if resp.stop_reason == "refusal":
+                raise RuntimeError(f"model refused the request: {getattr(resp, 'stop_details', None)}")
+            return next((b.text for b in resp.content if b.type == "text"), "") or ""
+
+        text = _call()
+        try:
+            return _loads_tolerant(text)
+        except Exception as e:
+            if not repair:
+                raise
+            fixed = _call(f"That was not valid JSON ({e}). Return the corrected, complete JSON object only.")
+            return _loads_tolerant(fixed)
