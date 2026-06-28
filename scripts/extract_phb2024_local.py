@@ -46,6 +46,8 @@ def _slug(name: str) -> str:
 def _clean(text: str) -> str:
     text = re.sub(r"-\s*\n\s*", "", text)
     text = text.replace("\n", " ")
+    # rejoin words split by line-break hyphens that survived into space-joined output
+    text = re.sub(r"([a-z])-\s+([a-z])", r"\1\2", text)
     # strip OCR'd running page furniture ("CH \PTE R 5 I FEATS 20x", "CHAPTER 4 | ...")
     text = re.sub(r"\bCH\s*\\?\s*[APT]{1,2}TE?\s*R\b.{0,4}\d.{0,40}?(?:FEATS|SPECIES|ORIGINS?|BACKGROUNDS?)\b\s*\S*",
                   " ", text, flags=re.I)
@@ -459,22 +461,57 @@ def _apply_corrections(records: list[dict], section: str) -> list[dict]:
         return records
     data = json.loads(CORRECTIONS.read_text(encoding="utf-8"))
     by_idx = {r["index"]: r for r in records}
-    # 1) full-record overrides (user-pasted clean text)
+    # 1) full-record overrides (user-pasted clean text or partial field patches)
     for idx, patch in data.get(section, {}).items():
         if idx in by_idx:
             by_idx[idx].update(patch)
             by_idx[idx]["corrected_from_paste"] = True
             by_idx[idx].pop("name_ocr_raw", None)
             by_idx[idx].pop("name_ocr_suspect", None)
-    # 2) targeted substring fixes (only the garbled span is replaced)
+    # 2) targeted description substring fixes (bad->null means truncate at that point)
     for idx, repls in data.get("text_fixes", {}).get(section, {}).items():
         rec = by_idx.get(idx)
         if not rec:
             continue
         for bad, good in repls:
             if bad in rec.get("description", ""):
-                rec["description"] = rec["description"].replace(bad, good)
+                if good is None:
+                    pos = rec["description"].index(bad)
+                    rec["description"] = rec["description"][:pos].rstrip()
+                else:
+                    rec["description"] = rec["description"].replace(bad, good)
                 rec["corrected_from_paste"] = True
+    # 3) feature-level fixes (name rename, desc truncation, desc substring fixes)
+    #    and feature injection (_add_features list inserts new features in level order)
+    for sc_idx, feat_dict in data.get("feature_fixes", {}).get(section, {}).items():
+        rec = by_idx.get(sc_idx)
+        if not rec:
+            continue
+        # inject missing features (paste from book — not recoverable from OCR)
+        if "_add_features" in feat_dict:
+            existing = {f["name"] for f in rec.get("features", [])}
+            for nf in feat_dict["_add_features"]:
+                if nf["name"] not in existing:
+                    rec.setdefault("features", []).append(dict(nf))
+                    existing.add(nf["name"])
+            rec["features"].sort(key=lambda f: (f["level"], f["name"]))
+            rec["corrected_from_paste"] = True
+        # existing per-feature fixes
+        for feat_idx, fixes in feat_dict.items():
+            if feat_idx == "_add_features":
+                continue
+            for feat in rec.get("features", []):
+                if _slug(feat.get("name", "")) == feat_idx:
+                    if "name" in fixes:
+                        feat["name"] = fixes["name"]
+                    if "desc_truncate_at" in fixes:
+                        marker = fixes["desc_truncate_at"]
+                        pos = feat.get("desc", "").find(marker)
+                        if pos >= 0:
+                            feat["desc"] = feat["desc"][:pos].rstrip()
+                    for bad, good in fixes.get("desc_fixes", []):
+                        feat["desc"] = feat["desc"].replace(bad, good)
+                    rec["corrected_from_paste"] = True
     return records
 
 
