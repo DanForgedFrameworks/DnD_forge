@@ -46,3 +46,12 @@ python tests/smoke_srd.py
 | `forge/pipeline/` | Stage orchestrator *(to build, adapted from Catalyst)* |
 | `forge/web/` | Flask backend *(to build)* |
 | `tests/` | Smoke tests |
+
+## Licensing & attribution
+
+The **2024** spell and slot data is generated from the **System Reference Document 5.2.1**
+(© Wizards of the Coast LLC), used under the
+[Creative Commons Attribution 4.0 License](https://creativecommons.org/licenses/by/4.0/), via the
+[downfallx/dnd-5e-srd-markdown](https://github.com/downfallx/dnd-5e-srd-markdown) conversion.
+Regenerate it with `python scripts/convert_srd2024_md.py`. Full credit and the pinned source commit
+are in [`data/srd/2024/ATTRIBUTION.md`](data/srd/2024/ATTRIBUTION.md).

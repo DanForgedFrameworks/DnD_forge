@@ -55,6 +55,7 @@ _CATEGORY_FILES: dict[str, dict[str, str]] = {
         "feats": "5e-SRD-Feats.json",
         "features": "5e-SRD-Features.json",
         "languages": "5e-SRD-Languages.json",
+        "levels": "5e-SRD-Levels.json",       # native 2024 slot tables (CC-BY SRD 5.2.1)
         "magic_items": "5e-SRD-Magic-Items.json",
         "magic_schools": "5e-SRD-Magic-Schools.json",
         "monsters": "5e-SRD-Monsters.json",
@@ -62,8 +63,7 @@ _CATEGORY_FILES: dict[str, dict[str, str]] = {
         "proficiencies": "5e-SRD-Proficiencies.json",
         "skills": "5e-SRD-Skills.json",
         "species": "5e-SRD-Species.json",
-        # NOTE: the 2024 source has no Spells / Levels / Rules files yet (known gap).
-        # 2024 spellcasting needs a fallback decision (see ARCHITECTURE open decisions).
+        "spells": "5e-SRD-Spells.json",        # native 2024 spell list (CC-BY SRD 5.2.1)
         "subclasses": "5e-SRD-Subclasses.json",
         "subspecies": "5e-SRD-Subspecies.json",
         "traits": "5e-SRD-Traits.json",

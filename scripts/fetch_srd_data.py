@@ -4,6 +4,11 @@ Source : https://github.com/5e-bits/5e-database  (the data behind dnd5eapi.co)
 Editions: 2014 (SRD 5.1) and 2024 (SRD 5.2), English locale.
 Licence : CC-BY-4.0 / OGL — fine for local / non-commercial use.
 
+2024 spells + slot tables: 5e-database ships NEITHER, so they are NOT pulled here. They are
+generated separately from the CC-BY downfallx markdown by scripts/convert_srd2024_md.py
+(see data/srd/2024/ATTRIBUTION.md). This fetch only writes the baseline files and never
+overwrites 5e-SRD-Spells.json / 5e-SRD-Levels.json, so the two steps compose in any order.
+
 Uses only the Python standard library, so it runs before any pip install.
 
 Usage:

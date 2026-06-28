@@ -14,7 +14,9 @@ about *choices*: which spells, how many, and what starting gear.
 character in place under strict, and returns a list of ``{level, message}`` warnings to
 fold into the /forge + /character response alongside the contract validate() warnings.
 
-Spell + slot tables only exist in the 2014 SRD; 2024 casters borrow them (project decision).
+Spell + slot tables are edition-native: 2024 casters resolve against the 2024 SRD spell
+list + Levels tables, 2014 casters against the 2014 set. The edition is threaded through
+from the character's ``ruleset`` slug.
 """
 from __future__ import annotations
 
@@ -50,16 +52,28 @@ def _data_root():
 
 
 @lru_cache(maxsize=4)
-def _repo_2014() -> SRDRepository:
-    return SRDRepository("2014", data_root=_data_root())
+def _repo(edition: str = "2014") -> SRDRepository:
+    return SRDRepository(edition, data_root=_data_root())
 
 
-@lru_cache(maxsize=1)
-def _spell_list_by_class() -> dict[str, dict[str, int]]:
-    """{class_index: {spell_index: spell_level}} from the 2014 SRD spell list."""
+def _edition_for(character: dict) -> str:
+    """Resolve the SRD edition ("2014"/"2024") from the character's ruleset slug."""
+    slug = character.get("ruleset")
+    if not slug:
+        return "2014"
+    try:
+        from ..ruleset import Ruleset
+        return Ruleset(slug).config.get("srdEdition", "2014")
+    except Exception:
+        return "2014"
+
+
+@lru_cache(maxsize=4)
+def _spell_list_by_class(edition: str = "2014") -> dict[str, dict[str, int]]:
+    """{class_index: {spell_index: spell_level}} from the edition's SRD spell list."""
     out: dict[str, dict[str, int]] = {}
     try:
-        spells = _repo_2014().all("spells")
+        spells = _repo(edition).all("spells")
     except Exception:
         return out
     for sp in spells:
@@ -69,14 +83,31 @@ def _spell_list_by_class() -> dict[str, dict[str, int]]:
     return out
 
 
-def class_spell_list(class_index: str) -> dict[str, int]:
-    """{spell_index: level} a class can cast (2014 list; borrowed for 2024)."""
-    return _spell_list_by_class().get(class_index, {})
+def class_spell_list(class_index: str, edition: str = "2014") -> dict[str, int]:
+    """{spell_index: level} a class can cast (edition-native SRD spell list)."""
+    return _spell_list_by_class(edition).get(class_index, {})
 
 
-def _levels_block(class_index: str, level: int) -> dict | None:
+def class_spells_detailed(class_index: str, edition: str = "2014") -> list[dict]:
+    """[{index, name, level}] for a class's SRD spell list, sorted by (level, name).
+
+    Powers the front-end spell picker (browse + tick). Names come from the spell entries.
+    """
+    names: dict[str, str] = {}
     try:
-        for e in _repo_2014().all("levels"):
+        for sp in _repo(edition).all("spells"):
+            names[sp.get("index")] = sp.get("name") or sp.get("index")
+    except Exception:
+        pass
+    out = [{"index": idx, "name": names.get(idx, idx), "level": lvl}
+           for idx, lvl in class_spell_list(class_index, edition).items()]
+    out.sort(key=lambda s: (s["level"], s["name"].lower()))
+    return out
+
+
+def _levels_block(class_index: str, level: int, edition: str = "2014") -> dict | None:
+    try:
+        for e in _repo(edition).all("levels"):
             if e.get("class", {}).get("index") == class_index and e.get("level") == level:
                 return e.get("spellcasting") or None
     except Exception:
@@ -84,7 +115,7 @@ def _levels_block(class_index: str, level: int) -> dict | None:
     return None
 
 
-def spell_limits(class_index: str, level: int, ability_mod: int) -> dict | None:
+def spell_limits(class_index: str, level: int, ability_mod: int, edition: str = "2014") -> dict | None:
     """Legal spell counts for a class at a level, or None for a non-caster.
 
     Returns {cantrips, leveled, maxSpellLevel, casterType}. `leveled` is the number of
@@ -93,7 +124,7 @@ def spell_limits(class_index: str, level: int, ability_mod: int) -> dict | None:
     rules = CASTER_RULES.get(class_index)
     if not rules:
         return None
-    block = _levels_block(class_index, level) or {}
+    block = _levels_block(class_index, level, edition) or {}
     cantrips = int(block.get("cantrips_known", 0) or 0)
     max_lvl = 0
     for n in range(1, 10):
@@ -125,13 +156,13 @@ def _equipment_names(entries) -> list[dict]:
     return out
 
 
-def starting_gear(class_index: str, background_index: str | None) -> dict:
-    """By-the-book FIXED starting equipment + background gold from the 2014 SRD.
+def starting_gear(class_index: str, background_index: str | None, edition: str = "2014") -> dict:
+    """By-the-book FIXED starting equipment + background gold from the edition's SRD.
 
     Only the fixed grants are resolved deterministically; equip *options* (choose A/B)
     are left for the player and noted, so strict mode never silently invents a choice.
     """
-    repo = _repo_2014()
+    repo = _repo(edition)
     cls = repo.get("classes", class_index) or {}
     bg = repo.get("backgrounds", background_index) if background_index else None
 
@@ -158,9 +189,10 @@ def enforce_rules(character: dict) -> list[dict]:
         return []
     mode = (pc.get("rulesMode") or "relaxed").lower()
     strict = mode == "strict"
+    edition = _edition_for(character)
     warnings: list[dict] = []
-    warnings += _enforce_spellcasting(character, strict)
-    warnings += _enforce_gear(character, strict)
+    warnings += _enforce_spellcasting(character, strict, edition)
+    warnings += _enforce_gear(character, strict, edition)
     return warnings
 
 
@@ -168,7 +200,7 @@ def _w(level: str, msg: str) -> dict:
     return {"level": level, "message": msg}
 
 
-def _enforce_spellcasting(character: dict, strict: bool) -> list[dict]:
+def _enforce_spellcasting(character: dict, strict: bool, edition: str = "2014") -> list[dict]:
     pc = character["pc"]
     sc = character.get("spellcasting")
     class_index = pc.get("class")
@@ -176,7 +208,7 @@ def _enforce_spellcasting(character: dict, strict: bool) -> list[dict]:
     note = "error" if strict else "info"
     out: list[dict] = []
 
-    limits = spell_limits(class_index, level, _spell_ability_mod(character, class_index))
+    limits = spell_limits(class_index, level, _spell_ability_mod(character, class_index), edition)
     if limits is None:
         if isinstance(sc, dict) and (sc.get("cantrips") or sc.get("prepared") or sc.get("known")):
             out.append(_w(note, f"{class_index} is not a spellcaster but spells were listed"))
@@ -187,7 +219,7 @@ def _enforce_spellcasting(character: dict, strict: bool) -> list[dict]:
     if not isinstance(sc, dict):
         return out  # caster class with no spells listed yet — nothing to police
 
-    allowed = class_spell_list(class_index)
+    allowed = class_spell_list(class_index, edition)
 
     # cantrips: must be on-list, level 0, within the cantrips-known count
     out += _police_list(sc, "cantrips", allowed, 0, limits["cantrips"], strict, "cantrip")
@@ -236,11 +268,11 @@ def _spell_ability_mod(character: dict, class_index: str) -> int:
     return modifier(int(score)) if score is not None else 0
 
 
-def _enforce_gear(character: dict, strict: bool) -> list[dict]:
+def _enforce_gear(character: dict, strict: bool, edition: str = "2014") -> list[dict]:
     pc = character["pc"]
     if not strict:
         return []  # relaxed keeps the AI's flavourful gear as-is
-    book = starting_gear(pc.get("class"), pc.get("background"))
+    book = starting_gear(pc.get("class"), pc.get("background"), edition)
     pc["equipment"] = book["equipment"]
     pc["currency"] = book["currency"]
     out = [_w("info", "starting equipment + gold set from the rulebook (strict mode)")]

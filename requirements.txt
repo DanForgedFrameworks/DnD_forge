@@ -11,8 +11,9 @@ openai>=1.0
 google-genai>=0.3
 python-dotenv>=1.0
 
-# .docx ingestion for the auto-fill upload path
+# .docx + .pdf ingestion for the auto-fill upload path
 python-docx>=1.1
+pypdf>=4
 
 # Web backend
 flask>=3.0

@@ -11,6 +11,18 @@ __pycache__/
 # Pulled canonical data (re-fetchable via scripts/fetch_srd_data.py)
 /data/srd/
 
+# Open-licensed third-party content: generated JSON is regenerated via
+# scripts/import_open5e_monsters.py; the licence/attribution text IS committed.
+/data/expanded/*.json
+
+# LOCAL-ONLY WALL: owned-book content for personal prototyping. NEVER committed,
+# NEVER shipped. Anything under data/local/ stays on this machine only.
+/data/local/
+
+# Source rulebook PDFs (copyrighted) — never committed.
+/PDFs/
+*.pdf
+
 # Pipeline working + output artifacts
 /intermediate/
 /output/
@@ -21,3 +33,12 @@ Thumbs.db
 
 # Local download/extract scratch (the front-end is vendored under frontend/ / web/frontend/)
 /D&D 5e character generator*/
+
+# local PDF text extraction scratch (book data, never committed)
+.extract_tmp/
+
+# 2024 SRD markdown source clone (scratch, regenerate via scripts/convert_srd2024_md.py)
+/.srd2024_src/
+
+# Art-style reference images (third-party / copyrighted, collected for direction only — never committed)
+/Example images/

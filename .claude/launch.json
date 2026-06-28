@@ -12,6 +12,19 @@
       "runtimeExecutable": ".venv_forge/Scripts/python.exe",
       "runtimeArgs": ["-m", "http.server", "8000", "--directory", "web/frontend"],
       "port": 8000
+    },
+    {
+      "name": "forge-bridge-5001",
+      "runtimeExecutable": ".venv_forge/Scripts/python.exe",
+      "runtimeArgs": ["-m", "forge.web.app"],
+      "port": 5001,
+      "env": { "FORGE_PORT": "5001" }
+    },
+    {
+      "name": "forge-frontend-8001",
+      "runtimeExecutable": ".venv_forge/Scripts/python.exe",
+      "runtimeArgs": ["-m", "http.server", "8001", "--directory", "web/frontend"],
+      "port": 8001
     }
   ]
 }

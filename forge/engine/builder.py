@@ -18,8 +18,9 @@ Intent dict (v1) keys:
     ability_allocation_2024  {ability: bonus}      (2024 only)
     skill_proficiencies      [skill_index, ...]    (the class skill picks)
 
-`repo` is the edition's SRDRepository. For 2024 spellcasters, pass a 2014
-repository as `levels_repo`/`class_repo` so spell + slot data can be borrowed.
+`repo` is the edition's SRDRepository. Pass `levels_repo` (and optionally
+`class_repo`) of the SAME edition so spell-slot tables resolve natively; 2024
+now ships its own Levels/Spells data, so a 2024 character should pass 2024 repos.
 """
 from __future__ import annotations
 
@@ -161,12 +162,15 @@ def _resolve_spellcasting(edition, cls, class_repo, levels_repo, level, mods, pb
 
     sc_meta = cls.get("spellcasting")
     src_index = cls["index"]
-    # 2024 casters borrow 2014 spellcasting metadata + slot tables wholesale (project
-    # decision) — the 2024 source ships neither spells nor level/slot tables.
-    if edition == "2024" and class_repo is not None:
+    # 2024 now ships its own spell + level/slot tables, so the native 2024 class
+    # metadata is used. Only if the 2024 source is missing spellcasting metadata do we
+    # fall back to the 2014 class entry (legacy borrow), and flag it.
+    borrowed_2024 = False
+    if edition == "2024" and not sc_meta and class_repo is not None:
         borrowed = class_repo.get("classes", src_index)
         if borrowed and borrowed.get("spellcasting"):
             sc_meta = borrowed.get("spellcasting")
+            borrowed_2024 = True
 
     if not sc_meta:
         return None  # non-caster
@@ -183,6 +187,6 @@ def _resolve_spellcasting(edition, cls, class_repo, levels_repo, level, mods, pb
         "spell_attack_bonus": (pb + mods.get(ability_idx, 0)) if ability_idx else None,
         "slots": slots,
     }
-    if edition == "2024":
-        out["note"] = "resolved with borrowed 2014 spell/slot data (flagged per project decision)"
+    if borrowed_2024:
+        out["note"] = "2024 source lacked spellcasting metadata; borrowed 2014 class entry"
     return out

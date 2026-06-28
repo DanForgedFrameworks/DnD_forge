@@ -26,6 +26,7 @@ from ..engine import resolve_pc_proficiencies, enforce_rules
 from ..engine.abilities import apply_ability_bonuses, ABILITIES as _AB_LOWER
 from ..engine.derive import spell_slots
 from ..engine.rules_mode import CASTER_RULES
+from .art import lock_appearance, apply_class_beats, apply_companion
 from .output_schema import AUTOFILL_OUTPUT_SCHEMA
 
 _SPEC_DIR = Path(__file__).resolve().parent / "specs"
@@ -139,6 +140,11 @@ def _assemble(raw: dict, *, ruleset, kind) -> dict:
         "portraits",
         {s: {"prompt": None, "imageUrl": None, "seed": None} for s in FIXED_PORTRAIT_STATES},
     )
+    # forge-time art enrichment (DATA only — keeps build_prompt == computePrompt):
+    # lock an explicit, stable appearance/gender (Item 6) and class-aware beats (Item 7).
+    lock_appearance(character)
+    apply_companion(character)
+    apply_class_beats(character)
     return character
 
 
@@ -179,8 +185,8 @@ def _assemble_pc(raw: dict, *, ruleset, rules_mode) -> tuple[dict, list]:
     # final abilities via the edition ASI (engine disposes); fall back to LLM's abilities
     character["abilities"] = _final_abilities(raw, pc, edition, repo, warnings)
 
-    # spellcasting: ability + slots from the (borrowed-2014) level tables
-    _resolve_pc_spellcasting(character, pc, level, warnings)
+    # spellcasting: ability + slots from the edition-native level tables
+    _resolve_pc_spellcasting(character, pc, level, warnings, edition)
 
     # proficiencies from class + background; then rules-mode enforcement
     resolve_pc_proficiencies(character)
@@ -193,6 +199,11 @@ def _assemble_pc(raw: dict, *, ruleset, rules_mode) -> tuple[dict, list]:
         "portraits",
         {s: {"prompt": None, "imageUrl": None, "seed": None} for s in FIXED_PORTRAIT_STATES},
     )
+    # forge-time art enrichment (DATA only — keeps build_prompt == computePrompt):
+    # lock an explicit, stable appearance/gender (Item 6) and class-aware beats (Item 7).
+    lock_appearance(character)
+    apply_companion(character)
+    apply_class_beats(character)
     return character, warnings
 
 
@@ -227,7 +238,7 @@ def _final_abilities(raw, pc, edition, repo, warnings) -> dict:
         return base_only
 
 
-def _resolve_pc_spellcasting(character, pc, level, warnings) -> None:
+def _resolve_pc_spellcasting(character, pc, level, warnings, edition="2014") -> None:
     sc = character.get("spellcasting")
     class_index = pc.get("class")
     if class_index not in CASTER_RULES:
@@ -239,7 +250,7 @@ def _resolve_pc_spellcasting(character, pc, level, warnings) -> None:
     if not sc.get("ability"):
         sc["ability"] = CASTER_RULES[class_index]["ability"]
 
-    levels_repo = SRDRepository("2014", data_root=_DATA_ROOT)  # spell/slot tables live in 2014
+    levels_repo = SRDRepository(edition, data_root=_DATA_ROOT)  # edition-native spell/slot tables
     block = spell_slots(levels_repo, class_index, level) or {}
     slots = {}
     for n in range(1, 10):

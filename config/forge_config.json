@@ -1,14 +1,14 @@
 {
-  "active_provider": "anthropic",
+  "active_provider": "gemini",
   "llm": {
-    "provider": "anthropic",
-    "model": "claude-opus-4-8",
+    "provider": "gemini",
+    "model": "gemini-2.5-flash",
     "max_tokens": 8000
   },
   "image": {
-    "provider": "gemini-flash",
-    "model": "imagen-4.0-generate-001",
-    "flashModel": "gemini-2.5-flash-image",
+    "provider": "openai",
+    "openaiModel": "gpt-image-1.5",
+    "openaiSize": "1024x1024",
     "size": "1024x1024",
     "base_url": "http://localhost:5000"
   },

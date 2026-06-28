@@ -52,22 +52,55 @@ def _llm_config() -> dict:
         return {}
 
 
-class LLMClient:
-    def __init__(self, model: str | None = None, max_tokens: int | None = None) -> None:
-        import anthropic  # lazy: non-LLM code/tests don't need the dependency
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 
+
+class LLMClient:
+    """Provider-aware client for the Forge's creative stages.
+
+    Provider is config-driven (`config/forge_config.json` -> llm.provider): "gemini"
+    (default for the forge — reads GEMINI_API_KEY) or "anthropic" (reads ANTHROPIC_API_KEY).
+    Both expose the same `complete_json` / `complete_json_loose` API so callers don't change.
+    """
+
+    def __init__(self, model: str | None = None, max_tokens: int | None = None) -> None:
         cfg = _llm_config()
-        self.client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY
-        self.model = model or cfg.get("model", DEFAULT_MODEL)
+        self.provider = (cfg.get("provider") or "anthropic").lower()
         self.max_tokens = max_tokens or cfg.get("max_tokens", DEFAULT_MAX_TOKENS)
+        if self.provider == "gemini":
+            import os
+            from google import genai  # lazy: only when Gemini is the active provider
+
+            self.model = model or cfg.get("model", DEFAULT_GEMINI_MODEL)
+            self._genai = genai
+            self._client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        else:
+            import anthropic  # lazy: non-LLM code/tests don't need the dependency
+
+            self.client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY
+            self.model = model or cfg.get("model", DEFAULT_MODEL)
+
+    # -- Gemini path (JSON mode + tolerant parse; engine validates downstream) ----------
+    def _gemini_json(self, system: str, user: str) -> dict:
+        from google.genai import types
+
+        config = types.GenerateContentConfig(
+            system_instruction=system + "\n\nReturn ONLY a single JSON object. No prose, no code fences.",
+            response_mime_type="application/json",
+            max_output_tokens=self.max_tokens,
+        )
+        resp = self._client.models.generate_content(model=self.model, contents=user, config=config)
+        text = (getattr(resp, "text", None) or "").strip()
+        if not text:
+            raise RuntimeError("no text returned by Gemini (possibly filtered)")
+        return _loads_tolerant(text)
 
     def complete_json(self, system: str, user: str, schema: dict) -> dict:
-        """Return a JSON object constrained to `schema` via STRICT structured outputs.
-
-        Use for small/medium schemas. Large, deeply-nested schemas overflow the
-        structured-output grammar compiler ('compiled grammar is too large') — use
-        `complete_json_loose` for those.
+        """Return a JSON object. Anthropic: STRICT structured outputs against `schema`.
+        Gemini: JSON mode (shape anchored by the prompt; validate downstream).
         """
+        if self.provider == "gemini":
+            return self._gemini_json(system, user)
         resp = self.client.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
@@ -84,13 +117,17 @@ class LLMClient:
         return json.loads(text)
 
     def complete_json_loose(self, system: str, user: str, *, repair: bool = True) -> dict:
-        """Return a JSON object WITHOUT the strict grammar (no schema constraint).
-
-        For large objects whose schema can't compile to a structured-output grammar.
-        The shape is anchored by an embedded JSON template in the prompt instead; the
-        response is tolerantly extracted and parsed, with one model-side repair retry.
-        Validate the result yourself (jsonschema) downstream.
+        """Return a JSON object WITHOUT a strict grammar (shape anchored by the prompt).
+        Tolerantly parsed, with one model-side repair retry. Validate downstream.
         """
+        if self.provider == "gemini":
+            try:
+                return self._gemini_json(system, user)
+            except Exception as e:
+                if not repair:
+                    raise
+                return self._gemini_json(system + f"\n\nThe previous output was invalid JSON ({e}). Return only a single valid JSON object.", user)
+
         def _call(extra_user: str | None = None) -> str:
             msgs = [{"role": "user", "content": user}]
             if extra_user:
