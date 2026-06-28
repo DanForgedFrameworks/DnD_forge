@@ -593,3 +593,26 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv[1:]))
+
+# ── ADDITIONAL 2024 PHB EXTRACTIONS (run separately) ──────────────────────
+# scripts/extract_phb2024_classes.py          -> data/local/class_features_2024_phb.json
+#   167 records (flat list); also writes class_features_2024_phb_by_class.json (grouped).
+#   Per-class: barbarian=19, bard=12, cleric=11, druid=12, fighter=15, monk=20,
+#   paladin=17, ranger=16, rogue=18, sorcerer=10, warlock=8, wizard=9.
+#   Known gap: Barbarian L4 ASI header OCR-garbled ('I.~') — that single entry is missing.
+#
+# scripts/extract_phb2024_weapon_masteries.py -> data/local/weapon_masteries_2024_phb.json
+#   46 records: 8 mastery property definitions + 38 weapon-to-mastery mappings.
+#   3 of 8 property descriptions (Nick, Topple, Vex) used canon-fallback text due to OCR garble.
+#
+# scripts/extract_phb2024_languages.py        -> data/local/languages_2024_phb.json
+#   19 records: 10 standard + 9 rare. Common Sign Language flagged new_in_2024=true.
+#   Druidic and Thieves' Cant flagged secret=true. Primordial includes dialect list.
+#   No gaps.
+#
+# scripts/extract_phb2024_multiclassing.py    -> data/local/multiclassing_2024_phb.json
+#   44 logical records: 12 prerequisites + 12 proficiency blocks + 20-row spell-slot table.
+#   Spell-slot table uses canonical fallback values (OCR column-confusion on 11 rows).
+#
+# Run all: pass the PDF path as the first argument to each script, e.g.
+#   python scripts/extract_phb2024_classes.py "PDFs/D&D 5E [2024] PHB.pdf"

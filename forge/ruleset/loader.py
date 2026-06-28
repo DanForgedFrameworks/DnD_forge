@@ -137,7 +137,7 @@ class Ruleset:
         except Exception:
             pass
 
-        return {
+        lists = {
             "classes": self._classes_enriched(repo, prof_type),
             "subclassesByClass": subclasses_by_class,
             "species": names("species"),
@@ -149,6 +149,53 @@ class Ruleset:
             "creatureTypes": CREATURE_TYPES,
             "sizes": SIZES,
         }
+        # Opt-in local (non-SRD) 2024 PHB overlay — only when the ruleset config asks for it
+        # (optionLists.source contains "local"), so the shippable SRD-only build is untouched.
+        if "local" in str((self.config.get("optionLists") or {}).get("source", "")):
+            self._merge_local(lists)
+        return lists
+
+    @staticmethod
+    def _merge_local(lists: dict) -> None:
+        """Overlay the richer local 2024 PHB content onto the SRD-derived optionLists, and add the
+        local-only blocks (classFeaturesByClass, weaponMasteries, languages, multiclassing)."""
+        from . import local_data as L
+        if not L.available():
+            return
+
+        def union(base, extra):  # merge {index,name} lists; local wins / adds, by index
+            by = {e["index"]: e for e in (base or []) if e.get("index")}
+            for e in (extra or []):
+                if e.get("index"):
+                    by[e["index"]] = e
+            return list(by.values())
+
+        if L.species():
+            lists["species"] = union(lists.get("species"), L.species())
+        if L.feats():
+            lists["feats"] = union(lists.get("feats"), L.feats())
+        local_sub = L.subclasses_by_class()
+        if local_sub:
+            merged = dict(lists.get("subclassesByClass") or {})
+            for ci, subs in local_sub.items():
+                merged[ci] = union(merged.get(ci), subs)
+            lists["subclassesByClass"] = merged
+        local_bg = L.backgrounds()
+        if local_bg:
+            lists["backgrounds"] = local_bg  # 2024 shape (Origin Feat + ability prose; no fixed skills)
+        # local-only blocks (new contract keys)
+        cfb = L.class_features_by_class()
+        if cfb:
+            lists["classFeaturesByClass"] = cfb
+        wm = L.weapon_masteries()
+        if wm.get("properties") or wm.get("weapons"):
+            lists["weaponMasteries"] = wm
+        langs = L.languages()
+        if langs:
+            lists["languages"] = langs
+        mc = L.multiclassing()
+        if mc:
+            lists["multiclassing"] = mc
 
     @staticmethod
     def _classes_enriched(repo, prof_type: dict) -> list:

@@ -362,6 +362,15 @@
             </div>
           </div>
           </sc-if>
+          <sc-if value="{{ char.show2024Bg }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:11px; background:#2a3326; border:1px solid #46583c; border-radius:7px; padding:9px 11px;">
+            <div style="font-size:10px; letter-spacing:1px; color:#a9c79a; text-transform:uppercase; margin-bottom:5px;">2024 background grants</div>
+            <sc-if value="{{ char.bg2024Feat }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#cfc0a4; margin-bottom:2px;"><span style="color:#bd7d3f; font-weight:600;">Origin Feat</span> {{ char.bg2024Feat }}</div></sc-if>
+            <sc-if value="{{ char.bg2024Ability }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#cfc0a4; margin-bottom:2px;"><span style="color:#bd7d3f; font-weight:600;">Ability boosts</span> +2/+1 from {{ char.bg2024Ability }}</div></sc-if>
+            <sc-if value="{{ char.bg2024Skills }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#cfc0a4;"><span style="color:#bd7d3f; font-weight:600;">Skills</span> {{ char.bg2024Skills }}</div></sc-if>
+            <div style="font-size:11px; color:#7d8a6f; margin-top:6px; line-height:1.4;">In 2024 your ability boosts and feat come from your <strong>background</strong>, not your species — set your final ability scores below.</div>
+          </div>
+          </sc-if>
           <div style="font-size:11.5px; color:#7d6f5a; margin-top:10px; line-height:1.45;">Class, {{ char.speciesLabel }} &amp; background define a PC — the creature type below stays Humanoid. Saves, skills &amp; proficiencies are derived by the engine from your picks.</div>
         </sc-if>
         <sc-if value="{{ char.pcReadonly }}" hint-placeholder-val="{{ true }}">
@@ -1280,6 +1289,52 @@
       </sc-if>
     </div>
     </sc-if>
+
+    <!-- ===== Play reference (compact lists; full descriptions are on the Codex) ===== -->
+    <div style="background:#231e18; border:1px solid #3a3227; border-radius:12px; padding:20px; margin-top:16px;">
+      <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:12px;">
+        <div style="font-family:'Cinzel',serif; font-size:12px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase;">Quick reference</div>
+        <div style="font-size:11px; color:#6f6353; font-style:italic;">full descriptions on the Codex</div>
+      </div>
+      <!-- abilities -->
+      <div style="display:flex; flex-wrap:wrap; gap:7px; margin-bottom:4px;">
+        <sc-for list="{{ playAbilities }}" as="a" hint-placeholder-count="6">
+          <div style="background:#1f1b15; border:1px solid #3a3227; border-radius:7px; padding:5px 12px; text-align:center;"><div style="font-size:10px; letter-spacing:0.5px; color:#bd7d3f; font-family:'Cinzel',serif;">{{ a.k }}</div><div style="font-size:14px; color:#e9dcc2;">{{ a.score }} {{ a.mod }}</div></div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ hasPlaySaves }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#cfc0a4; margin-top:7px;"><span style="color:#bd7d3f; font-weight:600;">Saves</span> {{ playSaves }}</div></sc-if>
+      <sc-if value="{{ hasPlaySkills }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#cfc0a4; margin-top:3px;"><span style="color:#bd7d3f; font-weight:600;">Skills</span> {{ playSkills }}</div></sc-if>
+      <sc-if value="{{ hasPlaySensesRef }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#cfc0a4; margin-top:3px;"><span style="color:#bd7d3f; font-weight:600;">Senses</span> {{ playSensesRef }}</div></sc-if>
+      <sc-if value="{{ hasPlayLanguagesRef }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#cfc0a4; margin-top:3px;"><span style="color:#bd7d3f; font-weight:600;">Languages</span> {{ playLanguagesRef }}</div></sc-if>
+
+      <sc-if value="{{ hasPlayAttacks }}" hint-placeholder-val="{{ false }}">
+        <div style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; margin:16px 0 6px;">Attacks &amp; Actions</div>
+        <sc-for list="{{ playAttacks }}" as="a" hint-placeholder-count="3">
+          <div style="font-size:13.5px; color:#cfc0a4; margin:0 0 4px;"><span style="color:#e9dcc2; font-weight:600;">{{ a.name }}</span><sc-if value="{{ a.hasLine }}" hint-placeholder-val="{{ false }}"> <span style="color:#9c8e76;">{{ a.line }}</span></sc-if></div>
+        </sc-for>
+      </sc-if>
+
+      <sc-if value="{{ hasPlayFeaturesRef }}" hint-placeholder-val="{{ false }}">
+        <div style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; margin:16px 0 6px;">Features &amp; Traits</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <sc-for list="{{ playFeaturesRef }}" as="f" hint-placeholder-count="4">
+            <span style="font-size:12.5px; background:#1f1b15; border:1px solid #3a3227; border-radius:999px; padding:3px 11px; color:#cfc0a4;">{{ f.name }}<sc-if value="{{ f.hasSrc }}" hint-placeholder-val="{{ false }}"> <span style="font-size:9.5px; color:#8a6f4a;">{{ f.src }}</span></sc-if></span>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ hasPlayReactionsRef }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#cfc0a4; margin-top:14px;"><span style="color:#bd7d3f; font-weight:600;">Reactions</span> {{ playReactionsRef }}</div></sc-if>
+
+      <sc-if value="{{ hasPlayEquipRef }}" hint-placeholder-val="{{ false }}">
+        <div style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; margin:16px 0 6px;">Equipment</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <sc-for list="{{ playEquipRef }}" as="e" hint-placeholder-count="4">
+            <span style="font-size:12.5px; background:#1f1b15; border:1px solid #3a3227; border-radius:5px; padding:3px 10px; color:#cfc0a4;">{{ e.label }}</span>
+          </sc-for>
+        </div>
+        <sc-if value="{{ hasPlayCoinRef }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#cfc0a4; margin-top:8px;"><span style="color:#bd7d3f; font-weight:600;">Coin</span> {{ playCoinRef }}</div></sc-if>
+      </sc-if>
+    </div>
     </sc-if>
   </div>
   </sc-if>
@@ -2457,7 +2512,64 @@ class Component extends DCLogic {
       inspirationStyle: "border-radius:7px; padding:6px 12px; font-size:12.5px; cursor:pointer; border:1px solid " + (v.inspiration ? "#c79a3a; background:#5a4a1f; color:#f7e9c4;" : "#4a3f30; background:#2c261e; color:#9c8e76;"),
       onShortRest: () => this.shortRest(), onLongRest: () => this.longRest(),
       playRestNote: this.state.playRestNote || "", hasRestNote: !!this.state.playRestNote,
+      // ---- compact play reference (names + key numbers; full prose stays on the Codex) ----
+      ...this.playReference(d),
     };
+  }
+  // Compact at-the-table reference: abilities/saves/skills, attacks (with hit+damage), features,
+  // reactions, equipment + coin. Just the scannable essentials — full descriptions live on the Codex.
+  // Returns flat bindings used by the Play view AND (as HTML) the downloaded file, so they match.
+  playReference(d) {
+    d = d || this.state.draft || {};
+    const ab = d.abilities || {}, pc = d.pc || {};
+    const srcPretty = s => { if (!s) return ""; const p = String(s).split(":"); return p[1] || p[0]; };
+    const atkLine = txt => {
+      txt = String(txt || "");
+      const hit = (txt.match(/([+−\-]\s?\d+)\s*to hit/) || [])[1];
+      const dm = txt.match(/Hit:\s*\d+\s*\(([^)]+)\)\s*([A-Za-z]+)?/) || [];
+      const parts = [];
+      if (hit) parts.push(hit.replace(/\s/g, "") + " to hit");
+      if (dm[1]) parts.push(dm[1].replace(/\s+/g, "") + (dm[2] ? " " + dm[2] : ""));
+      return parts.join(" · ");
+    };
+    const langs = (Array.isArray(d.languagesList) && d.languagesList.length) ? d.languagesList.map(l => l.name).join(", ") : (d.languages || "");
+    const reactFeats = (d.features || []).filter(f => f && f.kind === "reaction");
+    const reactNames = []; const seenR = {};
+    (d.reactions || []).concat(reactFeats).forEach(r => { const n = (r && r.name) || "", k = n.toLowerCase(); if (n && !seenR[k]) { seenR[k] = 1; reactNames.push(n); } });
+    const attacks = (d.actions || []).map(a => { const line = atkLine(a.text); return { name: a.name || "", line: line, hasLine: !!line }; });
+    const features = (d.features || []).filter(f => f && f.kind !== "reaction").map(f => ({ name: f.name, src: srcPretty(f.source), hasSrc: !!f.source }));
+    const equipment = (pc.equipment || []).map(e => ({ label: (e.qty && e.qty > 1) ? (e.name + " ×" + e.qty) : e.name }));
+    const coin = ["pp", "gp", "ep", "sp", "cp"].filter(k => (pc.currency || {})[k]).map(k => pc.currency[k] + " " + k).join(", ");
+    return {
+      playAbilities: ["STR", "DEX", "CON", "INT", "WIS", "CHA"].map(k => ({ k, score: (ab[k] != null ? ab[k] : "—"), mod: this.fmtMod(ab[k]) })),
+      playSaves: d.saves || "", hasPlaySaves: !!d.saves,
+      playSkills: d.skills || "", hasPlaySkills: !!d.skills,
+      playSensesRef: d.senses || "", hasPlaySensesRef: !!d.senses,
+      playLanguagesRef: langs, hasPlayLanguagesRef: !!langs,
+      playAttacks: attacks, hasPlayAttacks: attacks.length > 0,
+      playFeaturesRef: features, hasPlayFeaturesRef: features.length > 0,
+      playReactionsRef: reactNames.join(" · "), hasPlayReactionsRef: reactNames.length > 0,
+      playEquipRef: equipment, hasPlayEquipRef: equipment.length > 0,
+      playCoinRef: coin, hasPlayCoinRef: !!coin,
+    };
+  }
+  // The same compact reference as a self-contained HTML string for the downloaded "At the Table" tab.
+  playReferenceHtml(d) {
+    const r = this.playReference(d);
+    const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const head = t => '<div style="font-family:Cinzel,serif;font-size:12px;letter-spacing:1px;color:#bd7d3f;text-transform:uppercase;margin:18px 0 7px;border-bottom:1px solid #3a3227;padding-bottom:3px;">' + t + "</div>";
+    const H = [head("Abilities")];
+    H.push('<div style="display:flex;flex-wrap:wrap;gap:7px;">' + r.playAbilities.map(a => '<div style="background:#1f1b15;border:1px solid #3a3227;border-radius:7px;padding:5px 12px;text-align:center;"><div style="font-size:10px;color:#bd7d3f;font-family:Cinzel,serif;">' + a.k + '</div><div style="color:#e9dcc2;">' + esc(a.score) + " " + esc(a.mod) + "</div></div>").join("") + "</div>");
+    const line = (lbl, val) => '<div style="font-size:13px;color:#cfc0a4;margin-top:6px;"><strong style="color:#bd7d3f;">' + lbl + "</strong> " + esc(val) + "</div>";
+    if (r.hasPlaySaves) H.push(line("Saves", r.playSaves));
+    if (r.hasPlaySkills) H.push(line("Skills", r.playSkills));
+    if (r.hasPlaySensesRef) H.push(line("Senses", r.playSensesRef));
+    if (r.hasPlayLanguagesRef) H.push(line("Languages", r.playLanguagesRef));
+    if (r.hasPlayAttacks) { H.push(head("Attacks & Actions")); H.push("<div>" + r.playAttacks.map(a => '<div style="font-size:13.5px;color:#cfc0a4;margin:0 0 4px;"><strong style="color:#e9dcc2;">' + esc(a.name) + "</strong>" + (a.hasLine ? ' <span style="color:#9c8e76;">' + esc(a.line) + "</span>" : "") + "</div>").join("") + "</div>"); }
+    if (r.hasPlayFeaturesRef) { H.push(head("Features & Traits")); H.push('<div style="font-size:13px;color:#cfc0a4;line-height:1.8;">' + r.playFeaturesRef.map(f => esc(f.name) + (f.hasSrc ? ' <span style="font-size:10px;color:#8a6f4a;">[' + esc(f.src) + "]</span>" : "")).join(" &middot; ") + "</div>"); }
+    if (r.hasPlayReactionsRef) { H.push(head("Reactions")); H.push('<div style="font-size:13px;color:#cfc0a4;">' + esc(r.playReactionsRef) + "</div>"); }
+    if (r.hasPlayEquipRef || r.hasPlayCoinRef) { H.push(head("Equipment")); if (r.hasPlayEquipRef) H.push('<div style="font-size:13px;color:#cfc0a4;">' + r.playEquipRef.map(e => esc(e.label)).join(", ") + "</div>"); if (r.hasPlayCoinRef) H.push(line("Coin", r.playCoinRef)); }
+    return '<div style="border-top:1px solid #3a3227;margin-top:22px;padding-top:6px;">' + H.join("") + "</div>";
   }
   // ---- welcome portal: enter a stage with the copper glyph-rain cleanse ----
   enterStage(stage) {
@@ -2785,7 +2897,8 @@ class Component extends DCLogic {
         + ".pl-card{transition:border-color .2s,box-shadow .25s;}@media (prefers-reduced-motion:reduce){.pl-tap,.pl-pip,.pl-chip,.pl-card{transition:none!important;}}";
       const playSection = '<h2 style="margin:4px 0 4px;">At the Table</h2>'
         + '<div style="font-size:12.5px;color:#9c8e76;font-style:italic;margin-bottom:14px;">Fully playable and saved in this browser on this device — track HP, hit dice, spell slots, conditions and rests offline.</div>'
-        + '<div id="ffPlay"></div>';
+        + '<div id="ffPlay"></div>'
+        + this.playReferenceHtml(this.state.draft);   // compact quick-reference under the live tracker
       const playScript = "(" + this._playRuntime().toString() + ")(" + JSON.stringify(playData) + ");";
       // two-tab shell: Character Sheet (sheet + portraits + bonded) · At the Table (live tracker)
       const tabBtn = "background:none;border:none;border-bottom:2px solid transparent;font-family:'Cinzel',serif;font-size:14px;letter-spacing:1px;padding:9px 16px;cursor:pointer;color:#9c8e76;";
@@ -3196,8 +3309,11 @@ class Component extends DCLogic {
     // Reaction-kind ones fold into the Reactions section; the rest become a "Features & Traits"
     // section. The LLM's own flavour traits are kept, minus any the engine already covers by name.
     const featList = Array.isArray(d.features) ? d.features : [];
-    const featNames = {}; featList.forEach(f => { const n = String((f && f.name) || "").toLowerCase(); if (n) featNames[n] = 1; });
-    char.traits = enrich((d.traits || []).filter(t => !featNames[String((t && t.name) || "").toLowerCase()]));
+    // match on the BASE name (before any "(…)") so the AI's plain "Wild Shape" is recognised as the
+    // same ability as the derived "Wild Shape (CR 1 or below)" and isn't shown twice.
+    const baseName = s => String(s || "").toLowerCase().split(" (")[0].trim();
+    const featNames = {}; featList.forEach(f => { const n = baseName(f && f.name); if (n) featNames[n] = 1; });
+    char.traits = enrich((d.traits || []).filter(t => !featNames[baseName(t && t.name)]));
     const reactionFeats = featList.filter(f => f && f.kind === "reaction");
     const classFeats = featList.filter(f => f && f.kind !== "reaction");
     const seenR = {}; const combinedReactions = [];
@@ -3274,6 +3390,14 @@ class Component extends DCLogic {
       char.pcClassOpts = mkPcSel(classPairs); char.pcClassVal = String(pc.class || "");
       char.pcSpeciesOpts = mkPcSel(pairList(OL.species)); char.pcSpeciesVal = String(pc.species || "");
       char.pcBackgroundOpts = mkPcSel(pairList(OL.backgrounds)); char.pcBackgroundVal = String(pc.background || "");
+      // 2024 backgrounds work differently (Origin Feat + ability boosts + fixed skills, no languages);
+      // surface that structure in the editor when the local 2024 ruleset is active.
+      const is2024Local = String(this.state.rulesetSlug || "").indexOf("local") > -1;
+      const bg2024 = is2024Local ? ((OL.backgrounds || []).find(b => String(b.index) === String(pc.background)) || null) : null;
+      char.show2024Bg = !!(bg2024 && (bg2024.featText || bg2024.abilityScoresText || bg2024.skillsText));
+      char.bg2024Feat = (bg2024 && bg2024.featText) || "";
+      char.bg2024Ability = (bg2024 && bg2024.abilityScoresText) || "";
+      char.bg2024Skills = (bg2024 && bg2024.skillsText) || "";
       char.pcSubclassOpts = mkPcSel(subPairs); char.pcSubclassVal = String(pc.subclass || ""); char.pcHasSubclass = subPairs.length > 0;
       const subspPairs = pairList((OL.subspeciesBySpecies || {})[pc.species] || []);
       char.pcSubspeciesOpts = mkPcSel(subspPairs); char.pcSubspeciesVal = String(pc.subspecies || ""); char.pcHasSubspecies = subspPairs.length > 0;

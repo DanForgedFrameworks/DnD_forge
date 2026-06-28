@@ -89,11 +89,134 @@ def _granted_base_names(repo, ci: str, clvl: int) -> set:
     return names
 
 
+# Levels-table labels that aren't usable abilities — filtered out of the feature list.
+_SUBCLASS_MARKERS = {
+    "druid circle", "bard college", "divine domain", "otherworldly patron",
+    "sorcerous origin", "roguish archetype", "martial archetype", "monastic tradition",
+    "sacred oath", "ranger archetype", "ranger conclave", "arcane tradition", "primal path",
+}
+
+
+def _is_structural_marker(name: str) -> bool:
+    """A slot label / 'choose a subclass' marker / '<X> feature' placeholder — not an ability."""
+    n = (name or "").strip().lower()
+    return (n == "ability score improvement"
+            or n.startswith("spellcasting")
+            or n.endswith(" feature")
+            or n.endswith(" subclass")          # 2024 marker, e.g. "Cleric Subclass"
+            or n in _SUBCLASS_MARKERS)
+
+
+def _finalize_features(out: list[dict]) -> list[dict]:
+    """Shared cleanup for a derived feature list: drop choose-one option pools, collapse
+    progressive features to the current tier, and order species/background/class then subclass."""
+    # drop "choose-one" sub-option pools (Circle of the Land: Arctic / Coast / …): 3+ "Parent: …"
+    # siblings where Parent is itself a feature -> keep the umbrella, drop the options.
+    names_lower = {f["name"].lower() for f in out}
+    prefix_count: dict[str, int] = {}
+    for f in out:
+        nl = f["name"].lower()
+        if ": " in nl:
+            prefix_count[nl.split(": ")[0]] = prefix_count.get(nl.split(": ")[0], 0) + 1
+    out = [f for f in out if not (": " in f["name"].lower()
+                                  and prefix_count.get(f["name"].lower().split(": ")[0], 0) >= 3
+                                  and f["name"].lower().split(": ")[0] in names_lower)]
+    # collapse progressive features (Wild Shape ×3 -> the highest tier), by base name before "(…)".
+    best: dict[str, dict] = {}
+    for f in out:
+        base = f["name"].split(" (")[0].strip().lower()
+        if base not in best or f["level"] > best[base]["level"]:
+            best[base] = f
+    out = list(best.values())
+    out.sort(key=lambda f: (f["source"].startswith("subclass:"), f["level"], f["name"]))
+    return out
+
+
+def _local_class_features(character: dict, edition: str) -> list[dict]:
+    """Class + subclass features from the local 2024 PHB data (the SRD 2024 set is too sparse)."""
+    pc = character.get("pc") or {}
+    try:
+        from ..ruleset import local_data as L
+        base = L.class_features_by_class()
+        subs = L.subclass_records()
+    except Exception:
+        return []
+    out: list[dict] = []
+    seen: set[str] = set()
+
+    def add(name, text, source, level):
+        if not name or _is_structural_marker(name):
+            return
+        key = name.strip().lower()
+        if key in seen:
+            return
+        seen.add(key)
+        out.append({"name": name.strip(), "text": (text or "").strip(), "source": source,
+                    "level": int(level), "kind": _kind_of(text or "")})
+
+    def _lvl(v):
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return None
+
+    for ci, sub_idx_raw, clvl in _class_mix(pc):
+        if not ci:
+            continue
+        for f in base.get(ci, []):
+            lvl = _lvl(f.get("level"))
+            if lvl is not None and 1 <= lvl <= clvl:
+                add(f.get("name"), f.get("desc"), f"class:{ci.title()}", lvl)
+        sub_idx = (sub_idx_raw or "").lower()
+        for s in subs:
+            scls = s.get("class")
+            sci = (scls.get("index") if isinstance(scls, dict) else scls) or ""
+            if str(sci).lower() != ci or (s.get("index") or "").lower() != sub_idx:
+                continue
+            for sf in s.get("features", []):
+                lvl = _lvl(sf.get("level"))
+                if lvl is not None and 1 <= lvl <= clvl:
+                    add(sf.get("name"), sf.get("desc"), f"subclass:{s.get('name', sub_idx)}", lvl)
+    return _finalize_features(out)
+
+
+def _resolve_subclass_idx(repo, class_index: str, stored: str) -> str:
+    """Map a stored subclass id to the SRD's ('circle-of-the-land' -> 'land', 'oath-of-devotion'
+    -> 'devotion'), so subclass features actually resolve. Exact match first, else the SRD
+    index/name appearing within the stored flavour id."""
+    stored = (stored or "").lower().strip()
+    if not stored:
+        return ""
+    try:
+        subs = [s for s in repo.all("subclasses") if (s.get("class") or {}).get("index") == class_index]
+    except Exception:
+        return stored
+    for s in subs:
+        if (s.get("index") or "").lower() == stored:
+            return s["index"]
+    norm = stored.replace("-", " ")
+    words = set(norm.split())
+    for s in subs:
+        si, sn = (s.get("index") or "").lower(), (s.get("name") or "").lower()
+        if si and (si in words or si.replace("-", " ") in norm):
+            return s["index"]
+        if sn and sn in norm:
+            return s["index"]
+    return stored
+
+
 def derive_class_features(character: dict, edition: str = "2014") -> list[dict]:
-    """All class + subclass features the PC has earned, with text and a `kind` tag."""
+    """All class + subclass features the PC has earned, with text and a `kind` tag.
+
+    Cleaned for the sheet: structural markers dropped, subclass id resolved to the SRD's, and
+    progressive features (Wild Shape ×3, Bardic Inspiration die…) collapsed to the current tier.
+    """
     pc = character.get("pc")
     if not isinstance(pc, dict):
         return []
+    # 2024 local ruleset: the SRD 2024 feature set is sparse — use the local PHB extraction.
+    if "local" in str(character.get("ruleset", "")):
+        return _local_class_features(character, edition)
     try:
         feats = _repo(edition).all("features")
     except Exception:
@@ -101,20 +224,24 @@ def derive_class_features(character: dict, edition: str = "2014") -> list[dict]:
 
     out: list[dict] = []
     seen: set[str] = set()
-    for ci, sub_idx, clvl in _class_mix(pc):
+    for ci, sub_idx_raw, clvl in _class_mix(pc):
         if not ci:
             continue
+        sub_idx = _resolve_subclass_idx(_repo(edition), ci, sub_idx_raw)
         granted = _granted_base_names(_repo(edition), ci, clvl)
         for f in feats:
             fclass = (f.get("class") or {})
             if (fclass.get("index") or "").lower() != ci:
                 continue
-            flevel = int(f.get("level") or 0)
+            try:
+                flevel = int(f.get("level") or 0)   # some 2024 SRD records carry a non-numeric level
+            except (TypeError, ValueError):
+                continue
             if not (1 <= flevel <= clvl):
                 continue
             name = f.get("name")
-            if not name:
-                continue
+            if not name or _is_structural_marker(name):
+                continue  # skip slot labels / subclass-choice markers / "<X> feature" placeholders
             fsub = f.get("subclass")
             if fsub:  # subclass feature — only if it's THIS character's subclass (all granted)
                 if not sub_idx or (fsub.get("index") or "").lower() != sub_idx:
@@ -131,8 +258,8 @@ def derive_class_features(character: dict, edition: str = "2014") -> list[dict]:
             text = _text_of(f)
             out.append({"name": name, "text": text, "source": source,
                         "level": flevel, "kind": _kind_of(text)})
-    out.sort(key=lambda f: (f["source"].startswith("subclass:"), f["level"], f["name"]))
-    return out
+
+    return _finalize_features(out)
 
 
 def derive_species_traits(character: dict, edition: str = "2014") -> list[dict]:
@@ -155,16 +282,30 @@ def derive_species_traits(character: dict, edition: str = "2014") -> list[dict]:
         out.append({"name": name.strip(), "text": text, "source": f"species:{label}",
                     "level": 1, "kind": _kind_of(text)})
 
-    # SRD race traits (description resolved from the traits catalog)
-    race = _repo(edition).get("species", species) or {}
-    race_label = race.get("name") or species.title()
-    try:
-        traits_by_idx = _repo(edition).index("traits")
-    except Exception:
-        traits_by_idx = {}
-    for t in (race.get("traits") or []):
-        full = traits_by_idx.get(t.get("index")) or {}
-        add(t.get("name"), _text_of(full), race_label)
+    # Species traits: the local 2024 PHB list when the local ruleset is active (richer, traits
+    # carry their own text), else the SRD race traits (description from the traits catalog).
+    used_local = False
+    if "local" in str(character.get("ruleset", "")):
+        try:
+            from ..ruleset import local_data as L
+            local_traits = L.species_traits(species)
+        except Exception:
+            local_traits = []
+        if local_traits:
+            label = species.title()
+            for t in local_traits:
+                add(t.get("name"), (t.get("desc") or t.get("text") or "").strip(), label)
+            used_local = True
+    if not used_local:
+        race = _repo(edition).get("species", species) or {}
+        race_label = race.get("name") or species.title()
+        try:
+            traits_by_idx = _repo(edition).index("traits")
+        except Exception:
+            traits_by_idx = {}
+        for t in (race.get("traits") or []):
+            full = traits_by_idx.get(t.get("index")) or {}
+            add(t.get("name"), _text_of(full), race_label)
 
     # homebrew flavour traits (by lineage first, then species)
     tbl = _species_trait_table()
@@ -176,9 +317,27 @@ def derive_species_traits(character: dict, edition: str = "2014") -> list[dict]:
 
 
 def derive_background_feature(character: dict, edition: str = "2014") -> list[dict]:
-    """The background's special feature (Wanderer, Researcher, Shelter of the Faithful…) with text."""
+    """The background's contribution to Features & Traits.
+
+    2014: the background's special *feature* (Wanderer, Researcher, Shelter of the Faithful…).
+    2024 (local ruleset): backgrounds grant an **Origin Feat** instead — listed by name + text.
+    """
     pc = character.get("pc")
     if not isinstance(pc, dict) or not pc.get("background"):
+        return []
+    # 2024 backgrounds grant an Origin Feat, not a background feature.
+    if "local" in str(character.get("ruleset", "")):
+        try:
+            from ..ruleset import local_data as L
+            bg = L.background(pc.get("background")) or {}
+        except Exception:
+            bg = {}
+        feat = bg.get("feat") or {}
+        if feat.get("name"):
+            text = feat.get("text", "")
+            return [{"name": feat["name"], "text": text,
+                     "source": f"background:{bg.get('name', pc.get('background'))} (Origin Feat)",
+                     "level": 1, "kind": _kind_of(text)}]
         return []
     bg = _repo(edition).get("backgrounds", pc.get("background")) or {}
     feat = bg.get("feature") or {}

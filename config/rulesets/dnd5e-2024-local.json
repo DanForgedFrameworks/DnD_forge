@@ -1,0 +1,6 @@
+{
+  "slug": "dnd5e-2024-local",
+  "label": "D&D 5e (2024) — local PHB build",
+  "extends": "dnd5e-2024",
+  "optionLists": { "source": "srd+local" }
+}
