@@ -162,9 +162,15 @@ class SRDRepository:
             return entries
         with overlay_path.open(encoding="utf-8") as fh:
             overlay = json.load(fh)
+        # Overlays only make sense for dict-record categories; some SRD files (e.g. 2014
+        # languages) are plain string lists — leave those untouched.
+        if not isinstance(overlay, list) or any(not isinstance(e, dict) for e in entries):
+            return entries
         merged = list(entries)
         by_key = {e.get("index", e.get("name")): i for i, e in enumerate(merged)}
         for item in overlay:
+            if not isinstance(item, dict):
+                continue
             key = item.get("index", item.get("name"))
             if key in by_key:
                 merged[by_key[key]] = item

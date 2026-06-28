@@ -75,6 +75,32 @@ def _is_fragment_trait(name: str) -> bool:
     return n.startswith("you ") or (bool(n) and n[0].islower())
 
 
+@lru_cache(maxsize=1)
+def _text_fix_pairs() -> tuple:
+    """Flat [bad, good] OCR fixes applied to description text at read-time: the corrections file's
+    ``text_fixes`` (so documented fixes take effect without re-running the extractor; good=None
+    truncates at the bad span) plus a few unambiguous global patterns. The bad spans are unique OCR
+    garbage, so applying them anywhere is safe."""
+    pairs = [["Yl)u", "You"], ["tl)e ", "the "], ["Tl)e ", "The "], ["  ", " "]]
+    tf = (_load("phb2024_corrections.json") or {}).get("text_fixes", {})
+    for by_index in (tf.values() if isinstance(tf, dict) else []):
+        for fixes in (by_index.values() if isinstance(by_index, dict) else []):
+            for pair in (fixes or []):
+                if isinstance(pair, list) and pair:
+                    pairs.append([pair[0], pair[1] if len(pair) > 1 else None])
+    return tuple(tuple(p) for p in pairs)
+
+
+def _fix_text(text: str) -> str:
+    """Apply the OCR text-fixes to a description string."""
+    if not text:
+        return text
+    for bad, good in _text_fix_pairs():
+        if bad in text:
+            text = text.split(bad)[0] if good is None else text.replace(bad, good)
+    return text
+
+
 @lru_cache(maxsize=16)
 def _load(name: str):
     try:
@@ -103,7 +129,7 @@ def species_traits(index: str) -> list:
     OCR fragment sub-bullets are dropped and names tidied."""
     for s in _load("species_2024_phb.json") or []:
         if s.get("index") == index:
-            return [{"name": _fix_name(t["name"]), "desc": t.get("desc", "")}
+            return [{"name": _fix_name(t["name"]), "desc": _fix_text(t.get("desc", ""))}
                     for t in (s.get("traits") or [])
                     if isinstance(t, dict) and t.get("name") and not _is_fragment_trait(t["name"])]
     return []
@@ -153,7 +179,7 @@ def backgrounds() -> list:
         feat = {}
         if feat_name:
             rec = feats.get(_slug(feat_name)) or feats.get(_slug(feat_name.split("(")[0]))
-            feat = {"index": _slug(feat_name), "name": feat_name, "text": (rec or {}).get("description", "")}
+            feat = {"index": _slug(feat_name), "name": feat_name, "text": _fix_text((rec or {}).get("description", ""))}
         out.append({
             "index": b.get("index"), "name": b.get("name"),
             "skills": skills, "tools": tools, "languages": 0,
@@ -177,15 +203,16 @@ def class_features_by_class() -> dict:
     """{classIndex: [{level, name, desc}]} — level-by-level base features (OCR names tidied)."""
     data = _load("class_features_2024_phb_by_class.json") or {}
     by = data.get("by_class", {}) if isinstance(data, dict) else {}
-    return {ci: [{**f, "name": _fix_name(f.get("name", ""))} for f in feats]
+    return {ci: [{**f, "name": _fix_name(f.get("name", "")), "desc": _fix_text(f.get("desc", ""))} for f in feats]
             for ci, feats in by.items()}
 
 
 def subclass_records() -> list:
-    """The 48 local subclasses, each with a ``features: [{name, level, desc}]`` list (names tidied)."""
+    """The 48 local subclasses, each with a ``features: [{name, level, desc}]`` list (names + text tidied)."""
     out = []
     for s in _load("subclasses_2024_phb.json") or []:
-        feats = [{**f, "name": _fix_name(f.get("name", ""))} for f in (s.get("features") or [])]
+        feats = [{**f, "name": _fix_name(f.get("name", "")), "desc": _fix_text(f.get("desc", ""))}
+                 for f in (s.get("features") or [])]
         out.append({**s, "features": feats})
     return out
 
@@ -198,6 +225,23 @@ def weapon_masteries() -> dict:
         "properties": data.get("mastery_properties", []),
         "weapons": data.get("weapon_masteries", []),
     }
+
+
+@lru_cache(maxsize=1)
+def _weapon_mastery_map() -> dict:
+    wm = weapon_masteries()
+    prop_name = {p.get("index"): p.get("name") for p in wm.get("properties", []) if p.get("index")}
+    out = {}
+    for w in wm.get("weapons", []):
+        wi, mi = w.get("weapon"), w.get("mastery")
+        if wi and mi:
+            out[wi] = prop_name.get(mi, str(mi).title())
+    return out
+
+
+def weapon_mastery(weapon_index: str) -> str | None:
+    """The 2024 mastery property name for a weapon (e.g. 'longsword' -> 'Sap'); None if none."""
+    return _weapon_mastery_map().get(weapon_index)
 
 
 def languages() -> list:

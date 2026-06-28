@@ -223,6 +223,19 @@ def _resolve_weapon_entry(name: str, edition: str) -> dict | None:
     return None
 
 
+def _with_2024_mastery(entry: dict, character: dict, edition: str) -> dict:
+    """For a 2024 (local) character, attach the weapon's Mastery property (Sap, Vex, Topple…) so
+    the attack line shows it. Inert for 2014 and for weapons with no mastery."""
+    if not entry or entry.get("mastery") or "local" not in str(character.get("ruleset", "")):
+        return entry
+    try:
+        from ..ruleset import local_data as L
+        m = L.weapon_mastery(entry.get("index") or "")
+    except Exception:
+        m = None
+    return dict(entry, mastery={"name": m}) if m else entry
+
+
 def weapon_actions_for_item(name: str, character: dict, edition: str = "2014") -> list[dict]:
     """Attack/use action(s) for a single equipment item by name (the 'Add action' path).
 
@@ -233,6 +246,7 @@ def weapon_actions_for_item(name: str, character: dict, edition: str = "2014") -
     entry = _resolve_weapon_entry(name, edition)
     if not entry:
         return []
+    entry = _with_2024_mastery(entry, character, edition)
     abilities = character.get("abilities") or {}
     pc = character.get("pc") or {}
     pb = proficiency_bonus(int(pc.get("level") or 1))
@@ -307,6 +321,7 @@ def derive_weapon_actions(character: dict, edition: str = "2014") -> list[dict]:
         entry = _resolve_weapon_entry(nm, edition)  # resolves flavour names too (Two daggers, etc.)
         if not entry:
             continue
+        entry = _with_2024_mastery(entry, character, edition)
         if isinstance(it, dict) and it.get("modes") and not entry.get("modes"):
             entry = dict(entry, modes=it["modes"])
         display = nm if not entry.get("modes") else None

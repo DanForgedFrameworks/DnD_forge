@@ -14,7 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from forge.ruleset import Ruleset  # noqa: E402
 from forge.ruleset import local_data as L  # noqa: E402
 
-_LOCAL_KEYS = ("classFeaturesByClass", "weaponMasteries", "languages", "multiclassing")
+# Truly local-only optionList keys (languages is now a base key in all editions, overridden by local).
+_LOCAL_KEYS = ("classFeaturesByClass", "weaponMasteries", "multiclassing")
 
 
 def main() -> int:

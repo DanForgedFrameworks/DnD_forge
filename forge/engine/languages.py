@@ -35,7 +35,7 @@ def _flavour_descriptions() -> dict:
     """Hand-authored flavour descriptions for languages (richer than the SRD catalog's terse
     script/speaker data), keyed by lower-cased name."""
     try:
-        data = json.loads((_HOMEBREW_ROOT / "languages.json").read_text(encoding="utf-8"))
+        data = json.loads((_HOMEBREW_ROOT / "language_descriptions.json").read_text(encoding="utf-8"))
         return {k.lower(): v for k, v in data.items() if not k.startswith("_")}
     except Exception:
         return {}

@@ -598,6 +598,12 @@ def derive_character():
         character, warnings, changes = rederive(
             character, level=body.get("level"), classes=body.get("classes")
         )
+        # rederive covers the level-dependent maths; refresh the DISPLAY layer too so a class /
+        # species / background / subclass change returns a fully-consistent character in one call
+        # (display features + described languages, and actions reconciled to the current gear).
+        _refresh_features(character)
+        _reconcile_actions(character)
+        _annotate_actions(character)
     except Exception as e:  # never 500 on a fragile re-derive — surface as JSON
         return jsonify({"error": "derive_failed", "message": str(e)}), 422
     return jsonify({"character": character, "warnings": warnings, "changes": changes})

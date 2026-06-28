@@ -318,6 +318,7 @@
                 <span style="font-size:11.5px; color:#8a7c66;">Total level {{ char.pcTotalLevel }} / 20</span>
                 <button onClick="{{ char.onAddPcClass }}" style="background:none; border:1px solid #4a3f30; color:#bd7d3f; border-radius:5px; padding:3px 10px; font-size:12px; cursor:pointer;">＋ Add class</button>
               </div>
+              <sc-if value="{{ char.show2024McPrereq }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px; color:#7d8a6f; margin-top:5px; line-height:1.4;"><span style="color:#a9c79a;">2024 multiclass needs</span> {{ char.mc2024Prereq }}</div></sc-if>
             </div>
             </sc-if>
             <!-- Species (always shown) -->
@@ -366,7 +367,15 @@
           <div style="margin-top:11px; background:#2a3326; border:1px solid #46583c; border-radius:7px; padding:9px 11px;">
             <div style="font-size:10px; letter-spacing:1px; color:#a9c79a; text-transform:uppercase; margin-bottom:5px;">2024 background grants</div>
             <sc-if value="{{ char.bg2024Feat }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#cfc0a4; margin-bottom:2px;"><span style="color:#bd7d3f; font-weight:600;">Origin Feat</span> {{ char.bg2024Feat }}</div></sc-if>
-            <sc-if value="{{ char.bg2024Ability }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#cfc0a4; margin-bottom:2px;"><span style="color:#bd7d3f; font-weight:600;">Ability boosts</span> +2/+1 from {{ char.bg2024Ability }}</div></sc-if>
+            <sc-if value="{{ char.has2024AbilBoost }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:4px; font-size:12.5px; color:#cfc0a4;">
+              <span style="color:#bd7d3f; font-weight:600;">Ability boosts</span>
+              <span>+2</span><select value="{{ char.abilBoost2Val }}" onChange="{{ char.onAbilBoost2 }}" style="background:#2d271f; border:1px solid #4a3f30; border-radius:5px; padding:3px 6px; font-size:12px; color:#e7dcc6;">{{ char.abilBoost2Opts }}</select>
+              <span>+1</span><select value="{{ char.abilBoost1Val }}" onChange="{{ char.onAbilBoost1 }}" style="background:#2d271f; border:1px solid #4a3f30; border-radius:5px; padding:3px 6px; font-size:12px; color:#e7dcc6;">{{ char.abilBoost1Opts }}</select>
+              <span style="color:#7d8a6f; font-style:italic;">→ applied to scores below</span>
+            </div>
+            </sc-if>
+            <sc-if value="{{ char.bg2024Ability }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px; color:#7d8a6f; margin-bottom:2px;">options: {{ char.bg2024Ability }}</div></sc-if>
             <sc-if value="{{ char.bg2024Skills }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#cfc0a4;"><span style="color:#bd7d3f; font-weight:600;">Skills</span> {{ char.bg2024Skills }}</div></sc-if>
             <div style="font-size:11px; color:#7d8a6f; margin-top:6px; line-height:1.4;">In 2024 your ability boosts and feat come from your <strong>background</strong>, not your species — set your final ability scores below.</div>
           </div>
@@ -454,8 +463,16 @@
           <input value="{{ char.langNameVal }}" onInput="{{ char.onLangName }}" placeholder="Add a language (e.g. Kenderspeak)" style="flex:1; background:#2d271f; border:1px solid #4a3f30; border-radius:5px; padding:6px 9px; font-size:13px; color:#e7dcc6;">
           <input value="{{ char.langDescVal }}" onInput="{{ char.onLangDesc }}" placeholder="Description / context (optional)" style="flex:2; background:#2d271f; border:1px solid #4a3f30; border-radius:5px; padding:6px 9px; font-size:13px; color:#e7dcc6;">
           <button onClick="{{ char.onAddLanguage }}" style="background:#2d271f; color:#bd7d3f; border:1px solid #4a3f30; border-radius:5px; padding:6px 12px; font-size:12.5px; cursor:pointer; white-space:nowrap;">Add</button>
+          <sc-if value="{{ char.hasLangBrowse }}" hint-placeholder-val="{{ false }}"><button onClick="{{ char.onToggleLangBrowse }}" title="Browse the rulebook's languages" style="background:#3a2e1f; color:#f0d9b5; border:1px solid #6a5a44; border-radius:5px; padding:6px 11px; font-size:12px; cursor:pointer; white-space:nowrap;">🌐 Browse</button></sc-if>
         </div>
-        <div style="font-size:11px; color:#7d6f5a; margin-top:8px; line-height:1.4;">Species &amp; class tongues fill in automatically; add flavour languages (like Kenderspeak) here. Locked chips come from your species/class.</div>
+        <sc-if value="{{ char.langBrowseOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#1b1812; border:1px solid #4a3f30; border-radius:8px; padding:10px; margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
+          <sc-for list="{{ char.langBrowseItems }}" as="lg" hint-placeholder-count="6">
+            <button onClick="{{ lg.onClick }}" title="{{ lg.title }}" style="border-radius:6px; padding:4px 10px; font-size:12.5px; cursor:pointer; border:1px solid #4a3f30; background:#2d271f; color:#cabfa9;">{{ lg.name }}</button>
+          </sc-for>
+        </div>
+        </sc-if>
+        <div style="font-size:11px; color:#7d6f5a; margin-top:8px; line-height:1.4;">Species &amp; class tongues fill in automatically; add flavour languages (like Kenderspeak) by typing, or 🌐 Browse the rulebook's list. Locked rows come from your species/class.</div>
       </div>
       </sc-if>
 
@@ -1439,7 +1456,43 @@ class Component extends DCLogic {
   fmtMod(n) { n = parseInt(n, 10); if (isNaN(n)) n = 10; const m = Math.floor((n - 10) / 2); return "(" + (m >= 0 ? "+" : "\u2212") + Math.abs(m) + ")"; }
 
   setPc(k, v) { this.setState(s => ({ draft: Object.assign({}, s.draft, { pc: Object.assign({}, s.draft.pc || {}, { [k]: v }) }) })); }
+  // 2024 background ability boost (+2 / +1 from the background's options). Idempotent: strips the
+  // current boosts to recover the base scores, then re-applies the new picks, so changing them
+  // never double-counts. Stored on pc.abilityBoost2 / pc.abilityBoost1.
+  setAbilityBoost(slot, ability) {
+    this.setState(s => {
+      const pc = Object.assign({}, s.draft.pc || {});
+      const ab = Object.assign({}, s.draft.abilities || {});
+      const cur2 = pc.abilityBoost2, cur1 = pc.abilityBoost1;
+      if (cur2 && ab[cur2] != null) ab[cur2] = parseInt(ab[cur2], 10) - 2;
+      if (cur1 && ab[cur1] != null) ab[cur1] = parseInt(ab[cur1], 10) - 1;
+      if (slot === "b2") pc.abilityBoost2 = ability || ""; else pc.abilityBoost1 = ability || "";
+      const n2 = pc.abilityBoost2, n1 = pc.abilityBoost1;
+      if (n2 && ab[n2] != null) ab[n2] = parseInt(ab[n2], 10) + 2;
+      if (n1 && ab[n1] != null) ab[n1] = parseInt(ab[n1], 10) + 1;
+      return { draft: Object.assign({}, s.draft, { pc, abilities: ab }) };
+    });
+  }
   setPcFields(obj) { this.setState(s => ({ draft: Object.assign({}, s.draft, { pc: Object.assign({}, s.draft.pc || {}, obj) }) })); }
+  // Re-derive after a STRUCTURAL change (class / species / background / subclass / subspecies).
+  // These all feed proficiencies, features, languages, HP and spellcasting, so a plain field-set
+  // would leave the sheet stale — POST /character/derive re-runs the engine (incl. the display
+  // features + languages refresh) and lands the fully-consistent character. Optimistic + safe offline.
+  async derivePc(patch) {
+    const draft = this.state.draft;
+    this.setPcFields(patch);                                  // optimistic: reflect the pick now
+    if (!draft || draft.kind !== "character") return;
+    if (this.state.bridge !== true) { this.setState({ pcDeriveNote: "Set locally — connect to the forge to re-derive the maths." }); return; }
+    this.setState({ pcDeriveNote: "Re-deriving…" });
+    try {
+      const newPc = Object.assign({}, draft.pc || {}, patch);
+      const res = await this.jpost("/character/derive", { character: Object.assign({}, draft, { pc: newPc }) }, 9000);
+      const ch = res.character || res;
+      this.setState(s => ({ draft: Object.assign({}, s.draft, ch), pcDeriveNote: this.summariseChanges(res.changes, res.warnings) }));
+    } catch (e) {
+      this.setState({ pcDeriveNote: "Couldn't re-derive (engine offline?) — set locally." });
+    }
+  }
   // Re-derive a PC for a new level: POST /character/derive returns the character with HP,
   // hit dice, proficiency bonus, spell slots, save DC/attack and class features re-derived
   // (player's exact abilities/spells/gear untouched). Lands the result as the draft + a note.
@@ -1571,9 +1624,9 @@ class Component extends DCLogic {
   setPcCurrency(k, v) { this.setState(s => { const pc = Object.assign({}, s.draft.pc || {}); const n = parseInt(v, 10); pc.currency = Object.assign({}, pc.currency || {}, { [k]: isNaN(n) ? 0 : n }); return { draft: Object.assign({}, s.draft, { pc }) }; }); }
   // ----- Languages editor (Studio): manual languages persist in pc.extraLanguages; the engine
   // re-derives species/class tongues + these on save, and writes the display line + descriptions. -----
-  addLanguage() {
-    const name = (this.state.langName || "").trim(); if (!name) return;
-    const desc = (this.state.langDesc || "").trim();
+  addLanguage(presetName) {
+    const name = (typeof presetName === "string" ? presetName : (this.state.langName || "")).trim(); if (!name) return;
+    const desc = (typeof presetName === "string" ? "" : (this.state.langDesc || "")).trim();
     this.setState(s => {
       const pc = Object.assign({}, s.draft.pc || {});
       const lk = name.toLowerCase();
@@ -1611,8 +1664,16 @@ class Component extends DCLogic {
   }
   async saveCharacter() {
     if (!this.state.bridge) return null;
-    try { const res = await this.jpost("/character", { character: this.charPayload() }, 15000); this.refreshLibrary(); return res; }
-    catch (e) { return null; }
+    try {
+      const res = await this.jpost("/character", { character: this.charPayload() }, 15000);
+      // The save endpoint re-runs the full engine (proficiencies, gear canonicalisation, features,
+      // languages, action reconcile/annotate) and returns the derived character — land it so the
+      // on-screen sheet matches exactly what was persisted, never drifting until the next reload.
+      const ch = res && res.character;
+      if (ch && ch.kind) this.setState(s => ({ draft: Object.assign({}, s.draft, ch) }));
+      this.refreshLibrary();
+      return res;
+    } catch (e) { return null; }
   }
   // ---- My creations: save / open / delete ----
   toggleLib() { this.setState(s => ({ libOpen: !s.libOpen })); }
@@ -1786,6 +1847,17 @@ class Component extends DCLogic {
     try {
       const c = await this.api("/character/" + encodeURIComponent(id), null, 6000);
       const ch = c.character || c;
+      // Self-heal a companion's owner link: if it was forged before the owner was saved (id null),
+      // fill the id from the library by matching the owner's name — so a later owner rename can't
+      // silently sever the back-link (resolution then keys on a stable id, not just the name).
+      if (ch.companionOf && !ch.companionOf.id) {
+        const owner = (this.state.serverChars || []).find(o => o && String(o.name || "").toLowerCase() === String(ch.companionOf.name || "").toLowerCase());
+        if (owner && owner.id) ch.companionOf = Object.assign({}, ch.companionOf, { id: owner.id });
+      }
+      // Switch the active ruleset to the one this character was forged under, so the Studio editor
+      // offers the right edition's options (2014 vs 2024) and the 2024 background widgets appear.
+      const slug = ch.ruleset, known = (this.state.rulesets || []).some(r => (r.slug || r) === slug);
+      if (slug && known && slug !== this.state.rulesetSlug) this.loadRuleset(slug);
       this.setState({ activeId: id, draft: ch, mode: ch.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0, freshStart: false, pcDeriveNote: "" });
     } catch (e) { this.load(id); }
   }
@@ -1943,6 +2015,7 @@ class Component extends DCLogic {
     try {
       const res = await this.jpost("/forge", { dump: this.state.draft.dump || "", ruleset: this.state.rulesetSlug, kind: this.state.draft.kind, rulesMode: this.state.rulesMode, details: this.forgeDetails() }, 90000);
       const ch = res.character || res;
+      ch.ruleset = ch.ruleset || this.state.rulesetSlug;   // stamp the edition so re-opens target the right rules
       ch.proseName = ch.name || "";   // the name the AI used in the summary blurb — so a later rename can track it
       // FIDELITY: keep the user's typed descriptive fields — overlay any non-empty entry over the engine's,
       // so pressing Forge never silently overwrites what they wrote. (Blank fields fall through to the engine's.)
@@ -3328,6 +3401,12 @@ class Component extends DCLogic {
     // Studio editor: chips (species/class auto = locked; chosen = removable) + add inputs.
     char.langChips = (Array.isArray(d.languagesList) ? d.languagesList : []).map(l => ({ name: l.name, srcTag: srcPretty(l.source), desc: l.description || "", hasDesc: !!l.description, removable: l.source === "chosen", onRemove: () => this.removeLanguage(l.name) }));
     char.onAddLanguage = () => this.addLanguage();
+    // Language picker — browse the ruleset's language list and add with one click.
+    const _olLangs = (this.state.ruleset && this.state.ruleset.optionLists && this.state.ruleset.optionLists.languages) || [];
+    char.hasLangBrowse = _olLangs.length > 0;
+    char.langBrowseOpen = !!this.state.langBrowseOpen;
+    char.onToggleLangBrowse = () => this.setState(s => ({ langBrowseOpen: !s.langBrowseOpen }));
+    char.langBrowseItems = _olLangs.map(l => ({ name: l.name, title: (l.type ? l.type + " language" : ""), onClick: () => this.addLanguage(l.name) }));
     char.langNameVal = this.state.langName || ""; char.onLangName = e => this.setState({ langName: e.target.value });
     char.langDescVal = this.state.langDesc || ""; char.onLangDesc = e => this.setState({ langDesc: e.target.value });
 
@@ -3391,13 +3470,21 @@ class Component extends DCLogic {
       char.pcSpeciesOpts = mkPcSel(pairList(OL.species)); char.pcSpeciesVal = String(pc.species || "");
       char.pcBackgroundOpts = mkPcSel(pairList(OL.backgrounds)); char.pcBackgroundVal = String(pc.background || "");
       // 2024 backgrounds work differently (Origin Feat + ability boosts + fixed skills, no languages);
-      // surface that structure in the editor when the local 2024 ruleset is active.
-      const is2024Local = String(this.state.rulesetSlug || "").indexOf("local") > -1;
-      const bg2024 = is2024Local ? ((OL.backgrounds || []).find(b => String(b.index) === String(pc.background)) || null) : null;
+      // surface that structure in the editor for ANY 2024 ruleset (SRD or the richer local PHB build).
+      const is2024 = String(this.state.rulesetSlug || "").indexOf("2024") > -1;
+      const bg2024 = is2024 ? ((OL.backgrounds || []).find(b => String(b.index) === String(pc.background)) || null) : null;
       char.show2024Bg = !!(bg2024 && (bg2024.featText || bg2024.abilityScoresText || bg2024.skillsText));
       char.bg2024Feat = (bg2024 && bg2024.featText) || "";
       char.bg2024Ability = (bg2024 && bg2024.abilityScoresText) || "";
       char.bg2024Skills = (bg2024 && bg2024.skillsText) || "";
+      // +2/+1 ability-boost widget: two selectors over the background's three ability options.
+      const abilOpts = (bg2024 && bg2024.abilityOptions) || [];
+      char.has2024AbilBoost = abilOpts.length > 0;
+      const mkAbilOpts = () => [React.createElement("option", { key: "_", value: "" }, "—")].concat(abilOpts.map(a => React.createElement("option", { key: a, value: a }, a)));
+      char.abilBoost2Opts = mkAbilOpts(); char.abilBoost1Opts = mkAbilOpts();
+      char.abilBoost2Val = String(pc.abilityBoost2 || ""); char.abilBoost1Val = String(pc.abilityBoost1 || "");
+      char.onAbilBoost2 = e => this.setAbilityBoost("b2", e.target.value);
+      char.onAbilBoost1 = e => this.setAbilityBoost("b1", e.target.value);
       char.pcSubclassOpts = mkPcSel(subPairs); char.pcSubclassVal = String(pc.subclass || ""); char.pcHasSubclass = subPairs.length > 0;
       const subspPairs = pairList((OL.subspeciesBySpecies || {})[pc.species] || []);
       char.pcSubspeciesOpts = mkPcSel(subspPairs); char.pcSubspeciesVal = String(pc.subspecies || ""); char.pcHasSubspecies = subspPairs.length > 0;
@@ -3415,7 +3502,7 @@ class Component extends DCLogic {
         return { label: (o.name || titleCase(idx)), onClick: () => this.toggleSkillChoice(idx, skillChoose),
           style: "border:1px solid " + (on ? "#99502a" : "#4a3f30") + "; background:" + (on ? "#99502a" : "#2d271f") + "; color:" + (on ? "#fff" : "#cabfa9") + "; border-radius:999px; padding:4px 11px; font-size:12.5px; cursor:pointer;" };
       });
-      char.onPcClass = e => this.setPcFields({ "class": e.target.value, subclass: "", skillChoices: [] });
+      char.onPcClass = e => this.derivePc({ "class": e.target.value, subclass: "", skillChoices: [] });
       // Level control: re-derives HP/slots/PB/features via POST /character/derive (engine maths).
       char.pcLevelVal = String(pc.level || 1);
       char.onPcLevel = e => this.deriveLevel(e.target.value);
@@ -3445,10 +3532,21 @@ class Component extends DCLogic {
         char.pcClassRows = [];
         char.pcTotalLevel = pc.level || 1;
       }
-      char.onPcSpecies = e => this.setPcFields({ species: e.target.value, subspecies: "" });
-      char.onPcSubspecies = e => this.setPcFields({ subspecies: e.target.value });
-      char.onPcBackground = e => this.setPcFields({ background: e.target.value });
-      char.onPcSubclass = e => this.setPcFields({ subclass: e.target.value });
+      // 2024 multiclass prerequisites (ability minimums) — a reference note for the classes in play.
+      char.show2024McPrereq = false; char.mc2024Prereq = "";
+      if (isMulticlass && is2024) {
+        const mc = (OL.multiclassing && OL.multiclassing.prerequisites) || [];
+        const myClasses = pc.classes.map(r => String(r.class || "").toLowerCase()).filter(Boolean);
+        const reqs = mc.filter(p => myClasses.indexOf(String(p.class || "").toLowerCase()) > -1).map(p => {
+          const r = p.requires || {}; const parts = Object.keys(r).map(k => k.slice(0, 3).toUpperCase() + " " + r[k]);
+          return (p.class_name || p.class) + " (" + (parts.join(", ") || "—") + ")";
+        });
+        char.show2024McPrereq = reqs.length > 0; char.mc2024Prereq = reqs.join(" · ");
+      }
+      char.onPcSpecies = e => this.derivePc({ species: e.target.value, subspecies: "" });
+      char.onPcSubspecies = e => this.derivePc({ subspecies: e.target.value });
+      char.onPcBackground = e => this.derivePc({ background: e.target.value });
+      char.onPcSubclass = e => this.derivePc({ subclass: e.target.value });
     }
     // Only show the Codex spellcasting block when there's something real to show — an empty
     // spellcasting{} on a non-caster shouldn't render a hollow "Spellcasting" section.
@@ -3683,7 +3781,7 @@ class Component extends DCLogic {
     else if (this.state.bridge === true) { bst = "\u25CF Bridge live"; bstyle = "color:#48b06a;"; bridgeStatusTitle = "Connected to " + this.bridgeBase(); }
     else if (this.state.bridge === false) { bst = "\u25CB Not connected"; bstyle = "color:#c0875a;"; bridgeStatusTitle = "Not connected. Press \u21BB Reconnect (try port 5001 if 5000 is stuck) or start the bridge (python -m forge.web.app)."; }
     const bridgeStatusStyle = "font-size:12.5px; font-weight:600; letter-spacing:0.3px; white-space:nowrap; " + bstyle;
-    const rulesetLabel = s => ({ "dnd5e-2014": "D&D 5e (2014)", "dnd5e-2024": "D&D 5e (2024)" }[s] || s);
+    const rulesetLabel = s => ({ "dnd5e-2014": "D&D 5e (2014)", "dnd5e-2024": "D&D 5e (2024)", "dnd5e-2024-local": "D&D 5e (2024) — local PHB build" }[s] || s);
     const rulesetEls = (this.state.rulesets || []).map(r => { const slug = (r && r.slug) || r; const label = (r && r.label) || rulesetLabel(slug); return React.createElement("option", { key: slug, value: slug }, label); });
     const warnColor = { error: "#c0392b", warning: "#d6892f", info: "#8a6f4a" };
     const forgeWarnings = (this.state.forgeWarnings || []).map(w => ({ message: w.message, style: "border-left:3px solid " + (warnColor[w.level] || warnColor.info) + "; padding:7px 10px; background:#2a241d; border-radius:0 4px 4px 0; font-size:13px; color:#d8ccb4; line-height:1.45;" }));

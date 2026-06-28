@@ -13,6 +13,7 @@ rather than hard-coded.
 from __future__ import annotations
 
 import json
+import re
 from copy import deepcopy
 from pathlib import Path
 
@@ -116,7 +117,13 @@ class Ruleset:
 
         def names(category: str) -> list:
             try:
-                return [{"index": e.get("index"), "name": e.get("name")} for e in repo.all(category)]
+                out = []
+                for e in repo.all(category):
+                    if isinstance(e, str):  # some SRD files (e.g. 2014 languages) are plain name lists
+                        out.append({"index": re.sub(r"[^a-z0-9]+", "-", e.lower()).strip("-"), "name": e})
+                    elif isinstance(e, dict):
+                        out.append({"index": e.get("index"), "name": e.get("name")})
+                return out
             except Exception:
                 return []
 
@@ -145,6 +152,7 @@ class Ruleset:
             "subspeciesBySpecies": self._subspecies_by_species(repo),
             "backgrounds": self._backgrounds_enriched(repo, prof_type),
             "feats": names("feats"),
+            "languages": names("languages"),     # for the language picker (local overlay replaces for 2024)
             "conditions": names("conditions"),
             "creatureTypes": CREATURE_TYPES,
             "sizes": SIZES,
