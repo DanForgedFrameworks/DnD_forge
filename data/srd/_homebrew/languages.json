@@ -1,0 +1,28 @@
+{
+  "_note": "Flavour descriptions for languages, so every tongue on a sheet carries context — not just the SRD's terse script/speaker data. Keyed by lower-cased language name. Used as the PRIMARY description; the engine falls back to the SRD catalog (type/script/speakers) for anything not here, and to a player-written description for bespoke flavour tongues (e.g. Kenderspeak). Edition-shared.",
+
+  "common": "The trade tongue of the realms — nearly everyone speaks at least a little. Written in the Common script.",
+  "dwarvish": "The language of dwarves: hard consonants and guttural sounds, carried into their runes and carvings. Script: Dwarvish.",
+  "elvish": "Fluid and musical, with subtle intonations and intricate grammar; elven literature is rich and widely admired. Script: Elvish.",
+  "giant": "The booming tongue of giants and ogres, descended from the old Jotun speech. Script: Dwarvish.",
+  "gnomish": "The language of gnomes, famous for its inventive technical and scholarly treatises. Script: Dwarvish.",
+  "goblin": "The harsh, rapid speech of goblinoids — goblins, hobgoblins, and bugbears. Script: Dwarvish.",
+  "halfling": "The warm, homely tongue of halflings — seldom written, passed on in story, recipe, and song. Script: Common.",
+  "orc": "The brutal, grating language of orcs, full of threats and boasts. Script: Dwarvish.",
+  "orcish": "The brutal, grating language of orcs, full of threats and boasts. Script: Dwarvish.",
+  "abyssal": "The chaotic, vile tongue of demons and the Abyss; merely hearing it can unsettle a listener. Script: Infernal.",
+  "celestial": "The radiant, melodic language of celestials and the Upper Planes. Script: Celestial.",
+  "deep speech": "The alien, mind-bending language of aberrations — mind flayers, beholders — barely shaped for mortal mouths. It has no script.",
+  "draconic": "One of the oldest languages, spoken by dragons and dragonborn; much arcane writing is set down in Draconic. Script: Draconic.",
+  "infernal": "The precise, contractual tongue of devils and the Nine Hells — every word weighed like a clause. Script: Infernal.",
+  "primordial": "The elemental language, with Auran, Aquan, Ignan, and Terran dialects; one who knows Primordial understands them all.",
+  "sylvan": "The lilting language of the Feywild — fey, dryads, and many woodland creatures. Script: Elvish.",
+  "undercommon": "The trade cant of the Underdark, spoken by drow and others who dwell below. Script: Elvish.",
+  "auran": "The breathy, whistling dialect of Primordial spoken by creatures of the Elemental Plane of Air.",
+  "aquan": "The flowing, bubbling dialect of Primordial spoken by creatures of the Elemental Plane of Water.",
+  "ignan": "The crackling, sharp dialect of Primordial spoken by creatures of the Elemental Plane of Fire.",
+  "terran": "The slow, grinding dialect of Primordial spoken by creatures of the Elemental Plane of Earth.",
+  "druidic": "The secret language of druids. You can speak it and leave hidden messages; those who know Druidic spot such a message automatically, while others have little chance of noticing it.",
+  "thieves' cant": "A secret mix of dialect, jargon, and code that hides a message inside seemingly normal conversation. Only another who knows Thieves' Cant understands it.",
+  "thieves cant": "A secret mix of dialect, jargon, and code that hides a message inside seemingly normal conversation. Only another who knows Thieves' Cant understands it."
+}

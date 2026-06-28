@@ -8,8 +8,12 @@ __pycache__/
 # Secrets
 .env
 
-# Pulled canonical data (re-fetchable via scripts/fetch_srd_data.py)
-/data/srd/
+# Pulled canonical data (re-fetchable via scripts/fetch_srd_data.py) — fetched SRD only.
+/data/srd/*
+# ...but our ORIGINAL homebrew overlay (the Hoopak, flavour item actions, language &
+# feature descriptions, species traits, standard actions) IS shipped — it's our own
+# content, not the copyrighted SRD, and the engine depends on it.
+!/data/srd/_homebrew/
 
 # Open-licensed third-party content: generated JSON is regenerated via
 # scripts/import_open5e_monsters.py; the licence/attribution text IS committed.

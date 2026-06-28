@@ -1,0 +1,192 @@
+{
+  "_note": "Flavourful, Rule-of-Cool actions for ordinary gear, so any item can DO something — not just weapons. Keyed by SRD equipment index OR a lower-cased item name (for flavour/magic items with no equipment entry). Each value is a list of {name, text}. The engine tags them source 'item:<key>'. Edition-shared overlay (2014 + 2024). Every action is editable per-character in the Studio.",
+
+  "candle": [
+    { "name": "Candlelight", "text": "Light the candle (or use a Tinderbox). For 1 hour it sheds bright light in a 5-foot radius and dim light for 5 feet beyond. Its open flame can ignite a fuse, a torch, or a small patch of something flammable." }
+  ],
+  "torch": [
+    { "name": "Light the Torch", "text": "Burns for 1 hour, shedding bright light in a 20-foot radius and dim light for 20 feet beyond. As an improvised weapon a lit torch deals 1 fire damage on a hit and can set alight a creature or object that's flammable." }
+  ],
+  "tinderbox": [
+    { "name": "Strike a Flame", "text": "Light a torch, lantern, or campfire as an action (a candle as a bonus action). With dry kindling and a moment, start a small controlled fire — or a not-so-controlled one." }
+  ],
+  "lantern-hooded": [
+    { "name": "Hooded Lantern", "text": "Bright light in a 30-foot radius, dim light for 30 feet beyond, for 6 hours on a flask of oil. Lower the hood as a bonus action to shrink the light to a dim 5-foot radius without snuffing it." }
+  ],
+  "oil-flask": [
+    { "name": "Splash & Ignite", "text": "Throw the flask up to 20 feet (DC 10 attack vs the ground/target) to coat a 5-foot square. A creature hit directly that then takes fire damage takes an extra 5 fire damage; the spilled oil burns for 2 rounds if lit. Or pour it to fuel a lantern for 6 hours." }
+  ],
+  "acid-vial": [
+    { "name": "Hurl Acid", "text": "Throw the vial up to 20 feet as an action (ranged attack). On a hit the target takes 2d6 acid damage. Also useful to eat through rope, a weak lock, or a stuck hinge." }
+  ],
+  "alchemists fire (flask)": [
+    { "name": "Throw Alchemist's Fire", "text": "Hurl the flask up to 20 feet (ranged attack). On a hit the target takes 1d4 fire damage and is alight, taking 1d4 fire at the start of each of its turns until it or an ally spends an action to douse the flames (DC 10 Dexterity check)." }
+  ],
+  "holy-water-flask": [
+    { "name": "Cast Holy Water", "text": "Throw the flask up to 20 feet (ranged attack). On a hit a fiend or undead takes 2d6 radiant damage. Often poured to sanctify a threshold or cleanse a tainted object." }
+  ],
+  "dice-set": [
+    { "name": "Games of Chance", "text": "Draw locals into a wager. Make a Wisdom (Insight) check to read your opponents or a Charisma (Deception) check to bluff a winning hand; stake what you dare. A good run nets 1d10 gp — a bad one loses the same, and may earn you a sore loser." }
+  ],
+  "playing-card-set": [
+    { "name": "A Hand of Cards", "text": "Deal a game to pass the time or win some coin. Charisma (Deception) to bluff or Wisdom (Insight) to catch a cheat; a tidy win earns 1d10 gp, and a card game is a fine excuse to size up a stranger." }
+  ],
+  "abacus": [
+    { "name": "Quick Reckoning", "text": "Run the numbers in a blink. Gain advantage on a Charisma (Persuasion) check to haggle a fair price, or on an Intelligence (Investigation) check to catch a padded bill, a short-changed purse, or a cooked ledger." }
+  ],
+  "grappling-hook": [
+    { "name": "Hook & Climb", "text": "Hurl the hook to catch a ledge, battlement, or branch up to 25 feet away (DC 10–15 Dexterity check depending on the target). On a catch, you can climb the rope or swing across a gap of up to 15 feet." }
+  ],
+  "rope-hempen-50-feet": [
+    { "name": "Rope Tricks", "text": "Fifty feet of hemp. Rig a secured line (advantage on Strength (Athletics) to climb it), bind a creature or object (a bound creature escapes with a DC 15 Dexterity check), or string a tripline across a corridor." }
+  ],
+  "climbers-kit": [
+    { "name": "Anchor the Line", "text": "Spend 1 minute to fix pitons, boot tips, gloves and a harness to a surface. While anchored you can't fall more than 25 feet from the anchor and you can't move more than 25 feet from it without unfixing." }
+  ],
+  "piton": [
+    { "name": "Drive a Piton", "text": "Hammer the spike into rock or timber to anchor a rope, mark a route, or wedge a door shut (a wedged door needs a DC 13 Strength check to force)." }
+  ],
+  "crowbar": [
+    { "name": "Pry & Lever", "text": "Set the bar and lean in. Gain advantage on Strength checks to force open a stuck or locked door, lever the lid off a crate, or bend a weak grate." }
+  ],
+  "shovel": [
+    { "name": "Dig In", "text": "Move earth, sand, or snow. Dig a shallow grave, a foxhole, or a covered pit (a creature that doesn't see it makes a DC 12 Wisdom (Perception) check or falls in), or unearth what someone tried to bury." }
+  ],
+  "healers-kit": [
+    { "name": "Stabilise & Tend", "text": "Ten uses. Spend an action to stabilise a dying creature without a Wisdom (Medicine) check, or use the kit while binding wounds on a rest to ease recovery." }
+  ],
+  "herbalism-kit": [
+    { "name": "Brew a Remedy", "text": "With time and the kit, identify plants, treat poison or disease (Wisdom (Medicine) check), or craft a potion of healing during downtime." }
+  ],
+  "caltrops": [
+    { "name": "Scatter Caltrops", "text": "Spread them over a 5-foot square as an action. A creature that enters the area makes a DC 15 Dexterity save or takes 1 piercing damage and has its speed halved until it spends an action to pull the spikes free." }
+  ],
+  "ball-bearings": [
+    { "name": "Spill Ball Bearings", "text": "Scatter them across a 10-foot square as an action. A creature moving through makes a DC 10 Dexterity save or falls prone. A patient foe can step around them at half speed." }
+  ],
+  "hunting-trap": [
+    { "name": "Set the Trap", "text": "Spend an action to set the jawed trap. A creature that steps on it makes a DC 13 Dexterity save or takes 1d4 piercing damage and stops moving; freeing itself or another costs an action and a DC 13 Strength check." }
+  ],
+  "manacles": [
+    { "name": "Clap in Irons", "text": "Bind the hands of an incapacitated or willing Small/Medium creature. Escaping needs a DC 20 Dexterity (Sleight of Hand) check; breaking them, a DC 20 Strength check." }
+  ],
+  "net": [
+    { "name": "Cast the Net", "text": "Throw it at a creature within 5/15 feet (ranged attack). A Large-or-smaller target is restrained until it frees itself with a DC 10 Strength check, or someone cuts the net (AC 10, 5 slashing damage)." }
+  ],
+  "mirror-steel": [
+    { "name": "Angle the Mirror", "text": "Peer around a corner or over a wall without exposing yourself, signal an ally with a flash of sunlight, or check whether the thing in the dark casts a reflection at all." }
+  ],
+  "pole-10-foot": [
+    { "name": "Probe Ahead", "text": "Tap the floor, ceiling, and walls ahead to trigger or reveal pressure plates, tripwires, and unstable ground from a safe 10 feet back — the classic way to find a trap before it finds you." }
+  ],
+  "spyglass": [
+    { "name": "Look Far", "text": "Objects viewed through it are magnified to twice their size; gain advantage on Wisdom (Perception) checks that rely on sight at a distance — reading a banner, counting a column, spotting a sail." }
+  ],
+  "magnifying-glass": [
+    { "name": "Examine Closely", "text": "Gain advantage on an Intelligence (Investigation) check to study fine detail — a forged seal, a hidden maker's mark, a clue at a crime scene. In bright sun it can slowly start a fire in dry tinder." }
+  ],
+  "disguise-kit": [
+    { "name": "Don a Disguise", "text": "Spend time and the kit to change your appearance. Make a Charisma (Deception) check, contested by a suspicious onlooker's Wisdom (Insight), to pass as someone else." }
+  ],
+  "forgery-kit": [
+    { "name": "Forge a Document", "text": "Produce a convincing false paper or seal with a Dexterity check using the kit, contested by the examiner's Intelligence (Investigation) — a writ, a letter of passage, a noble's signature." }
+  ],
+  "poisoners-kit": [
+    { "name": "Apply Poison", "text": "Coat a weapon or a single piece of ammunition (DC 13 to avoid poisoning yourself), or craft and identify poisons with a check using the kit during downtime." }
+  ],
+  "navigators-tools": [
+    { "name": "Chart a Course", "text": "Use the charts and instruments to plot a route, gain advantage on Wisdom (Survival) checks to avoid getting lost, and estimate your position at sea or in the wilds." }
+  ],
+  "smiths-tools": [
+    { "name": "Mend Metal", "text": "Repair damaged armour or a weapon, force or refit a lock, or break a chain over time with a Strength check using the tools." }
+  ],
+  "thieves-tools": [
+    { "name": "Pick a Lock / Disarm a Trap", "text": "Work the picks and probes. Make a Dexterity check using Thieves' Tools to open a lock, or to disarm a mechanical trap you can reach." }
+  ],
+  "fishing-tackle": [
+    { "name": "Cast a Line", "text": "Spend time by water to catch food. A Wisdom (Survival) check lands a day's rations on a success — and the odd boot, ring, or rumour from the riverbed." }
+  ],
+  "signal-whistle": [
+    { "name": "Blow the Whistle", "text": "A shrill blast carries far. Sound a pre-arranged signal, raise an alarm, or call a trained animal to your side." }
+  ],
+  "hourglass": [
+    { "name": "Mark the Time", "text": "Measure a fixed span of minutes — time a held breath, a ritual, a guard's circuit, or how long until the tide turns." }
+  ],
+  "chain-10-feet": [
+    { "name": "Bind with Chain", "text": "Ten feet of iron links (AC 19, 10 HP, DC 20 Strength to burst). Lash a door shut, secure a prisoner to a fixed object, or rig a heavy improvised trip." }
+  ],
+  "waterskin": [
+    { "name": "Drink or Share", "text": "Holds 4 pints. Slake your own thirst for the day, share with a parched companion, or empty it to douse a small flame or float as a tiny bladder." }
+  ],
+  "rations-1-day": [
+    { "name": "Eat a Ration", "text": "A day's dry food. Stave off a level of exhaustion from hunger, or share to win the trust of someone hungrier than you." }
+  ],
+  "lute": [
+    { "name": "Play a Tune", "text": "Perform for a crowd or a single listener. A Charisma (Performance) check can earn coin, lift spirits, draw a room's attention your way, or set a mood for what comes next." }
+  ],
+  "animal feed": [
+    { "name": "Scatter Feed", "text": "Lay out a day's feed and wait quietly. Roll a d20; on a 15 or higher a small, unowned local creature (the DM picks) is drawn in and lingers near you for about an hour, remaining friendly so long as it isn't threatened." }
+  ],
+  "three small bells": [
+    { "name": "Sound the Bells", "text": "A sharp jingle carries a short way. Use them as a pre-arranged signal between allies, an improvised alarm tied to a door, or a sudden distraction to draw an eye the wrong way." }
+  ],
+  "map of kendermore": [
+    { "name": "Consult the Map", "text": "Pore over the well-worn chart. Gain advantage on a Wisdom (Survival) check to navigate the region it depicts, or on an Intelligence (History) check to recall a landmark, shortcut, or half-forgotten local secret." }
+  ],
+  "map of the city (generic)": [
+    { "name": "Consult the City Map", "text": "Trace the streets with a finger. Gain advantage on a check to navigate the city, find the fastest route, or recall where a district, gate, guild, or notable building lies." }
+  ],
+
+  "signet ring of house vael": [
+    { "name": "Seal & Signify", "text": "Press the ring into hot wax to seal a letter with House Vael's mark, or show it to prove your identity — advantage on Charisma checks among those who recognise the house, and a door or two that won't open for a commoner." }
+  ],
+  "scroll of pedigree": [
+    { "name": "Present Your Lineage", "text": "Unroll the documented bloodline to assert your noble standing. Advantage on a Charisma (Persuasion) check to claim the audience, rights, or courtesy owed your house." }
+  ],
+  "star-chart bound in violet leather": [
+    { "name": "Read the Stars", "text": "Consult the chart to navigate by night (advantage on Wisdom (Survival) under open sky) or to recall an omen, conjunction, or scrap of astrological lore (Intelligence (Arcana))." }
+  ],
+  "prayer book of funeral rites": [
+    { "name": "Perform Last Rites", "text": "Lead a funeral or blessing. A Wisdom (Religion) check can consecrate ground, lay a restless spirit at ease, or comfort the bereaved (advantage on social checks with mourners)." }
+  ],
+  "stick of incense": [
+    { "name": "Light the Incense", "text": "Sweet smoke fills a 10-foot space for 10 minutes. Mask a scent (disadvantage on tracking you by smell), set a calm and meditative mood (advantage on a focus-reliant check), or signal that a rite has begun." }
+  ],
+  "small portable shrine": [
+    { "name": "Set Up the Shrine", "text": "Spend 10 minutes to unfold a small sacred space. Gain advantage on the next Wisdom (Religion) check made there, or perform a short devotion to steady yourself before what's coming." }
+  ],
+  "the unwritten map (blank scroll)": [
+    { "name": "Consult the Unwritten Map", "text": "The vellum is blank — until you are truly lost. Once per day, study it for a minute and the DM gives you a vague nudge toward your goal: a direction, a landmark, or a feeling of warmer and colder." }
+  ],
+  "pathfinder bells": [
+    { "name": "Ring the Bells", "text": "A soft, clear chime. Mark a safe trail for those who follow, signal a companion across distance, or sound a gentle ward that unsettles the timid creatures of the wood." }
+  ],
+  "woven protection charms": [
+    { "name": "Clutch the Charms", "text": "Folk-charms of knotted thread and twig. Clutch them and whisper the old words for a moment's courage — advantage on your next saving throw against being frightened, or to steady a panicking companion you can touch." }
+  ],
+  "pouch of harmless spores and dried bellflowers": [
+    { "name": "Scatter Spores", "text": "Toss a pinch into the air. A harmless puff of spores and petals marks a 5-foot space, leaves a faint trail only you can follow for an hour, or briefly draws the eye as a small distraction." }
+  ],
+  "pet mouse (squeak)": [
+    { "name": "Send the Pet", "text": "Your small companion darts off on a simple errand — scout a tight gap, fetch a small object, gnaw a cord, or cause a scurrying distraction. Roll a d20; on a 10 or higher it succeeds and returns to you within a few minutes." }
+  ],
+  "pet mouse (flitter)": [
+    { "name": "Send the Pet", "text": "Your small companion darts off on a simple errand — scout a tight gap, fetch a small object, gnaw a cord, or cause a scurrying distraction. Roll a d20; on a 10 or higher it succeeds and returns to you within a few minutes." }
+  ],
+  "chocolate chops (pet badger)": [
+    { "name": "Send the Pet", "text": "Your stout badger companion trundles off on a simple errand — dig under an obstacle, scout a burrow or low passage, fetch something, or make a fierce little distraction. Roll a d20; on a 10 or higher it succeeds and returns within a few minutes." }
+  ],
+
+  "potion of healing": [
+    { "name": "Drink the Potion", "text": "Quaff as an action (or feed it to a creature within reach as an action) to regain 2d4 + 2 hit points. (Greater 4d4+4, Superior 8d4+8, Supreme 10d4+20.)" }
+  ],
+  "bag of holding": [
+    { "name": "Stow or Retrieve", "text": "Holds up to 500 lb / 64 cubic feet in an extradimensional space, always weighing 15 lb. Retrieving a specific item is an action. Overload it, pierce it, or turn it inside-out and it ruptures, spilling everything into the Astral Plane — gone." }
+  ],
+  "bag of holding (used)": [
+    { "name": "Rummage the Found Bag", "text": "A second-hand bag of holding still carries what the last owner left behind. Roll a d20 the first time you search it: 1–6 nothing but lint and a bad smell; 7–9 1d20 sp and a half-eaten ration; 10–12 a useful mundane tool (DM's choice); 13–15 50 + 2d20 gp in mixed coin; 16–18 a potion of healing; 19 a +1 dagger wrapped in oilcloth; 20 a sealed letter and a minor magic trinket the previous owner died for. It functions as a normal Bag of Holding thereafter." }
+  ],
+  "deck of many things": [
+    { "name": "Draw from the Deck", "text": "Declare how many cards you'll draw (most draw 1), then draw within 1 hour — each card's effect triggers at once and can change your fate forever. ⚠ A campaign-altering artifact: best run from its own tab (see the chat). Iconic cards include Sun (great wealth + a useful magic item), Moon (1d3 wishes), Star (+2 to one ability), Throne (proficiency in a skill + a small keep), Key (a rare magic weapon), The Fates (reroll any one event), Gem/Comet (treasure/glory) — and the dark half: Void (your soul is imprisoned), Donjon (you vanish into a cell), Ruin (lose all wealth), Flames (a devil hunts you), Skull (fight avatar of Death), Talons (all your magic items vanish), Euryale (a curse), The Rogue (an NPC turns on you), Balance/Idiot/Jester (alignment/intellect/XP swings)." }
+  ]
+}

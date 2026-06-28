@@ -302,10 +302,27 @@ def _enforce_gear(character: dict, strict: bool, edition: str = "2014") -> list[
     pc = character["pc"]
     if not strict:
         return []  # relaxed keeps the AI's flavourful gear as-is
+    # Preserve whitelisted homebrew/species signature items (e.g. the kender Hoopak)
+    # across the by-the-book reset — they are additive, never the thing strict polices.
+    kept = [it for it in (pc.get("equipment") or [])
+            if isinstance(it, dict) and (it.get("homebrew") or _is_whitelisted_item(it.get("name"), edition))]
     book = starting_gear(pc.get("class"), pc.get("background"), edition)
-    pc["equipment"] = book["equipment"]
+    pc["equipment"] = kept + book["equipment"]
     pc["currency"] = book["currency"]
     out = [_w("info", "starting equipment + gold set from the rulebook (strict mode)")]
+    if kept:
+        names = ", ".join(it.get("name") for it in kept if it.get("name"))
+        out.append(_w("info", f"kept your signature gear ({names}) alongside the by-the-book kit"))
     if book["hasUnresolvedOptions"]:
         out.append(_w("info", "class offers a starting-equipment choice (A/B) - pick one at the table"))
     return out
+
+
+def _is_whitelisted_item(name: str | None, edition: str) -> bool:
+    """True for a catalog item flagged homebrew (so a Hoopak typed by name, not yet
+    carrying the homebrew flag, still survives strict's reset)."""
+    if not name:
+        return False
+    from .equipment import canonical_item  # local import: avoid import cycle at module load
+    card = canonical_item(name, edition)
+    return bool(card and card.get("homebrew"))

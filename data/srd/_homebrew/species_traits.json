@@ -1,0 +1,13 @@
+{
+  "_note": "Homebrew species/lineage traits for flavour species not in the SRD (kender, aarakocra…), so a grounded character still gets its signature traits. Keyed by lower-cased lineage OR species name. Each value is a list of {name, text}. Merged ALONGSIDE the grounded SRD species' own traits (a kender keeps halfling traits AND gains these). Edition-shared.",
+
+  "kender": [
+    { "name": "Fearless", "text": "Kender are famously without fear. You can't be Frightened." },
+    { "name": "Taunt", "text": "As a Bonus Action, you needle and mock a creature within 60 feet that can see and hear you and understands at least one language. It must succeed on a Wisdom saving throw (DC 8 + your proficiency bonus + your Charisma modifier) or, until the end of its next turn, it has disadvantage on attack rolls against creatures other than you. You can taunt a number of times equal to your proficiency bonus, regaining all uses on a long rest." },
+    { "name": "Kender Curiosity", "text": "Your insatiable, light-fingered curiosity grants you proficiency in one skill of your choice from Investigation, Sleight of Hand, or Insight — and a habit of 'finding' things in your pouches that you don't remember picking up." }
+  ],
+  "aarakocra": [
+    { "name": "Flight", "text": "You have a flying speed of 50 feet. To use this speed, you can't be wearing medium or heavy armor." },
+    { "name": "Talons", "text": "Your taloned feet are natural weapons, which you can use to make unarmed strikes. On a hit you deal 1d4 slashing damage, instead of the bludgeoning damage normal for an unarmed strike." }
+  ]
+}

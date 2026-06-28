@@ -22,7 +22,10 @@ from pathlib import Path
 from ..contract import derive_modifiers, validate, apply_derived
 from ..ruleset import Ruleset
 from ..canon import SRDRepository
-from ..engine import resolve_pc_proficiencies, enforce_rules
+from ..engine import (
+    resolve_pc_proficiencies, enforce_rules, resolve_gear, derive_weapon_actions,
+    pc_features_for_display, annotate_equipment_actions, derive_languages, languages_display,
+)
 from ..engine.abilities import apply_ability_bonuses, ABILITIES as _AB_LOWER
 from ..engine.derive import spell_slots
 from ..engine.rules_mode import CASTER_RULES
@@ -191,6 +194,24 @@ def _assemble_pc(raw: dict, *, ruleset, rules_mode) -> tuple[dict, list]:
     # proficiencies from class + background; then rules-mode enforcement
     resolve_pc_proficiencies(character)
     warnings.extend(enforce_rules(character))
+    # canonicalise gear: re-attach catalog modes + recombine any split species item
+    # (e.g. a kender's decomposed Sling -> the one multi-mode Hoopak). Runs after
+    # enforce so it sees both the AI's relaxed gear and strict's preserved homebrew.
+    warnings.extend(resolve_gear(character, edition))
+    annotate_equipment_actions(character, edition)  # tag which items can become an action (+ Action UI)
+    # auto-add weapon attack actions derived from the resolved gear (engine computes hit +
+    # damage). Tagged source="weapon:…"; merged so the LLM's class/spell actions are kept and
+    # re-forging doesn't duplicate. The player can edit/remove these in the Studio.
+    _merge_weapon_actions(character, edition)
+    # class + subclass features (with rules text) + Opportunity Attack, for the sheet's
+    # Features/Reactions sections. Engine-owned display list; refreshed on save/level-change.
+    character["features"] = pc_features_for_display(character, edition)
+    # structured, described languages (species + class tongues + the AI's picks); keep the plain
+    # `languages` line in sync. Grounded-species tongue suppressed (no 'Halfling' on a kender).
+    _langs = derive_languages(character, edition)
+    if _langs:
+        character["languagesList"] = _langs
+        character["languages"] = languages_display(_langs)
 
     # derived strings (saves/skills/senses) + spell save DC / attack
     apply_derived(character)
@@ -205,6 +226,24 @@ def _assemble_pc(raw: dict, *, ruleset, rules_mode) -> tuple[dict, list]:
     apply_companion(character)
     apply_class_beats(character)
     return character, warnings
+
+
+def _merge_weapon_actions(character: dict, edition: str) -> None:
+    """Top up character['actions'] with any weapon attacks the LLM DIDN'T already write.
+
+    The autofill LLM already authors weapon attacks (tagged ``source="equipment:<Name>"``,
+    often with flavour names like "Sling (Rabbitslayer)"). We keep those as-is and only add
+    engine-derived attacks whose name isn't already present — chiefly multi-mode items like
+    the Hoopak (staff/sling) the LLM can't express as one. De-duping by name keeps a re-forge
+    idempotent and avoids the "Dagger twice" doubling.
+    """
+    derived = derive_weapon_actions(character, edition)
+    if not derived:
+        return
+    existing = list(character.get("actions") or [])
+    have = {str((a or {}).get("name", "")).strip().lower() for a in existing}
+    add = [a for a in derived if a["name"].strip().lower() not in have]
+    character["actions"] = existing + add
 
 
 def _parse_allocation(value) -> dict:

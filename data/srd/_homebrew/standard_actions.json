@@ -1,0 +1,21 @@
+{
+  "_note": "The universal actions and reactions any creature can take in combat (PHB). Offered in the Studio's 'Common actions' picker so a player can drop the relevant ones onto their sheet. Tagged source 'standard:<name>'. Edition-shared (2024 renames/adds a few; the core set holds).",
+
+  "actions": [
+    { "name": "Dash", "text": "Gain extra movement equal to your speed for this turn (after any modifiers).", "kind": "action" },
+    { "name": "Disengage", "text": "Your movement doesn't provoke opportunity attacks for the rest of the turn.", "kind": "action" },
+    { "name": "Dodge", "text": "Until the start of your next turn, attack rolls against you have disadvantage if you can see the attacker, and you make Dexterity saving throws with advantage. Lost if you're incapacitated or your speed drops to 0.", "kind": "action" },
+    { "name": "Help", "text": "Aid another: give a creature advantage on its next ability check for a task you assist, OR give an ally advantage on its next attack against a creature within 5 feet of you (before your next turn).", "kind": "action" },
+    { "name": "Hide", "text": "Make a Dexterity (Stealth) check to become hidden, provided you're out of sight of the creatures you're hiding from.", "kind": "action" },
+    { "name": "Ready", "text": "Choose a trigger and a single action or movement to prepare. When the trigger occurs before your next turn, you may use your reaction to take it.", "kind": "action" },
+    { "name": "Search", "text": "Devote your attention to finding something — usually a Wisdom (Perception) or Intelligence (Investigation) check.", "kind": "action" },
+    { "name": "Use an Object", "text": "Interact with a second object this turn (beyond your one free object interaction), or use an object that requires an action.", "kind": "action" },
+    { "name": "Grapple", "text": "A special melee attack: Strength (Athletics) contested by the target's Athletics or Acrobatics, against a creature no more than one size larger. On a success the target is grappled (speed 0).", "kind": "action" },
+    { "name": "Shove", "text": "A special melee attack: Strength (Athletics) contested by Athletics or Acrobatics, against a creature no more than one size larger. On a success, push it 5 feet away or knock it prone.", "kind": "action" },
+    { "name": "Improvise", "text": "Attempt something this turn that no other action covers; the DM decides whether it's possible and what check, if any, it needs.", "kind": "action" }
+  ],
+  "reactions": [
+    { "name": "Opportunity Attack", "text": "When a hostile creature you can see leaves your reach, use your reaction to make one melee attack against it.", "kind": "reaction" },
+    { "name": "Ready (triggered)", "text": "When the trigger you set with the Ready action occurs, use your reaction to take the action or movement you prepared.", "kind": "reaction" }
+  ]
+}

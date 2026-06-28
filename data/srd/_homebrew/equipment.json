@@ -1,0 +1,64 @@
+[
+  {
+    "index": "hoopak",
+    "name": "Hoopak",
+    "equipment_categories": [
+      { "index": "weapons", "name": "Weapons", "url": "/api/2024/equipment-categories/weapons" },
+      { "index": "martial-weapons", "name": "Martial Weapons", "url": "/api/2024/equipment-categories/martial-weapons" },
+      { "index": "melee-weapons", "name": "Melee Weapons", "url": "/api/2024/equipment-categories/melee-weapons" },
+      { "index": "ranged-weapons", "name": "Ranged Weapons", "url": "/api/2024/equipment-categories/ranged-weapons" }
+    ],
+    "cost": { "quantity": 2, "unit": "gp" },
+    "damage": {
+      "damage_dice": "1d6",
+      "damage_type": { "index": "bludgeoning", "name": "Bludgeoning", "url": "/api/2024/damage-types/bludgeoning" }
+    },
+    "two_handed_damage": {
+      "damage_dice": "1d8",
+      "damage_type": { "index": "bludgeoning", "name": "Bludgeoning", "url": "/api/2024/damage-types/bludgeoning" }
+    },
+    "range": { "normal": 5 },
+    "throw_range": { "normal": 30, "long": 120 },
+    "ammunition": { "index": "sling-bullets", "name": "Sling Bullets", "url": "/api/2024/equipment/sling-bullets" },
+    "weight": 4,
+    "properties": [
+      { "index": "versatile", "name": "Versatile", "url": "/api/2024/weapon-properties/versatile" },
+      { "index": "ammunition", "name": "Ammunition", "url": "/api/2024/weapon-properties/ammunition" },
+      { "index": "special", "name": "Special", "url": "/api/2024/weapon-properties/special" }
+    ],
+    "mastery": { "index": "topple", "name": "Topple", "url": "/api/2024/weapon-mastery-properties/topple" },
+    "special": [
+      "Double weapon. Used as a melee weapon, the Hoopak is a quarterstaff: 1d6 bludgeoning (1d8 two-handed, Versatile), Topple mastery.",
+      "Used as a ranged weapon, the forked end is a sling: range 30/120, 1d4 bludgeoning, Ammunition (sling bullets or stones), Slow mastery. Switching ends costs your free Object Interaction.",
+      "Whistling fork. Swung sharply through the air the Hoopak emits a loud whoop or whistle. As a Bonus Action you can sound it to send a simple pre-arranged signal audible out to 600 feet.",
+      "Proficiency. Anyone proficient with both simple weapons and a martial weapon can wield the Hoopak fully; with simple-weapon proficiency only you can still use either end at no proficiency bonus."
+    ],
+    "modes": [
+      {
+        "name": "Staff",
+        "type": "melee",
+        "damage": "1d6 (1d8 two-handed)",
+        "damageType": "bludgeoning",
+        "mastery": "Topple",
+        "summary": "Quarterstaff — a versatile bludgeoning melee weapon."
+      },
+      {
+        "name": "Sling",
+        "type": "ranged",
+        "damage": "1d4",
+        "damageType": "bludgeoning",
+        "range": "30/120",
+        "ammunition": "Sling bullets",
+        "summary": "The forked end fires bullets or stones. Switching ends costs your free Object Interaction."
+      },
+      {
+        "name": "Bullroarer",
+        "type": "utility",
+        "summary": "Swung sharply it whoops or whistles — as a Bonus Action, a simple pre-arranged signal audible out to ~600 feet."
+      }
+    ],
+    "homebrew": true,
+    "source": "Dragonlance (kender signature weapon)",
+    "url": "/api/homebrew/equipment/hoopak"
+  }
+]

@@ -137,6 +137,59 @@ def spells_for_class():
     })
 
 
+@app.get("/equipment")
+def equipment_lookup():
+    """The equipment catalog (SRD + homebrew overlay) for the "+ Item" picker.
+
+    Query: ruleset (slug, optional), q (substring filter over name/category, optional).
+    Returns {items: [{index, name, category, homebrew?, modes?, ammunition?}], edition}.
+    Homebrew/species items (e.g. the kender Hoopak) sort first. Advisory only — the
+    front-end can still free-type an item the catalog doesn't have.
+    """
+    from forge.engine import equipment_catalog, item_is_actionable
+
+    try:
+        edition = Ruleset(request.args.get("ruleset", "dnd5e-2014")).config.get("srdEdition", "2014")
+    except Exception:
+        edition = "2014"
+    items = equipment_catalog(edition, request.args.get("q"))
+    for it in items:  # flag which catalog items can become an action (drives the "+ Action" button)
+        it["actionable"] = bool(it.get("modes")) or item_is_actionable(it.get("index") or it.get("name", ""), edition)
+    return jsonify({"items": items, "edition": edition})
+
+
+@app.get("/actions/standard")
+def standard_actions_list():
+    """The universal actions + reactions any creature can take (Dash, Dodge, Grapple, Opportunity
+    Attack…), for the Studio's 'Common actions' picker. Returns {actions: [{name, text, kind}]}."""
+    from forge.engine import standard_actions
+    return jsonify({"actions": standard_actions()})
+
+
+@app.post("/character/weapon-actions")
+def weapon_actions():
+    """Derive attack actions from a draft PC's gear (engine computes hit + damage).
+
+    Body: {character (required), item? (a single equipment name — else all weapons)}.
+    Returns {actions: [{name, source, text}]}. The Studio's "Add as attack" button posts
+    the current draft; the front-end appends the returned actions (dedup by `source`).
+    """
+    from forge.engine import derive_weapon_actions, item_actions
+
+    body = request.get_json(force=True) or {}
+    character = body.get("character") or {}
+    try:
+        edition = Ruleset(character.get("ruleset", "dnd5e-2014")).config.get("srdEdition", "2014")
+    except Exception:
+        edition = "2014"
+    item = body.get("item")
+    # single item -> any contextual action (weapon attacks, the Hoopak's bullroarer, or a
+    # blank stub for ordinary gear); no item -> all weapon attacks across the gear list.
+    actions = (item_actions(item, character, edition) if item
+               else derive_weapon_actions(character, edition))
+    return jsonify({"actions": actions})
+
+
 # -- forge (brain-dump -> character) ------------------------------------------
 @app.post("/forge")
 def forge():
@@ -332,6 +385,113 @@ def serve_portrait(cid, state):
 
 
 # -- characters ---------------------------------------------------------------
+def _heal_portraits(character: dict) -> dict:
+    """Re-link a character's portraits to the PNGs that ACTUALLY exist on disk.
+
+    The disk is the source of truth: a portrait lives at ``output/portraits/<id>/<state>.png``,
+    so its link can always be derived from the character's id + the state — it never needs to
+    be stored. This heals two failure modes at once:
+      • a JSON whose imageUrls were wiped to null (the file is there, the link was lost), and
+      • a baked-in absolute URL with a stale port (we store a RELATIVE ``/art/<id>/<state>.png``
+        that the front-end resolves against whatever bridge it's actually talking to).
+    An uploaded image (a ``data:`` URI) is left untouched. Mutates and returns the character.
+    """
+    cid = character.get("id")
+    if not cid:
+        return character
+    portraits = character.get("portraits")
+    portraits = dict(portraits) if isinstance(portraits, dict) else {}
+    for state in FIXED_PORTRAIT_STATES:
+        slot = portraits.get(state)
+        slot = dict(slot) if isinstance(slot, dict) else {"prompt": None, "imageUrl": None, "seed": None}
+        if (slot.get("imageUrl") or "").startswith("data:"):
+            portraits[state] = slot
+            continue
+        png = PORTRAIT_DIR / str(cid) / f"{state}.png"
+        slot["imageUrl"] = f"/art/{cid}/{state}.png" if png.exists() else None
+        portraits[state] = slot
+    character["portraits"] = portraits
+    return character
+
+
+def _refresh_features(character: dict) -> dict:
+    """(Re)derive a PC's class/subclass features + Opportunity Attack into character['features'].
+
+    Cheap and deterministic, so we run it on load and save — a character forged before this
+    existed gains its feature list on next view, and a level/subclass change refreshes it.
+    """
+    if character.get("kind") not in ("character", "npc"):
+        return character
+    try:
+        from forge.engine import pc_features_for_display, derive_languages, languages_display
+        _ed = Ruleset(character.get("ruleset", "dnd5e-2014")).config.get("srdEdition", "2014")
+        if character.get("kind") == "character":
+            character["features"] = pc_features_for_display(character, _ed)
+        # structured, described languages (species + class tongues + the player's picks); keep the
+        # plain `languages` line in sync for the statblock. Suppresses a grounded-species tongue.
+        langs = derive_languages(character, _ed)
+        if langs:
+            character["languagesList"] = langs
+            character["languages"] = languages_display(langs)
+    except Exception:
+        pass
+    return character
+
+
+def _reconcile_actions(character: dict) -> dict:
+    """Drop auto-generated weapon/item actions whose item is no longer in the equipment list.
+
+    Weapon attacks and item actions are tagged ``weapon:<idx>`` / ``equipment:<Name>`` /
+    ``item:<idx>``. When the player removes the item, its action shouldn't linger on the sheet.
+    Hand-written actions and class/spell actions (no such tag) are always kept. Runs on load
+    AND save, so a sheet that orphaned actions before this existed self-cleans on next open.
+    """
+    pc = character.get("pc")
+    if character.get("kind") != "character" or not isinstance(pc, dict):
+        return character
+    actions = character.get("actions")
+    if not isinstance(actions, list):
+        return character
+    try:
+        from forge.engine import canonical_item
+        edition = Ruleset(character.get("ruleset", "dnd5e-2014")).config.get("srdEdition", "2014")
+    except Exception:
+        return character
+    valid: set[str] = set()
+    for it in pc.get("equipment") or []:
+        nm = it.get("name") if isinstance(it, dict) else str(it)
+        if not nm:
+            continue
+        valid.add(nm.strip().lower())
+        try:
+            card = canonical_item(nm, edition)
+        except Exception:
+            card = None
+        if card and card.get("index"):
+            valid.add(card["index"].lower())
+    kept = []
+    for a in actions:
+        m = re.match(r"^(weapon|equipment|item):([^:]+)", str((a or {}).get("source", "")).lower())
+        if not m or m.group(2).strip() in valid:  # not item-derived, or its item is still carried
+            kept.append(a)
+    character["actions"] = kept
+    return character
+
+
+def _annotate_actions(character: dict) -> dict:
+    """Tag each equipment item with `hasAction` so the Studio shows "+ Action" only where there's
+    actually one (armour, ammunition, focuses have none — armour is already in AC)."""
+    if character.get("kind") != "character":
+        return character
+    try:
+        from forge.engine import annotate_equipment_actions
+        edition = Ruleset(character.get("ruleset", "dnd5e-2014")).config.get("srdEdition", "2014")
+        annotate_equipment_actions(character, edition)
+    except Exception:
+        pass
+    return character
+
+
 def _char_summary(c: dict, stem: str) -> dict:
     return {
         "id": c.get("id", stem), "name": c.get("name"), "kind": c.get("kind"),
@@ -370,7 +530,12 @@ def get_character(cid):
     path = CHAR_DIR / f"{cid}.json"
     if not path.exists():
         abort(404)
-    return jsonify(json.loads(path.read_text(encoding="utf-8")))
+    character = json.loads(path.read_text(encoding="utf-8"))
+    _heal_portraits(character)  # derive image links from the PNGs on disk (port-proof, null-proof)
+    _refresh_features(character)  # class/subclass features + Opportunity Attack (so saved PCs show them)
+    _reconcile_actions(character)  # drop attacks/actions for items no longer carried (self-heals orphans)
+    _annotate_actions(character)   # tag which equipment items can become an action (+ Action UI)
+    return jsonify(character)
 
 
 @app.delete("/character/<cid>")
@@ -444,7 +609,19 @@ def save_character():
     character = body.get("character") or body
     character["id"] = character.get("id") or _slug(character.get("name"))
     resolve_pc_proficiencies(character)  # PC: derive saveProfs/skillProfs/proficiencies from class+bg
+    if character.get("kind") == "character":
+        try:  # canonicalise gear on save (re-attach catalog modes; tolerate any edition/data gap)
+            from forge.engine import resolve_gear
+            from forge.ruleset import Ruleset as _RS
+            _ed = _RS(character.get("ruleset", "dnd5e-2014")).config.get("srdEdition", "2014")
+            resolve_gear(character, _ed)
+        except Exception:
+            pass
     apply_derived(character)  # keep saves/skills/senses + spell DC/attack consistent on disk
+    _heal_portraits(character)  # never persist a null/stale image link when the PNG is on disk
+    _refresh_features(character)  # keep class/subclass features current with class/level/subclass
+    _reconcile_actions(character)  # persist the removal: no actions for items no longer carried
+    _annotate_actions(character)   # persist which items can become an action (+ Action UI)
     CHAR_DIR.mkdir(parents=True, exist_ok=True)
     (CHAR_DIR / f"{character['id']}.json").write_text(
         json.dumps(character, indent=2, ensure_ascii=False), encoding="utf-8"
