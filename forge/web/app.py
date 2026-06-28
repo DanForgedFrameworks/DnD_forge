@@ -10,6 +10,7 @@ Endpoints (all JSON unless noted), synchronous, permissive CORS for local dev:
   GET  /character                 -> {characters:[{id,name,kind,ruleset,level}]}
   GET  /character/<id>            -> Character (404 if missing)
   POST /character {character}     -> {id, character}   (apply_derived + save; id = slug)
+  POST /character/derive {character,level?,classes?} -> {character, warnings, changes}
   GET  /art/<id>/<state>.png      -> image/png bytes (404 if not generated)
 
 Run from the repo root:  .venv_forge\Scripts\python -m forge.web.app
@@ -42,7 +43,7 @@ from forge.agents.sheet_extract import (                         # noqa: E402
     extract_sheet_text, UnsupportedSheetType,
 )
 from forge.contract import apply_derived                          # noqa: E402
-from forge.engine import resolve_pc_proficiencies                 # noqa: E402
+from forge.engine import resolve_pc_proficiencies, rederive        # noqa: E402
 from forge.ruleset import Ruleset                                 # noqa: E402
 from forge.web.forge_log import log_forge                         # noqa: E402
 
@@ -407,6 +408,34 @@ def purge_character(cid):
         src.unlink()
     shutil.rmtree(PORTRAIT_DIR / cid, ignore_errors=True)
     return jsonify({"purged": cid})
+
+
+@app.post("/character/derive")
+def derive_character():
+    """Re-derive a PC's level-dependent numbers for a new level / class mix (deterministic).
+
+    Body: {character (required), level? (int — single-class shortcut),
+           classes? ([{class, subclass, level}] — the multiclass list)}.
+    Re-runs HP/hit dice, proficiency bonus, spell slots, spell save DC/attack, class
+    features and advisory spell-count limits, WITHOUT touching the player's exact ability
+    scores, chosen spells or equipment (strict mode still regenerates gear, as on save).
+    Returns {character, warnings:[{level,message}], changes:{...}} — `changes` is a small
+    diff (hp, proficiencyBonus, hitDice, spellSlots, saveDc/attackBonus, featuresGained)
+    for the front-end's "what changed" note. Does NOT persist; the front-end saves via
+    POST /character once the player accepts.
+    """
+    body = request.get_json(force=True) or {}
+    character = body.get("character") or {}
+    if character.get("kind") != "character":
+        return jsonify({"error": "not_a_pc",
+                        "message": "derive only applies to player characters (kind=character)"}), 400
+    try:
+        character, warnings, changes = rederive(
+            character, level=body.get("level"), classes=body.get("classes")
+        )
+    except Exception as e:  # never 500 on a fragile re-derive — surface as JSON
+        return jsonify({"error": "derive_failed", "message": str(e)}), 422
+    return jsonify({"character": character, "warnings": warnings, "changes": changes})
 
 
 @app.post("/character")

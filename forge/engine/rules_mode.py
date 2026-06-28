@@ -200,18 +200,48 @@ def _w(level: str, msg: str) -> dict:
     return {"level": level, "message": msg}
 
 
+def _caster_mix(pc: dict) -> list[tuple[str, int]]:
+    """[(class_index, class_level)] for the character's class mix (multiclass-aware)."""
+    classes = pc.get("classes")
+    if isinstance(classes, list) and any((c or {}).get("class") for c in classes):
+        return [((c.get("class") or "").lower(), int(c.get("level") or 1))
+                for c in classes if (c or {}).get("class")]
+    return [((pc.get("class") or "").lower(), int(pc.get("level") or 1))]
+
+
+def _combined_limits(character: dict, mix: list[tuple[str, int]], edition: str):
+    """Union spell list + summed counts for a class mix. None if no caster in the mix.
+
+    Best-effort multiclass policy (PHB): cantrips/leveled counts SUM across caster classes;
+    the highest learnable spell level is the max over each class's own table; the allowed
+    list is the union of the caster classes' spell lists.
+    """
+    caster_mix = [(ci, lv) for ci, lv in mix if ci in CASTER_RULES]
+    if not caster_mix:
+        return None
+    allowed: dict[str, int] = {}
+    cantrips = leveled = max_level = 0
+    for ci, lv in caster_mix:
+        allowed.update(class_spell_list(ci, edition))
+        lim = spell_limits(ci, lv, _spell_ability_mod(character, ci), edition) or {}
+        cantrips += int(lim.get("cantrips", 0) or 0)
+        leveled += int(lim.get("leveled", 0) or 0)
+        max_level = max(max_level, int(lim.get("maxSpellLevel", 0) or 0))
+    return {"allowed": allowed, "cantrips": cantrips, "leveled": leveled, "maxSpellLevel": max_level}
+
+
 def _enforce_spellcasting(character: dict, strict: bool, edition: str = "2014") -> list[dict]:
     pc = character["pc"]
     sc = character.get("spellcasting")
-    class_index = pc.get("class")
-    level = int(pc.get("level") or 1)
+    mix = _caster_mix(pc)
     note = "error" if strict else "info"
     out: list[dict] = []
 
-    limits = spell_limits(class_index, level, _spell_ability_mod(character, class_index), edition)
-    if limits is None:
+    combined = _combined_limits(character, mix, edition)
+    if combined is None:
         if isinstance(sc, dict) and (sc.get("cantrips") or sc.get("prepared") or sc.get("known")):
-            out.append(_w(note, f"{class_index} is not a spellcaster but spells were listed"))
+            label = " / ".join(ci for ci, _ in mix) or "this build"
+            out.append(_w(note, f"{label} is not a spellcaster but spells were listed"))
             if strict:
                 character.pop("spellcasting", None)
         return out
@@ -219,13 +249,13 @@ def _enforce_spellcasting(character: dict, strict: bool, edition: str = "2014") 
     if not isinstance(sc, dict):
         return out  # caster class with no spells listed yet — nothing to police
 
-    allowed = class_spell_list(class_index, edition)
+    allowed = combined["allowed"]
 
-    # cantrips: must be on-list, level 0, within the cantrips-known count
-    out += _police_list(sc, "cantrips", allowed, 0, limits["cantrips"], strict, "cantrip")
+    # cantrips: must be on-list, level 0, within the (combined) cantrips-known count
+    out += _police_list(sc, "cantrips", allowed, 0, combined["cantrips"], strict, "cantrip")
     # leveled spells: the schema carries them under `prepared` (also accept `known`)
     leveled_key = "prepared" if sc.get("prepared") is not None else ("known" if sc.get("known") is not None else "prepared")
-    out += _police_list(sc, leveled_key, allowed, limits["maxSpellLevel"], limits["leveled"], strict, "spell")
+    out += _police_list(sc, leveled_key, allowed, combined["maxSpellLevel"], combined["leveled"], strict, "spell")
     return out
 
 

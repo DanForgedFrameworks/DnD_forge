@@ -6,6 +6,48 @@ project auto-loads the memory files; also read `ARCHITECTURE.md` and
 
 ---
 
+## ▶▶ CONTINUE HERE — state as of 2026-06-28 (read this first, then §0 way-of-working)
+
+**What this chat is:** the single **front-end/build chat** — the whole UI lives in ONE file,
+`web/frontend/Character Forge - Prototype.dc.html` (a DC template engine: `<sc-if>`/`<sc-for>`/`{{ }}` + a React-like
+class in the embedded `<script type="text/x-dc">`; `support.js` is the runtime, don't edit). Engine = Python under
+`forge/`, exposed by the Flask bridge `forge/web/app.py`. Verify via the **Preview MCP** (`forge-frontend-8001` launch
+config; image-heavy screenshots time out — probe the DOM with `preview_eval`). `build_prompt` (art.py) MUST stay
+byte-for-byte equal to `computePrompt()` (the .dc.html) — change both together.
+
+**Everything from this session is committed AND pushed** to public `DanForgedFrameworks/DnD_forge` (main). Copyrighted
+content stays gitignored (PDFs, `/data/srd/`, `/data/local/`, `/output/`, `/Example images/`).
+
+**DONE this session (front-end unless noted):** Play tab (HP/death-saves/hit-dice/spell-slots/conditions/rests +
+microinteractions); Party tab (teams by `companionOf` + quick stats); interactive tabbed **HTML download** (Sheet · "At
+the Table" offline tracker w/ localStorage + Codex-style portrait switching); **Concept Sheet** input + paste-to-parse
++ exact-honour overrides (abilities/spells/equipment); **spell picker** (Studio, advisory — engine `GET /spells`);
+**Studio equipment+coin editor**; **art fidelity** Option 1 (description) + Option 2 (owner reference image, engine);
+no-text image rule; per-state editable prompts; per-slot anchor rooting + At-rest "fresh take"; **art style: custom
+REPLACES house style** + **"Use default house style" tickbox**; quick-brain-dump art boxes no longer overwritten on
+forge (sent as details + overlaid back); **companion-forge fix** (declared companion remembered on `ch.bonded` →
+persistent pre-filled "⚒ Forge <name> too" in the Studio; humanoid companions no longer mangled); Hané portrait
+backfill; launcher (`launch_forge.py`/`Forge.bat`); housekeeping (v1 files retired). Full detail in the dated blocks
+below.
+
+**⚠ DEPLOYMENT before testing:** engine changed, so **RESTART the bridge** (Forge.bat / [R]) AND **hard-refresh** the
+page — spell picker, Party-tab HP, Option-2 likeness, and the art-style house/custom split all need the new engine
+code, or preview≠generated. Front-end-only fixes just need the refresh.
+
+**IN-FLIGHT / DELEGATED (separate chats — not this one):**
+- **PC progression (levelling) + multiclass** — `docs/PC-PROGRESSION-MULTICLASS-BRIEF.md`. **An engine chat is ACTIVELY
+  working this** (saw `forge/engine/progression.py` (new) + `forge/engine/grants.py` (modified) appear; `app.py` now
+  has `POST /character/derive`, `rederive`, `resolve_pc_proficiencies`). **Do NOT edit `forge/engine/*` or `app.py`
+  derive bits from the build chat — coordinate / leave to that chat** to avoid collisions.
+- **SRD data rebuild (2014+2024, esp. 2024 monsters: 3→~300)** — `docs/SRD-DATA-REBUILD-BRIEF.md`. Not started.
+
+**NEXT / OPEN:** (1) user to **restart+refresh and test** the whole batch (Play tab, Party, spell picker, Option-2,
+equipment editing, art-style tickbox, companion forge). (2) Logged-for-later ideas: manual **team assembly** + a
+**team-level HTML/print** export. (3) Whatever the user reports next. Keep editing ONLY `web/frontend/*.dc.html`
+(front-end) unless a fix is clearly engine-side AND the progression chat isn't touching that file.
+
+---
+
 ## 0. How to work with this user (READ FIRST)
 - **The user is not a coder. Explain in plain English; do not dump jargon** (no commit SHAs,
   `§`-references, or code key-names in user-facing prose — keep those in the "relay to Design"
@@ -760,7 +802,74 @@ data/srd / data/local / Example images / PDFs / output (85 tracked files, all le
 **`main` is 20 commits ahead of `origin/main` (public GitHub DanForgedFrameworks/DnD_forge) — NOT pushed.** Awaiting
 explicit user go to push (outward-facing/public).
 
-**⚠ DEPLOYMENT: spell picker + Party-tab HP + Option-2 likeness all need the BRIDGE RESTARTED** (new `/spells` endpoint + rules_mode helper) — relaunch
+**QUICK-BRAIN-DUMP ART FIELDS OVERWRITTEN — FIXED (2026-06-28, user report).** Bug: in the quick brain-dump mode the
+Appearance/Outfit-gear/Environment/Art-style boxes the user typed were (a) NOT sent to `/forge` and (b) clobbered
+because the engine's fresh `ch` fully replaced `draft` (engine generates its own art). So typed descriptions vanished
+on Forge, and a "Hoopak" in the Outfit/gear box never reached anything (that box is the PORTRAIT outfit `art.outfit`,
+not statblock `pc.equipment`). **Fix (front-end only, `doForge`):** (1) new `forgeDetails()` = `flavourText()` + the
+typed art boxes (Appearance/Outfit & gear/Environment/Art style) → sent as `details` so the engine SEES them (and can
+fold gear into equipment); (2) capture `userArt` before the call and **overlay** any non-empty typed field back over
+`ch.art` (user's words win; blank fields fall through to the engine's) — placed BEFORE applyCompanion/applyMaster/
+applyKindBeats so they weave into the kept appearance. Concept-sheet path unaffected (its seed art is blank → overlay
+no-ops; narrative already carries the description). **Verified:** page compiles, no errors; extracted `forgeDetails`
+→ "Appearance: … · Outfit & gear: Hoopak staff…"; overlay keeps user appearance/outfit, lets engine fill blank
+environment/style. `/forge` already accepts `details` → **no bridge restart, just hard-refresh.** NB the Hoopak as a
+*guaranteed statblock item* still wants the **Concept-Sheet Equipment field** (exact-honour) or the **Studio equipment
+editor**; the Outfit/gear box is portrait-only (engine may now infer it into equipment but isn't forced to).
+
+**ART STYLE NOW REPLACES THE HOUSE STYLE — DONE+verified (2026-06-28, user choice).** User confused why portraits
+moved off the default look: the Art Style box was being injected AND the locked Rutkowski/Jacobson tail was ALWAYS
+appended, so a custom "cartoonish" style fought "gritty painterly". (Compounded by the earlier overlay fix finally
+making their custom style stick.) User chose **box replaces house style**. Split the locked tail in two: **`HOUSE_STYLE`**
+("in the style of Greg Rutkowski and Tyler Jacobson, gritty painterly high-fantasy digital illustration, dramatic
+cinematic lighting") used ONLY when `art.style` is blank, and **`FIXED_TAIL`** (now just technical+quality+no-text:
+"full-body fantasy character art, cinematic composition, consistent character design across the set, rich detail,
+absolutely no text…") ALWAYS appended. A filled `art.style` REPLACES `HOUSE_STYLE` (no more conflict) but keeps the
+technical/no-text tail. Changed in BOTH `forge/agents/art.py` (`build_prompt`, new `HOUSE_STYLE` const) AND the
+front-end `computePrompt` — verified **byte-for-byte identical** (script compares both constants: HOUSE_STYLE + FIXED_TAIL
+match) and behaviour (blank→Rutkowski; custom→replaces, no Rutkowski; both keep full-body + no-text); `test_art` green;
+page compiles. **So: leave the Art Style box blank for the default house look; fill it for a clean per-character style.**
+⚠ This touches `build_prompt` → needs **bridge restart** (image gen) AND hard-refresh (preview), or preview≠generated.
+
+**BLANK ART STYLE BOX STILL GAVE A CUSTOM STYLE — FIXED (2026-06-28, user report).** After "box replaces house style",
+leaving the Art Style box blank STILL gave a non-default look because the **engine auto-invents an `art.style`**
+("Whimsical, adventurous…") and the replace-logic honoured it. Fix (`doForge`, front-end only): removed `style` from
+the keep-engine overlay loop; **in the quick brain-dump the engine's invented style is now DISCARDED — only a style the
+user TYPED in the box is kept** (`a2.style = userArt.style || ""`), so a blank box → `""` → `computePrompt` uses
+HOUSE_STYLE → default Rutkowski look. Concept-sheet path passes `opts.fromSheet:true` and KEEPS the engine's style (it
+reflects the narrative "## Art style"). Verified compiles, no errors; logic sound. Front-end only → hard refresh.
+
+**ART STYLE TICKBOX — DONE+verified (2026-06-28, user request).** Replaced the "blank box = default" guesswork with an
+explicit checkbox **"Use the default house style"** (state `artUseDefault`, default true) in the quick brain-dump Art
+Style cell. Ticked → Art Style box hidden, `doForge` forces `a2.style=""` → HOUSE_STYLE. Unticked → box appears
+(placeholder "leave blank → the forge picks a style to fit the concept; or type your own"); `doForge`: typed → use it,
+blank → keep the engine's concept-fitting style. Render vals `artUseDefault`/`artCustomStyle`/`onArtUseDefault`.
+Verified live: checkbox checked by default + box hidden; untick → box shows; compiles, no errors. Front-end only →
+hard refresh.
+
+**FORGE-COMPANION "still not resolved" (user, 2026-06-28) — INVESTIGATED, awaiting which symptom.** Flow confirmed:
+springboard "⚒ Forge <X> too" shows in the post-forge strip ONLY when the bonded **dropdown** (`flavour.bonded`) is set
+to Companion/Pet/Familiar AND `bondedDesc` filled (doForge line ~1579 builds `pendingCompanion`). Clicking it
+(`forgeCompanionFromOwner`) only **SEEDS** a new companion draft in the Forge (per the user's earlier "set up only"
+choice) — it does NOT auto-forge; the user must press Forge again. Likely causes of the user's pain: (a) dropdown left
+"None" → no springboard; (b) "set up only" friction (they expect a finished linked character in one click); (c) their
+companion is **Flint Fireforge, a DWARF (humanoid)** → `applyCreatureGuard` would prepend "a small non-humanoid
+creature" and mangle him. Asked the user which symptom; offered to make the springboard **one-click auto-forge** +
+skip the non-humanoid guard for humanoid companions.
+**RESOLVED (2026-06-28).** User: "no Forge-X-too option appeared, companion was selected, saved as Tasslehoff" + chose
+**keep set-up-only**. Root cause = the springboard is TRANSIENT (only in the post-forge strip; lost on save/navigate),
+and the persistent Studio +Companion buttons make a GENERIC creature (don't carry the typed desc). Fixes (front-end):
+(1) `doForge` now **remembers the declared companion ON the character** (`ch.bonded = {type, desc}`) and offers the
+springboard whenever a TYPE is chosen (description optional; only weaves into portraits if described). (2) New
+**persistent, pre-filled** Studio button (Bonded section) "⚒ Forge <name> too" → `forgeDeclaredBonded()` (seeds from
+`ch.bonded` via `forgeCompanionFromOwner`, set-up-only) — survives save/navigation. (3) `forgeCompanionFromOwner`
+robust to empty desc (`who` fallback). (4) **`applyCreatureGuard` no longer forces "non-humanoid"** when the desc/
+type reads humanoid (dwarf/elf/human/halfling/kender/… ) so a dwarf ally like Flint stays a dwarf; real animals still
+guarded. (5) name extraction splits on comma **or em/en-dash** so "Flint Fireforge — a gruff dwarf" → label "Flint
+Fireforge". Verified: compiles, no errors; guard keeps dwarf humanoid + still guards a wolf; labels correct (Flint /
+Grey / "their familiar"). Front-end only → hard refresh.
+
+**⚠ DEPLOYMENT: spell picker + Party-tab HP + Option-2 likeness + art-style-replace all need the BRIDGE RESTARTED** (new `/spells` endpoint + rules_mode helper) — relaunch
 Forge.bat / [R]. Front-end picker UI is in the .dc.html (hard refresh). All prior Play-tab/download work was
 front-end-only; this is the first engine change since the no-text/prompt-override/anchor batch.
 
@@ -893,6 +1002,19 @@ garble fixed · `bondType` stored on springboard creations.
 ### 💡 Suggestions (logged, not scheduled)
 15. **Linked characters / "team" view** (user idea 2026-06-21): link a familiar/companion/pet to its owner (PC or NPC)
     and group them into a **party/team you build up** — a "linked characters" list. Extends the existing `companionOf`.
+16. **Forge/Studio entry boxes should match the rules they point to** (user ask 2026-06-28). New richer content now exists
+    and the input UI may not line up with it:
+    - **New data (from the data chat):** `data/expanded/monsters.json` = 1,544 open-licensed third-party monsters
+      (Kobold Press, OGL — see `scripts/import_open5e_monsters.py` + `data/expanded/ATTRIBUTION.md`); and a **local-only**
+      `data/local/` set extracted from the owner's 2024 PHB (74 feats, 10 species incl. **Aasimar**, 16 backgrounds —
+      see `scripts/extract_phb2024_local.py`). Every entry is tagged `source` + `srd:false` (and local ones `local:true`).
+    - **Consideration:** the forge/studio fields/dropdowns assume the older/narrower option set. They likely need to:
+      (a) drive the picker lists from the active edition's *actual* data (2024 backgrounds = Ability Scores + **Origin
+      Feat** + Skills + Tool + Equipment, which differs structurally from 2014; species traits differ; far more feats/
+      backgrounds now); (b) honour the **tag-and-filter** model — a "SRD only ⇄ include open/local content" toggle so the
+      shareable build stays SRD-clean while local prototyping can switch the extras on.
+    - **Boundary:** `data/expanded/*.json` and all of `data/local/` are gitignored; the loader/UI must treat them as an
+      *optional overlay*, never a hard dependency. Wiring the overlay-load + filter is a front-end/engine job (this chat).
 
 ### 🔁 For the user to re-test
 - Re-run **"Generate all 4"** now that `input_fidelity:high` identity-lock is live — confirm the face/outfit holds across the set.

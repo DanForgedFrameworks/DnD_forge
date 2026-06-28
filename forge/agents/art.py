@@ -60,12 +60,19 @@ KIND_WORDS = {
     "character": "hero adventurer",
 }
 
-FIXED_TAIL = (
+# The locked house ART STYLE — used ONLY when the character has no custom `art.style`. A custom
+# art.style REPLACES this (per-character style control), so e.g. a cartoonish look isn't fought by
+# "gritty painterly". MUST stay byte-for-byte identical to computePrompt()'s house-style fallback.
+HOUSE_STYLE = (
     "in the style of Greg Rutkowski and Tyler Jacobson, gritty painterly high-fantasy "
-    "digital illustration, dramatic cinematic lighting, full-body fantasy character art, "
-    "cinematic composition, consistent character design across the set, rich detail, "
-    "absolutely no text, lettering, words, captions, speech bubbles, numbers, signage or "
-    "writing of any kind anywhere in the image"
+    "digital illustration, dramatic cinematic lighting"
+)
+# Technical/quality + no-text constraints — ALWAYS appended, whatever the style. Keeps full-body
+# framing, set consistency and the no-text rule even for a custom style.
+FIXED_TAIL = (
+    "full-body fantasy character art, cinematic composition, consistent character design across "
+    "the set, rich detail, absolutely no text, lettering, words, captions, speech bubbles, numbers, "
+    "signage or writing of any kind anywhere in the image"
 )
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -137,7 +144,8 @@ def build_prompt(
     # 5) mood, 6) style, 7) fixed tail
     if art.get("personality"):
         segments.append("mood: " + _clean(art["personality"]))
-    segments.append(_clean(art.get("style")) or "painterly high fantasy")
+    # style: the character's own art.style REPLACES the house style; else the locked house style
+    segments.append(_clean(art.get("style")) or HOUSE_STYLE)
     segments.append(FIXED_TAIL)
 
     base = "“" + ". ".join(segments) + ". — " + STATE_LABELS[state].lower() + " variant.”"

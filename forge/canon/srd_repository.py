@@ -85,6 +85,11 @@ class SRDRepository:
             )
         self.edition = edition
         self.root = Path(data_root) / edition
+        # Edition-shared homebrew overlay. Files here are keyed by canonical
+        # category (e.g. `equipment.json`) and merged over the SRD data by
+        # `index`. Kept outside the per-edition dirs so `fetch_srd_data.py`
+        # re-imports never clobber it.
+        self._homebrew_root = Path(data_root) / "_homebrew"
         self._cache: dict[str, list] = {}
 
     # -- introspection -------------------------------------------------------
@@ -141,5 +146,29 @@ class SRDRepository:
                     f"Run `python scripts/fetch_srd_data.py {self.edition}` to pull the data."
                 )
             with path.open(encoding="utf-8") as fh:
-                self._cache[category] = json.load(fh)
+                entries = json.load(fh)
+            self._cache[category] = self._apply_homebrew(category, entries)
         return self._cache[category]
+
+    def _apply_homebrew(self, category: str, entries: list) -> list:
+        """Merge an optional `_homebrew/<category>.json` overlay over SRD data.
+
+        Overlay entries replace any base entry sharing their `index` (else
+        `name`), and otherwise append. Returns the base list unchanged when no
+        overlay file exists.
+        """
+        overlay_path = self._homebrew_root / f"{category}.json"
+        if not overlay_path.exists():
+            return entries
+        with overlay_path.open(encoding="utf-8") as fh:
+            overlay = json.load(fh)
+        merged = list(entries)
+        by_key = {e.get("index", e.get("name")): i for i, e in enumerate(merged)}
+        for item in overlay:
+            key = item.get("index", item.get("name"))
+            if key in by_key:
+                merged[by_key[key]] = item
+            else:
+                by_key[key] = len(merged)
+                merged.append(item)
+        return merged

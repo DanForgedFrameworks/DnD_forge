@@ -306,7 +306,14 @@
               <label style="font-size:10px; letter-spacing:1px; color:#8a7c66; text-transform:uppercase; display:block; margin-bottom:4px;">Background</label>
               <select value="{{ char.pcBackgroundVal }}" onChange="{{ char.onPcBackground }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px 10px; font-size:13.5px; color:#e7dcc6; appearance:none; cursor:pointer;">{{ char.pcBackgroundOpts }}</select>
             </div>
+            <div>
+              <label style="font-size:10px; letter-spacing:1px; color:#8a7c66; text-transform:uppercase; display:block; margin-bottom:4px;">Level <span style="color:#7a6c55;">— re-derives HP, slots &amp; features</span></label>
+              <input type="number" min="1" max="20" value="{{ char.pcLevelVal }}" onChange="{{ char.onPcLevel }}" style="width:100%; box-sizing:border-box; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px 10px; font-size:13.5px; color:#e7dcc6;">
+            </div>
           </div>
+          <sc-if value="{{ char.pcDeriveNote }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:11.5px; color:#9bbf8a; margin-top:9px; line-height:1.45; background:#22281c; border:1px solid #3a4a30; border-radius:6px; padding:7px 10px;">{{ char.pcDeriveNote }}</div>
+          </sc-if>
           <sc-if value="{{ char.pcHasSkillPicker }}" hint-placeholder-val="{{ false }}">
           <div style="margin-top:11px;">
             <div style="font-size:10px; letter-spacing:1px; color:#8a7c66; text-transform:uppercase; margin-bottom:6px;">Skills — {{ char.pcSkillChooseLabel }}</div>
@@ -435,6 +442,12 @@
                   <button onClick="{{ oc.onOpen }}" style="flex:none; background:#2d4a32; color:#dff0e2; border:1px solid #3f6147; border-radius:6px; padding:5px 11px; font-size:12.5px; cursor:pointer;">Open / edit</button>
                 </div>
               </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasDeclaredBonded }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#2a241d; border:1px solid #6a5a44; border-radius:7px; padding:10px 12px; margin-bottom:10px;">
+              <button onClick="{{ onForgeDeclaredBonded }}" style="background:#5a3a1f; color:#f7e9d4; border:1px solid #7a5733; border-radius:7px; padding:8px 13px; font-size:13px; font-weight:600; cursor:pointer;">&#9874; Forge {{ declaredBondedLabel }} too &rsaquo;</button>
+              <div style="font-size:11.5px; color:#9c8e76; font-style:italic; margin-top:6px; line-height:1.4;">You named this {{ declaredBondedNoun }} when forging this character — turn it into its own linked sheet.</div>
             </div>
           </sc-if>
           <div style="font-size:12px; color:#9c8e76; margin-bottom:9px; line-height:1.45;">Forge another companion, pet or familiar linked to this character — you'll describe it, then forge it.</div>
@@ -675,7 +688,12 @@
         <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Appearance</label><textarea value="{{ art.appearance }}" onInput="{{ AH.appearance }}" rows="2" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea></div>
         <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Outfit / gear</label><textarea value="{{ art.outfit }}" onInput="{{ AH.outfit }}" rows="2" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea></div>
         <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Environment</label><textarea value="{{ art.environment }}" onInput="{{ AH.environment }}" rows="2" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea></div>
-        <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Art style</label><textarea value="{{ art.style }}" onInput="{{ AH.style }}" rows="2" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea></div>
+        <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Art style</label>
+          <label style="display:flex; align-items:center; gap:7px; font-size:12.5px; color:#cdbf9f; cursor:pointer; margin-bottom:6px;"><input type="checkbox" checked="{{ artUseDefault }}" onChange="{{ onArtUseDefault }}" style="width:15px; height:15px; cursor:pointer;" /> Use the default house style</label>
+          <sc-if value="{{ artCustomStyle }}" hint-placeholder-val="{{ false }}">
+            <textarea value="{{ art.style }}" onInput="{{ AH.style }}" rows="2" placeholder="Leave blank → the forge picks a style to fit the concept; or type your own" style="width:100%; box-sizing:border-box; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea>
+          </sc-if>
+        </div>
       </div>
       </sc-if>
 
@@ -1157,6 +1175,7 @@ class Component extends DCLogic {
       trash: [], trashOpen: false, lightbox: null,
       entered: false, entering: null, exampleBarOpen: false, freshStart: true, concept: null,
       forgeInput: "dump",   // "dump" (quick brain-dump) | "sheet" (structured concept sheet)
+      artUseDefault: true,  // ✓ use the locked house art style; uncheck → forge matches a style to the concept (or type your own)
       conceptSheet: { species: "", klass: "", subclass: "", background: "", alignment: "", level: "", abilities: { STR: "", DEX: "", CON: "", INT: "", WIS: "", CHA: "" }, spells: "", equipment: "", narrative: this.CONCEPT_TEMPLATE }
     };
   }
@@ -1170,6 +1189,41 @@ class Component extends DCLogic {
 
   setPc(k, v) { this.setState(s => ({ draft: Object.assign({}, s.draft, { pc: Object.assign({}, s.draft.pc || {}, { [k]: v }) }) })); }
   setPcFields(obj) { this.setState(s => ({ draft: Object.assign({}, s.draft, { pc: Object.assign({}, s.draft.pc || {}, obj) }) })); }
+  // Re-derive a PC for a new level: POST /character/derive returns the character with HP,
+  // hit dice, proficiency bonus, spell slots, save DC/attack and class features re-derived
+  // (player's exact abilities/spells/gear untouched). Lands the result as the draft + a note.
+  async deriveLevel(newLevel) {
+    const lvl = Math.max(1, Math.min(20, parseInt(newLevel, 10) || 1));
+    const draft = this.state.draft;
+    if (!draft || draft.kind !== "character") return;
+    this.setPc("level", lvl);                         // optimistic: reflect the choice now
+    if (this.state.bridge !== true) { this.setState({ pcDeriveNote: "Level set locally — connect to the forge to re-derive the maths." }); return; }
+    this.setState({ pcDeriveNote: "Re-deriving…" });
+    try {
+      const body = { character: Object.assign({}, draft, { pc: Object.assign({}, draft.pc || {}, { level: lvl }) }), level: lvl };
+      const res = await this.jpost("/character/derive", body, 9000);
+      const ch = res.character || res;
+      this.setState(s => ({ draft: Object.assign({}, s.draft, ch), pcDeriveNote: this.summariseChanges(res.changes, res.warnings) }));
+    } catch (e) {
+      this.setState({ pcDeriveNote: "Couldn't re-derive (engine offline?) — level set locally." });
+    }
+  }
+  // Build a short human "what changed" line from the derive endpoint's changes{} + warnings[].
+  summariseChanges(changes, warnings) {
+    changes = changes || {};
+    const lead = s => { const m = /^\s*(\d+)/.exec(String(s || "")); return m ? m[1] : s; };
+    const bits = [];
+    if (changes.level) bits.push("Level " + changes.level.from + " → " + changes.level.to);
+    if (changes.hp) bits.push("HP " + lead(changes.hp.from) + " → " + lead(changes.hp.to));
+    if (changes.proficiencyBonus) bits.push("Proficiency +" + changes.proficiencyBonus.from + " → +" + changes.proficiencyBonus.to);
+    if (changes.spellSlots) bits.push("spell slots updated");
+    const fg = changes.featuresGained || [];
+    if (fg.length) bits.push(fg.length + " feature" + (fg.length === 1 ? "" : "s") + " gained (" + fg.slice(0, 3).map(f => f.name).join(", ") + (fg.length > 3 ? "…" : "") + ")");
+    const advisories = (warnings || []).filter(w => w && w.level !== "info").length;
+    let note = bits.length ? ("Re-derived: " + bits.join(" · ") + ".") : "Re-derived — no level-dependent values changed.";
+    if (advisories) note += " " + advisories + " advisory note" + (advisories === 1 ? "" : "s") + " — check the warnings.";
+    return note;
+  }
   // ----- PC equipment + currency editors (Studio) -----
   setPcEquip(i, name) { this.setState(s => { const pc = Object.assign({}, s.draft.pc || {}); const eq = (pc.equipment || []).slice(); eq[i] = Object.assign({}, eq[i], { name: name }); pc.equipment = eq; return { draft: Object.assign({}, s.draft, { pc }) }; }); }
   addPcEquip() { this.setState(s => { const pc = Object.assign({}, s.draft.pc || {}); pc.equipment = [...(pc.equipment || []), { name: "New item" }]; return { draft: Object.assign({}, s.draft, { pc }) }; }); }
@@ -1361,7 +1415,7 @@ class Component extends DCLogic {
     try {
       const c = await this.api("/character/" + encodeURIComponent(id), null, 6000);
       const ch = c.character || c;
-      this.setState({ activeId: id, draft: ch, mode: ch.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0, freshStart: false });
+      this.setState({ activeId: id, draft: ch, mode: ch.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0, freshStart: false, pcDeriveNote: "" });
     } catch (e) { this.load(id); }
   }
   // ---- Forge entry points are GATED behind a confirm (it spends a token + a few seconds). ----
@@ -1495,29 +1549,56 @@ class Component extends DCLogic {
     if (!(cs.level || "").trim()) pre.push({ level: "warning", message: "No level set — the forge guessed one, which can knock out higher-level spells. Set a level in the box for best results." });
     if (/[\/,]|\band\b|&/i.test(cs.klass || "")) pre.push({ level: "info", message: "Multiclass spotted — the forge builds the primary class; the second class isn't fully supported yet (its features/spells may be missing)." });
     // seed the draft so doForge sends the composed brief + correct kind; carry the exact ability + spell overrides.
-    this.setState(s => ({ draft: Object.assign({}, s.draft, { dump: dump, kind: kind }) }), () => this.doForge({ abilityOverride: this.conceptSheetAbilities(), spellOverride: this.conceptSheetSpells(), equipOverride: this.conceptSheetEquipment(), preWarnings: pre }));
+    this.setState(s => ({ draft: Object.assign({}, s.draft, { dump: dump, kind: kind }) }), () => this.doForge({ fromSheet: true, abilityOverride: this.conceptSheetAbilities(), spellOverride: this.conceptSheetSpells(), equipOverride: this.conceptSheetEquipment(), preWarnings: pre }));
   }
   // The actual token-spending call. Stays in the Forge afterwards (no auto-jump to Studio).
   // opts.abilityOverride: {STR:..,..} from the concept sheet — honoured EXACTLY (deterministic).
+  // Forge context = flavour nudges + the descriptive art boxes the user typed (so the engine SEES
+  // their appearance/outfit/environment/style and can reflect them, e.g. gear → equipment).
+  forgeDetails() {
+    const parts = [];
+    const fv = this.flavourText(); if (fv) parts.push(fv);
+    const a = this.state.draft.art || {};
+    const add = (label, v) => { if ((v || "").trim()) parts.push(label + ": " + String(v).trim()); };
+    add("Appearance", a.appearance); add("Outfit & gear", a.outfit); add("Environment", a.environment); add("Art style", a.style);
+    return parts.join(". ");
+  }
   async doForge(opts) {
     opts = opts || {};
     if (!this.state.bridge) { this.setState({ forgeWarnings: [{ level: "error", message: "The forge engine isn't connected — press ↻ Reconnect in the top bar." }] }); return; }
+    // Capture the descriptive boxes the user typed BEFORE the engine returns its own — so their words win.
+    const userArt = Object.assign({}, this.state.draft.art || {});
     this.setState({ forgeBusy: true, forgeWarnings: [], forgeDone: false, pendingCompanion: null });
     try {
-      const res = await this.jpost("/forge", { dump: this.state.draft.dump || "", ruleset: this.state.rulesetSlug, kind: this.state.draft.kind, rulesMode: this.state.rulesMode, details: this.flavourText() }, 90000);
+      const res = await this.jpost("/forge", { dump: this.state.draft.dump || "", ruleset: this.state.rulesetSlug, kind: this.state.draft.kind, rulesMode: this.state.rulesMode, details: this.forgeDetails() }, 90000);
       const ch = res.character || res;
       ch.proseName = ch.name || "";   // the name the AI used in the summary blurb — so a later rename can track it
+      // FIDELITY: keep the user's typed descriptive fields — overlay any non-empty entry over the engine's,
+      // so pressing Forge never silently overwrites what they wrote. (Blank fields fall through to the engine's.)
+      const a2 = ch.art || (ch.art = {});
+      ["appearance", "outfit", "environment", "pose", "personality"].forEach(k => { const v = (userArt[k] || "").trim(); if (v) a2[k] = userArt[k]; });
+      // Art STYLE (quick brain-dump): the "Use default art style" tickbox governs it.
+      //  • ticked  → force the locked HOUSE STYLE (discard the engine's auto-invented style + ignore the box);
+      //  • unticked → use the style the user TYPED, else keep the forge's concept-fitting style.
+      if (!opts.fromSheet) {
+        if (this.state.artUseDefault) a2.style = "";
+        else if ((userArt.style || "").trim()) a2.style = userArt.style;
+        // else: leave a2.style as the engine's concept-fitting style
+      }
       // the engine returns a fresh character — carry the owner link across the forge (front-end-only field).
       if (this.state.draft.companionOf) ch.companionOf = this.state.draft.companionOf;
       const warnings = (res.warnings || []).map(w => (typeof w === "string" ? { level: "info", message: w } : w));
       // If the owner (PC/NPC) declared a bonded creature, remember it so we can offer to forge it next.
       const f = this.state.flavour || {};
       let pending = null;
-      if ((ch.kind === "character" || ch.kind === "npc") && f.bonded && f.bonded !== "None" && f.bondedDesc) {
+      // Bonded creature: offer the springboard whenever a TYPE is chosen (description optional). Remember it ON the
+      // character (ch.bonded) so the "Forge <X> too" offer ALSO persists in the Studio — not just the transient strip.
+      if ((ch.kind === "character" || ch.kind === "npc") && f.bonded && f.bonded !== "None") {
         const a = ch.art || (ch.art = {});
-        pending = { type: f.bonded, desc: f.bondedDesc, ownerName: ch.name || "their owner", ownerId: ch.id || null, environment: a.environment || "", style: a.style || "", appearance: a.appearance || "" };
-        a.companion = this.companionShortForm(f.bondedDesc);   // → appears alongside them in every portrait
-        this.applyCompanion(ch);
+        const desc = (f.bondedDesc || "").trim();
+        ch.bonded = { type: f.bonded, desc: desc };
+        pending = { type: f.bonded, desc: desc, ownerName: ch.name || "their owner", ownerId: ch.id || null, environment: a.environment || "", style: a.style || "", appearance: a.appearance || "" };
+        if (desc) { a.companion = this.companionShortForm(desc); this.applyCompanion(ch); }   // weave into portraits only if described
       }
       // carry the Familiar/Companion/Pet tag across the forge (engine returns a fresh char), then guard non-humanoids
       if (this.state.draft.bondType) ch.bondType = this.state.draft.bondType;
@@ -1554,7 +1635,7 @@ class Component extends DCLogic {
   }
   companionLabel() {
     const pc = this.state.pendingCompanion; if (!pc) return "";
-    const name = (pc.desc || "").split(",")[0].trim();
+    const name = (pc.desc || "").split(/[,—–]/)[0].trim();
     return (name && name.length <= 24) ? name : ("their " + (pc.type || "companion").toLowerCase());
   }
   // Springboard: seed a NEW linked creation from the owner's bonded creature, land in the Forge to review.
@@ -1568,7 +1649,8 @@ class Component extends DCLogic {
     const ctx = [];
     if (pc.environment) ctx.push("set in the same world as " + pc.ownerName + " (whose surroundings are: " + pc.environment + ") — but give the creature its OWN fitting scene, not its owner's");
     if (pc.style) ctx.push("matching the art style: " + pc.style);
-    const dump = "You ARE " + pc.desc + ", the " + pc.type.toLowerCase() + magical + " of " + pc.ownerName +
+    const who = (pc.desc || "").trim() || ("the " + pc.type.toLowerCase() + " of " + pc.ownerName);
+    const dump = "You ARE " + who + ", the " + pc.type.toLowerCase() + magical + " of " + pc.ownerName +
       ". Give it a fitting name, a striking look, its bond with " + pc.ownerName + ", a fitting environment of its own, and memorable detail in how it acts." +
       (ctx.length ? " Keep it consistent, " + ctx.join(", ") + "." : "");
     const blank = this.clone(this.LIB.blank);
@@ -1579,6 +1661,13 @@ class Component extends DCLogic {
       art: Object.assign({}, blank.art || {}, { style: pc.style || "" })   // inherit style only; the forge fills the creature's own environment
     });
     this.setState({ draft: seed, forgeKind: kind, mode: "monster", activeId: "blank", view: "forge", forgeDone: false, pendingCompanion: null, concept: null, freshStart: true, flavour: { experience: "", origin: "", memory: "" } });
+  }
+  // Studio: forge the bonded creature the owner DECLARED (ch.bonded, remembered at forge time) — persistent,
+  // pre-filled with the description the user wrote. Set-up-only: lands a seeded draft in the Forge to review.
+  forgeDeclaredBonded() {
+    const owner = this.state.draft || {}; const b = owner.bonded; if (!b || !b.type) return;
+    const a = owner.art || {};
+    this.setState({ pendingCompanion: { type: b.type, desc: b.desc || "", ownerName: owner.name || "their owner", ownerId: owner.id || this.state.activeId || null, environment: a.environment || "", style: a.style || "", appearance: a.appearance || "" } }, () => this.forgeCompanionFromOwner());
   }
   // Studio: spawn a linked companion/pet/familiar from the CURRENTLY-loaded PC/NPC (any time, not just post-forge).
   forgeBondedForCurrent(type) {
@@ -1665,8 +1754,13 @@ class Component extends DCLogic {
     const k = ch.kind;
     if (k !== "pet" && k !== "companion") return ch;
     const art = ch.art || (ch.art = {});
-    const guard = k === "companion" ? "a non-humanoid animal" : "a small non-humanoid creature";
     const appearance = (art.appearance || "").trim();
+    // Don't force "non-humanoid" on a HUMANOID companion (e.g. a dwarf ally like Flint, an elf, a halfling…) —
+    // the guard is only meant to stop ANIMAL pets/familiars drifting humanoid. Skip if the description (or the
+    // statblock type) reads humanoid.
+    const blob = (appearance + " " + (ch.type || "") + " " + (ch.dump || "")).toLowerCase();
+    if (/\b(humanoid|dwarf|elf|human|halfling|gnome|half-orc|orc|tiefling|dragonborn|kender|person|man|woman|warrior|knight|wizard|priest|rogue|fighter)\b/.test(blob)) return ch;
+    const guard = k === "companion" ? "a non-humanoid animal" : "a small non-humanoid creature";
     if (appearance.toLowerCase().indexOf("non-humanoid") === -1) {
       art.appearance = appearance ? (guard + ", " + appearance) : guard;
     }
@@ -2122,7 +2216,7 @@ class Component extends DCLogic {
   // Forge entry kind picker (PC / NPC / Monster / Companion / Pet) — drives Surprise me + the draft.
   pickForgeKind(k) { this.setState({ forgeKind: k }); this.setKind(k); }
   cap(s) { s = s || ""; return s.charAt(0).toUpperCase() + s.slice(1); }
-  load(id) { const c = this.LIB[id]; if (!c) return; this.setState({ activeId: id, draft: this.clone(c), mode: c.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0, freshStart: false, exampleBarOpen: false }); }
+  load(id) { const c = this.LIB[id]; if (!c) return; this.setState({ activeId: id, draft: this.clone(c), mode: c.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0, freshStart: false, exampleBarOpen: false, pcDeriveNote: "" }); }
   random() { const ids = Object.keys(this.LIB).filter(i => i !== this.state.activeId && i !== "blank"); const pick = ids[Math.floor(Math.random() * ids.length)]; this.load(pick); }
   blank() {
     const d = this.clone(this.LIB.blank);
@@ -2617,8 +2711,9 @@ class Component extends DCLogic {
     seg.push((beat ? clean(beat) : sc.act) + "; " + sc.cam);
     seg.push(a.environment ? sc.env + " " + clean(a.environment) + ", a high-fantasy world" : sc.env + " an evocative high-fantasy location");
     if (a.personality) seg.push("mood: " + clean(a.personality));
-    seg.push(a.style ? clean(a.style) : "painterly high fantasy");
-    seg.push("in the style of Greg Rutkowski and Tyler Jacobson, gritty painterly high-fantasy digital illustration, dramatic cinematic lighting, full-body fantasy character art, cinematic composition, consistent character design across the set, rich detail, absolutely no text, lettering, words, captions, speech bubbles, numbers, signage or writing of any kind anywhere in the image");
+    // style: the character's own art.style REPLACES the house style; else the locked house style.
+    seg.push(a.style ? clean(a.style) : "in the style of Greg Rutkowski and Tyler Jacobson, gritty painterly high-fantasy digital illustration, dramatic cinematic lighting");
+    seg.push("full-body fantasy character art, cinematic composition, consistent character design across the set, rich detail, absolutely no text, lettering, words, captions, speech bubbles, numbers, signage or writing of any kind anywhere in the image");
     return "\u201C" + seg.filter(Boolean).join(". ") + ". \u2014 " + this.state.forgeState.toLowerCase() + " variant.\u201D";
   }
 
@@ -2770,6 +2865,10 @@ class Component extends DCLogic {
           style: "border:1px solid " + (on ? "#99502a" : "#4a3f30") + "; background:" + (on ? "#99502a" : "#2d271f") + "; color:" + (on ? "#fff" : "#cabfa9") + "; border-radius:999px; padding:4px 11px; font-size:12.5px; cursor:pointer;" };
       });
       char.onPcClass = e => this.setPcFields({ "class": e.target.value, subclass: "", skillChoices: [] });
+      // Level control: re-derives HP/slots/PB/features via POST /character/derive (engine maths).
+      char.pcLevelVal = String(pc.level || 1);
+      char.onPcLevel = e => this.deriveLevel(e.target.value);
+      char.pcDeriveNote = this.state.pcDeriveNote || "";
       char.onPcSpecies = e => this.setPcFields({ species: e.target.value, subspecies: "" });
       char.onPcSubspecies = e => this.setPcFields({ subspecies: e.target.value });
       char.onPcBackground = e => this.setPcFields({ background: e.target.value });
@@ -3054,6 +3153,11 @@ class Component extends DCLogic {
       onForgeBondedCompanion: () => this.forgeBondedForCurrent("Companion"),
       onForgeBondedPet: () => this.forgeBondedForCurrent("Pet"),
       onForgeBondedFamiliar: () => this.forgeBondedForCurrent("Familiar"),
+      // persistent, pre-filled "Forge <the companion you described> too" — from ch.bonded remembered at forge time
+      hasDeclaredBonded: !!(d.bonded && d.bonded.type),
+      declaredBondedLabel: (() => { const b = d.bonded || {}; const nm = ((b.desc || "").split(/[,—–]/)[0] || "").trim(); return (nm && nm.length <= 24) ? nm : ("their " + (b.type || "companion").toLowerCase()); })(),
+      declaredBondedNoun: ((d.bonded || {}).type || "companion").toLowerCase(),
+      onForgeDeclaredBonded: () => this.forgeDeclaredBonded(),
       ownedCreatures, hasOwnedCreatures,
       showSpellEdit: !!(d.kind === "character" && d.spellcasting),
       ...this.spellPickerRender(),
@@ -3062,6 +3166,7 @@ class Component extends DCLogic {
       onCantripsEdit: e => this.setSpellList("cantrips", e.target.value),
       onPreparedEdit: e => this.setSpellList("prepared", e.target.value),
       dump: d.dump || "", onDump: e => this.setDump(e.target.value), art: d.art || {},
+      artUseDefault: !!this.state.artUseDefault, artCustomStyle: !this.state.artUseDefault, onArtUseDefault: e => this.setState({ artUseDefault: e.target.checked }),
       // concept-sheet input mode
       inputDump: this.state.forgeInput !== "sheet", inputSheet: this.state.forgeInput === "sheet",
       onInputDump: () => this.setForgeInput("dump"), onInputSheet: () => this.setForgeInput("sheet"),
