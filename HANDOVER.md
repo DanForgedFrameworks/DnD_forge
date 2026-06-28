@@ -750,6 +750,16 @@ endpoint (`POST /character/derive`) so a Level control re-derives HP/proficiency
 mixed hit dice, multiclass proficiencies) via an additive `pc.classes[]` model that keeps single-class byte-for-byte.
 Run in a separate chat.
 
+**#5 HOUSEKEEPING — DONE locally (2026-06-27), push pending user OK.** (a) Retired the v1 prototype: `git rm`
+`frontend/` (old dc.html + support/image-slot/README + engine-handoff) + `web/forge-bridge.js` + `web/fallback-data.js`
+— superseded by `web/frontend/` + the Flask bridge; recoverable from history. (Left `scripts/build_fallback.py` +
+stale doc mentions in ARCHITECTURE.md/web/README.md — minor.) (b) gitignored **`/Example images/`** (copyrighted
+art-style reference JPGs — must NOT be committed/pushed). (c) Two clean LOCAL commits on `main`: `cd2507c` (retire) +
+`97ac75a` (the whole session build). Working tree clean. **Verified before any push:** `git ls-files` has NO .pdf /
+data/srd / data/local / Example images / PDFs / output (85 tracked files, all legit) — gitignore wall holds.
+**`main` is 20 commits ahead of `origin/main` (public GitHub DanForgedFrameworks/DnD_forge) — NOT pushed.** Awaiting
+explicit user go to push (outward-facing/public).
+
 **⚠ DEPLOYMENT: spell picker + Party-tab HP + Option-2 likeness all need the BRIDGE RESTARTED** (new `/spells` endpoint + rules_mode helper) — relaunch
 Forge.bat / [R]. Front-end picker UI is in the .dc.html (hard refresh). All prior Play-tab/download work was
 front-end-only; this is the first engine change since the no-text/prompt-override/anchor batch.
