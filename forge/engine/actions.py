@@ -223,6 +223,30 @@ def _resolve_weapon_entry(name: str, edition: str) -> dict | None:
     return None
 
 
+def _with_2024_mastery(entry: dict, character: dict, edition: str) -> dict:
+    """For a 2024 (local) character, attach the weapon's Mastery property (Sap, Vex, Topple…) so
+    the attack line shows it. Inert for 2014 and for weapons with no mastery."""
+    if not entry or "local" not in str(character.get("ruleset", "")):
+        return entry
+    try:
+        from ..ruleset import local_data as L
+        # A.8: only a "warrior" class (Barbarian/Fighter/Paladin/Ranger/Rogue — those with the Weapon
+        # Mastery feature) may APPLY a weapon's mastery; others wield it without the property.
+        pc = character.get("pc") or {}
+        classes = pc.get("classes")
+        mix = ({(c.get("class") or "").lower() for c in classes} if isinstance(classes, list)
+               else {(pc.get("class") or "").lower()})
+        if not (mix & L.mastery_classes()):
+            # non-warrior: strip any mastery the data baked in (SRD entries carry it); wield, don't apply
+            return {k: v for k, v in entry.items() if k != "mastery"} if entry.get("mastery") else entry
+        if entry.get("mastery"):
+            return entry  # warrior + already has the property
+        m = L.weapon_mastery(entry.get("index") or "")
+    except Exception:
+        m = None
+    return dict(entry, mastery={"name": m}) if m else entry
+
+
 def weapon_actions_for_item(name: str, character: dict, edition: str = "2014") -> list[dict]:
     """Attack/use action(s) for a single equipment item by name (the 'Add action' path).
 
@@ -233,6 +257,7 @@ def weapon_actions_for_item(name: str, character: dict, edition: str = "2014") -
     entry = _resolve_weapon_entry(name, edition)
     if not entry:
         return []
+    entry = _with_2024_mastery(entry, character, edition)
     abilities = character.get("abilities") or {}
     pc = character.get("pc") or {}
     pb = proficiency_bonus(int(pc.get("level") or 1))
@@ -250,6 +275,21 @@ def item_actions(name: str, character: dict, edition: str = "2014") -> list[dict
       3. A blank stub named after the item, so the player can describe a contextual use of their
          own (lighting a candle, reading a map, etc.). This is why "Add action" works on anything.
     """
+    # A.4: the Trinket item's action rolls the d100 table — each press yields a fresh trinket.
+    if (name or "").strip().lower() == "trinket" and "local" in str(character.get("ruleset", "")):
+        try:
+            import random
+            from ..ruleset import local_data as L
+            tr = L.trinkets()
+            if tr:
+                pick = random.choice(tr)
+                # source stays `item:trinket:<roll>` so _reconcile keeps it (item index = "trinket")
+                # while each roll is distinct for the de-dup in addWeaponAction.
+                return [{"name": "Trinket — rolled " + str(pick.get("roll", "")),
+                         "source": "item:trinket:" + str(pick.get("roll", "")),
+                         "text": "d100 " + str(pick.get("roll", "")) + ": " + str(pick.get("description", ""))}]
+        except Exception:
+            pass
     weap = weapon_actions_for_item(name, character, edition)
     if weap:
         return weap
@@ -271,6 +311,8 @@ def item_is_actionable(name: str, edition: str = "2014") -> bool:
     clothing and the like have no action of their own (armour is already in AC), so they don't.
     Cheap (no ability scores needed); safe to call per equipment row.
     """
+    if (name or "").strip().lower() == "trinket":
+        return True  # A.4: the Trinket rolls the d100 table as its action
     card = canonical_item(name, edition)
     idx = str((card["index"] if card else name) or "").lower()
     table = _flavour_actions()
@@ -307,6 +349,7 @@ def derive_weapon_actions(character: dict, edition: str = "2014") -> list[dict]:
         entry = _resolve_weapon_entry(nm, edition)  # resolves flavour names too (Two daggers, etc.)
         if not entry:
             continue
+        entry = _with_2024_mastery(entry, character, edition)
         if isinstance(it, dict) and it.get("modes") and not entry.get("modes"):
             entry = dict(entry, modes=it["modes"])
         display = nm if not entry.get("modes") else None

@@ -112,10 +112,12 @@ def spells_for_class():
         level = int(request.args.get("level", "1"))
     except (TypeError, ValueError):
         level = 1
+    ruleset = request.args.get("ruleset", "dnd5e-2014")
     try:
-        edition = Ruleset(request.args.get("ruleset", "dnd5e-2014")).config.get("srdEdition", "2014")
+        edition = Ruleset(ruleset).config.get("srdEdition", "2014")
     except Exception:
         edition = "2014"
+    include_local = "local" in ruleset.lower()  # 2024-local merges the local PHB spell list
 
     abilities = {}
     for k in ("str", "dex", "con", "int", "wis", "cha"):
@@ -131,7 +133,7 @@ def spells_for_class():
         ability_mod = (abilities[rules["ability"]] - 10) // 2
 
     return jsonify({
-        "spells": rm.class_spells_detailed(cls, edition),
+        "spells": rm.class_spells_detailed(cls, edition, include_local=include_local),
         "limits": rm.spell_limits(cls, level, ability_mod, edition),
         "edition": edition,
     })
@@ -148,14 +150,86 @@ def equipment_lookup():
     """
     from forge.engine import equipment_catalog, item_is_actionable
 
+    ruleset = request.args.get("ruleset", "dnd5e-2014")
     try:
-        edition = Ruleset(request.args.get("ruleset", "dnd5e-2014")).config.get("srdEdition", "2014")
+        edition = Ruleset(ruleset).config.get("srdEdition", "2014")
     except Exception:
         edition = "2014"
-    items = equipment_catalog(edition, request.args.get("q"))
+    include_local = "local" in ruleset.lower()  # 2024-local merges the local PHB equipment catalog
+    items = equipment_catalog(edition, request.args.get("q"), include_local=include_local)
     for it in items:  # flag which catalog items can become an action (drives the "+ Action" button)
         it["actionable"] = bool(it.get("modes")) or item_is_actionable(it.get("index") or it.get("name", ""), edition)
     return jsonify({"items": items, "edition": edition})
+
+
+def _srd_feat_prereq(feat: dict, abilities: dict) -> tuple[bool, str]:
+    """(available, prereq_text) for an SRD feat from its structured `prerequisites` (ability minimums).
+    No prerequisite -> (True, 'None'). All listed minimums must be met."""
+    reqs = feat.get("prerequisites") or []
+    if not reqs:
+        return True, "None"
+    parts, ok = [], True
+    for r in reqs:
+        if isinstance(r, str):  # 2024 SRD feats list free-text prereqs — keep as text, don't block
+            if r.strip():
+                parts.append(r.strip())
+            continue
+        if not isinstance(r, dict):
+            continue
+        ab = ((r.get("ability_score") or {}).get("index") or "").upper()
+        mn = int(r.get("minimum_score") or 0)
+        if ab:
+            parts.append(f"{ab} {mn}+")
+            if int(abilities.get(ab, 0) or 0) < mn:
+                ok = False
+    return ok, (", ".join(parts) if parts else "None")
+
+
+@app.get("/feats")
+def feats_list():
+    """The 2024 feat list for the feat picker, with each feat's prerequisite evaluated against the
+    character (A.2). 2024-local only — SRD rulesets return an empty list (their feats are list-only).
+
+    Query: ruleset (slug), class, level, str/dex/con/int/wis/cha. Returns {feats: [{index, name, type,
+    prerequisites_text, description, available, reason}], edition}. `available` is ADVISORY — the picker
+    greys locked feats but can still add them (rule-of-cool friendly)."""
+    ruleset = request.args.get("ruleset", "dnd5e-2014")
+    try:
+        edition = Ruleset(ruleset).config.get("srdEdition", "2014")
+    except Exception:
+        edition = "2014"
+
+    def _i(k, d=10):
+        try:
+            return int(request.args.get(k, d))
+        except (TypeError, ValueError):
+            return d
+    abilities = {k.upper(): _i(k) for k in ("str", "dex", "con", "int", "wis", "cha")}
+    character = {
+        "kind": "character", "ruleset": ruleset,
+        "pc": {"class": (request.args.get("class") or "").lower(), "level": _i("level", 1)},
+        "abilities": abilities,
+    }
+    feats = []
+    if "local" in ruleset.lower():
+        from forge.ruleset import local_data as L
+        for f in L.feats_full():
+            st = L.feat_prereq_status(f, character)
+            feats.append({**f, "available": st["available"], "reason": st["reason"]})
+    else:
+        # A.10a: SRD feats (2014 / 2024) with their structured ability-minimum prerequisites.
+        from forge.canon import SRDRepository
+        try:
+            for f in SRDRepository(edition).all("feats"):
+                avail, text = _srd_feat_prereq(f, abilities)
+                desc = f.get("desc") or f.get("description")  # 2014 uses `desc` (list), 2024 `description`
+                feats.append({"index": f.get("index"), "name": f.get("name"), "type": "general",
+                              "prerequisites_text": text,
+                              "description": " ".join(desc) if isinstance(desc, list) else (desc or ""),
+                              "available": avail, "reason": "" if avail else "Requires " + text})
+        except Exception:
+            feats = []
+    return jsonify({"feats": feats, "edition": edition})
 
 
 @app.get("/actions/standard")
@@ -598,6 +672,12 @@ def derive_character():
         character, warnings, changes = rederive(
             character, level=body.get("level"), classes=body.get("classes")
         )
+        # rederive covers the level-dependent maths; refresh the DISPLAY layer too so a class /
+        # species / background / subclass change returns a fully-consistent character in one call
+        # (display features + described languages, and actions reconciled to the current gear).
+        _refresh_features(character)
+        _reconcile_actions(character)
+        _annotate_actions(character)
     except Exception as e:  # never 500 on a fragile re-derive — surface as JSON
         return jsonify({"error": "derive_failed", "message": str(e)}), 422
     return jsonify({"character": character, "warnings": warnings, "changes": changes})
@@ -626,7 +706,41 @@ def save_character():
     (CHAR_DIR / f"{character['id']}.json").write_text(
         json.dumps(character, indent=2, ensure_ascii=False), encoding="utf-8"
     )
+    _sync_companion_links(character)  # keep companions' owner-link in sync (cement id, propagate rename)
     return jsonify({"id": character["id"], "character": character})
+
+
+def _sync_companion_links(owner: dict) -> None:
+    """When an owner is saved, keep its companions' ``companionOf`` solid so the link can't be severed
+    by a later rename: (a) cement a null companion id from a current-name match, and (b) propagate the
+    owner's (possibly new) name onto any companion already linked by id. Both directions key on the
+    stable id once it exists, so name changes never break the link again."""
+    oid, oname = owner.get("id"), owner.get("name")
+    if not oid or not oname:
+        return
+    for p in CHAR_DIR.glob("*.json"):
+        if p.stem == oid:
+            continue
+        try:
+            c = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        o = c.get("companionOf")
+        if not isinstance(o, dict):
+            continue
+        changed = False
+        if str(o.get("id") or "") == str(oid):
+            if o.get("name") != oname:        # propagate rename onto an id-linked companion
+                o["name"] = oname
+                changed = True
+        elif not o.get("id") and str(o.get("name") or "").lower() == str(oname).lower():
+            o["id"] = oid                     # cement the id while the name still matches
+            changed = True
+        if changed:
+            try:
+                p.write_text(json.dumps(c, indent=2, ensure_ascii=False), encoding="utf-8")
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":

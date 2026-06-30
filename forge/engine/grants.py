@@ -92,10 +92,12 @@ def resolve_pc_proficiencies(character: dict) -> dict:
     # only its reduced PHB multiclass set. Background tools/languages always apply.
     if cls or bg or secondaries:
         bg_tools = [_humanize(t) for t in ((bg or {}).get("tools") or [])]
+        # A.10b: the player's chosen "one tool of your choice" from the background (pc.bgTools[]).
+        chosen_tools = [str(t).strip() for t in (pc.get("bgTools") or []) if str(t).strip()]
         proficiencies = {
             "armor": list((cls or {}).get("armor") or []),
             "weapons": list((cls or {}).get("weapons") or []),
-            "tools": list((cls or {}).get("tools") or []) + bg_tools,
+            "tools": list((cls or {}).get("tools") or []) + bg_tools + chosen_tools,
             "languages": int((bg or {}).get("languages") or 0),  # # of free background languages
         }
         for sec in secondaries:

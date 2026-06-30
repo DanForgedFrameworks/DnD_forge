@@ -318,6 +318,7 @@
                 <span style="font-size:11.5px; color:#8a7c66;">Total level {{ char.pcTotalLevel }} / 20</span>
                 <button onClick="{{ char.onAddPcClass }}" style="background:none; border:1px solid #4a3f30; color:#bd7d3f; border-radius:5px; padding:3px 10px; font-size:12px; cursor:pointer;">＋ Add class</button>
               </div>
+              <sc-if value="{{ char.show2024McPrereq }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px; color:#7d8a6f; margin-top:5px; line-height:1.4;"><span style="color:#a9c79a;">2024 multiclass needs</span> {{ char.mc2024Prereq }}</div></sc-if>
             </div>
             </sc-if>
             <!-- Species (always shown) -->
@@ -334,6 +335,12 @@
             <div>
               <label style="font-size:10px; letter-spacing:1px; color:#8a7c66; text-transform:uppercase; display:block; margin-bottom:4px;">Background</label>
               <select value="{{ char.pcBackgroundVal }}" onChange="{{ char.onPcBackground }}" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px 10px; font-size:13.5px; color:#e7dcc6; appearance:none; cursor:pointer;">{{ char.pcBackgroundOpts }}</select>
+              <sc-if value="{{ char.hasBgToolChoice }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:6px;">
+                  <div style="font-size:10.5px; color:#8a9d6f; margin-bottom:3px; line-height:1.3;">{{ char.bgToolPrompt }}</div>
+                  <input value="{{ char.bgToolVal }}" onInput="{{ char.onBgTool }}" placeholder="Name your chosen tool (e.g. Smith’s Tools)" style="width:100%; box-sizing:border-box; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:6px 9px; font-size:12.5px; color:#e7dcc6;">
+                </div>
+              </sc-if>
             </div>
             <!-- single-class: Level in col 2 -->
             <sc-if value="{{ char.isSingleClass }}" hint-placeholder-val="{{ false }}">
@@ -366,7 +373,15 @@
           <div style="margin-top:11px; background:#2a3326; border:1px solid #46583c; border-radius:7px; padding:9px 11px;">
             <div style="font-size:10px; letter-spacing:1px; color:#a9c79a; text-transform:uppercase; margin-bottom:5px;">2024 background grants</div>
             <sc-if value="{{ char.bg2024Feat }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#cfc0a4; margin-bottom:2px;"><span style="color:#bd7d3f; font-weight:600;">Origin Feat</span> {{ char.bg2024Feat }}</div></sc-if>
-            <sc-if value="{{ char.bg2024Ability }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#cfc0a4; margin-bottom:2px;"><span style="color:#bd7d3f; font-weight:600;">Ability boosts</span> +2/+1 from {{ char.bg2024Ability }}</div></sc-if>
+            <sc-if value="{{ char.has2024AbilBoost }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:4px; font-size:12.5px; color:#cfc0a4;">
+              <span style="color:#bd7d3f; font-weight:600;">Ability boosts</span>
+              <span>+2</span><select value="{{ char.abilBoost2Val }}" onChange="{{ char.onAbilBoost2 }}" style="background:#2d271f; border:1px solid #4a3f30; border-radius:5px; padding:3px 6px; font-size:12px; color:#e7dcc6;">{{ char.abilBoost2Opts }}</select>
+              <span>+1</span><select value="{{ char.abilBoost1Val }}" onChange="{{ char.onAbilBoost1 }}" style="background:#2d271f; border:1px solid #4a3f30; border-radius:5px; padding:3px 6px; font-size:12px; color:#e7dcc6;">{{ char.abilBoost1Opts }}</select>
+              <span style="color:#7d8a6f; font-style:italic;">→ applied to scores below</span>
+            </div>
+            </sc-if>
+            <sc-if value="{{ char.bg2024Ability }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px; color:#7d8a6f; margin-bottom:2px;">options: {{ char.bg2024Ability }}</div></sc-if>
             <sc-if value="{{ char.bg2024Skills }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#cfc0a4;"><span style="color:#bd7d3f; font-weight:600;">Skills</span> {{ char.bg2024Skills }}</div></sc-if>
             <div style="font-size:11px; color:#7d8a6f; margin-top:6px; line-height:1.4;">In 2024 your ability boosts and feat come from your <strong>background</strong>, not your species — set your final ability scores below.</div>
           </div>
@@ -454,8 +469,55 @@
           <input value="{{ char.langNameVal }}" onInput="{{ char.onLangName }}" placeholder="Add a language (e.g. Kenderspeak)" style="flex:1; background:#2d271f; border:1px solid #4a3f30; border-radius:5px; padding:6px 9px; font-size:13px; color:#e7dcc6;">
           <input value="{{ char.langDescVal }}" onInput="{{ char.onLangDesc }}" placeholder="Description / context (optional)" style="flex:2; background:#2d271f; border:1px solid #4a3f30; border-radius:5px; padding:6px 9px; font-size:13px; color:#e7dcc6;">
           <button onClick="{{ char.onAddLanguage }}" style="background:#2d271f; color:#bd7d3f; border:1px solid #4a3f30; border-radius:5px; padding:6px 12px; font-size:12.5px; cursor:pointer; white-space:nowrap;">Add</button>
+          <sc-if value="{{ char.hasLangBrowse }}" hint-placeholder-val="{{ false }}"><button onClick="{{ char.onToggleLangBrowse }}" title="Browse the rulebook's languages" style="background:#3a2e1f; color:#f0d9b5; border:1px solid #6a5a44; border-radius:5px; padding:6px 11px; font-size:12px; cursor:pointer; white-space:nowrap;">🌐 Browse</button></sc-if>
         </div>
-        <div style="font-size:11px; color:#7d6f5a; margin-top:8px; line-height:1.4;">Species &amp; class tongues fill in automatically; add flavour languages (like Kenderspeak) here. Locked chips come from your species/class.</div>
+        <sc-if value="{{ char.langBrowseOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#1b1812; border:1px solid #4a3f30; border-radius:8px; padding:10px; margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
+          <sc-for list="{{ char.langBrowseItems }}" as="lg" hint-placeholder-count="6">
+            <button onClick="{{ lg.onClick }}" title="{{ lg.title }}" style="border-radius:6px; padding:4px 10px; font-size:12.5px; cursor:pointer; border:1px solid #4a3f30; background:#2d271f; color:#cabfa9;">{{ lg.name }}</button>
+          </sc-for>
+        </div>
+        </sc-if>
+        <div style="font-size:11px; color:#7d6f5a; margin-top:8px; line-height:1.4;">Species &amp; class tongues fill in automatically; add flavour languages (like Kenderspeak) by typing, or 🌐 Browse the rulebook's list. Locked rows come from your species/class.</div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ showFeats }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#211c15; border:1px solid #3a3227; border-radius:8px; padding:11px 13px;">
+        <div style="display:flex; align-items:center; margin-bottom:8px;">
+          <label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; color:#bd7d3f; text-transform:uppercase;">Feats</label>
+          <button onClick="{{ onOpenFeatPicker }}" title="Browse the 2024 feats (prerequisites checked against this character)" style="margin-left:auto; background:#3a2e1f; color:#f0d9b5; border:1px solid #6a5a44; border-radius:6px; padding:4px 11px; font-size:12px; cursor:pointer;">＋ Feat</button>
+        </div>
+        <sc-if value="{{ featPickerOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#1b1812; border:1px solid #4a3f30; border-radius:9px; padding:13px; margin-bottom:11px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:9px;">
+            <input value="{{ featPickerSearch }}" onInput="{{ onFeatSearch }}" placeholder="Search feats… (try “alert”)" style="flex:1; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:7px 9px; font-size:13px; color:#e7dcc6;" />
+            <button onClick="{{ onCloseFeatPicker }}" style="background:#2c261e; color:#b09f84; border:1px solid #4a3f30; border-radius:6px; padding:6px 11px; font-size:12px; cursor:pointer;">Done</button>
+          </div>
+          <sc-if value="{{ featPickerLoading }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#9c8e76;">Loading feats…</div></sc-if>
+          <sc-if value="{{ featPickerError }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px; color:#c08a5a;">{{ featPickerError }}</div></sc-if>
+          <div style="max-height:300px; overflow-y:auto; display:grid; gap:10px;">
+            <sc-for list="{{ featGroups }}" as="g" hint-placeholder-count="2">
+              <div>
+                <div style="font-size:10.5px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; margin-bottom:5px;">{{ g.label }}</div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                  <sc-for list="{{ g.feats }}" as="fb" hint-placeholder-count="3">
+                    <button onClick="{{ fb.onClick }}" title="{{ fb.title }}" style="{{ fb.style }}">{{ fb.name }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ hasChosenFeats }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            <sc-for list="{{ chosenFeats }}" as="ft" hint-placeholder-count="1">
+              <span style="display:inline-flex; align-items:center; gap:6px; background:#2d271f; border:1px solid #4a3f30; border-radius:999px; padding:4px 6px 4px 11px; font-size:12.5px; color:#e7dcc6;">{{ ft.label }} <button onClick="{{ ft.onRemove }}" title="Remove" style="background:none; border:none; color:#a07a6a; cursor:pointer; font-size:14px; line-height:1;">×</button></span>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="font-size:11px; color:#7d6f5a; margin-top:8px; line-height:1.4;">Origin feats come from your background; pick General feats at ASI levels. Locked feats (🔒) don't meet their prerequisite yet — you can still add one in Relaxed mode.</div>
       </div>
       </sc-if>
 
@@ -674,7 +736,7 @@
               </div>
               <div style="display:flex; flex-wrap:wrap; gap:6px;">
                 <sc-for list="{{ spellCantripButtons }}" as="sp" hint-placeholder-count="4">
-                  <button onClick="{{ sp.onClick }}" style="{{ sp.style }}">{{ sp.name }}</button>
+                  <button onClick="{{ sp.onClick }}" title="{{ sp.title }}" style="{{ sp.style }}">{{ sp.name }}</button>
                 </sc-for>
               </div>
             </div>
@@ -694,7 +756,7 @@
                   <div style="font-size:10.5px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; margin-bottom:5px;">{{ g.label }}</div>
                   <div style="display:flex; flex-wrap:wrap; gap:6px;">
                     <sc-for list="{{ g.spells }}" as="sp" hint-placeholder-count="3">
-                      <button onClick="{{ sp.onClick }}" style="{{ sp.style }}">{{ sp.name }}</button>
+                      <button onClick="{{ sp.onClick }}" title="{{ sp.title }}" style="{{ sp.style }}">{{ sp.name }}</button>
                     </sc-for>
                   </div>
                 </div>
@@ -727,6 +789,7 @@
           <div><div style="font-family:'Cinzel',serif; font-weight:700; font-size:14px; color:#7a3f1e;">{{ a.k }}</div><div style="font-size:16px;">{{ a.score }}</div><div style="font-size:15px; color:#4a3d2c;">{{ a.mod }}</div></div>
         </sc-for>
       </div>
+      <sc-if value="{{ char.hasAbilityBoost }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px; color:#7a6c55; text-align:center; font-style:italic; margin-top:6px;">{{ char.abilityBoostNote }}</div></sc-if>
       <div style="height:3px; margin:13px 0; background:linear-gradient(90deg, rgba(154,79,37,0), #9a4f25 8%, #9a4f25 92%, rgba(154,79,37,0)); clip-path:polygon(0 50%,3% 0,97% 0,100% 50%,97% 100%,3% 100%);"></div>
       <div style="font-size:15px; line-height:1.5;">
         <sc-if value="{{ char.showSaves }}" hint-placeholder-val="{{ true }}"><div><strong style="color:#7a3f1e;">Saving Throws</strong> {{ char.saves }}</div></sc-if>
@@ -1302,6 +1365,7 @@
           <div style="background:#1f1b15; border:1px solid #3a3227; border-radius:7px; padding:5px 12px; text-align:center;"><div style="font-size:10px; letter-spacing:0.5px; color:#bd7d3f; font-family:'Cinzel',serif;">{{ a.k }}</div><div style="font-size:14px; color:#e9dcc2;">{{ a.score }} {{ a.mod }}</div></div>
         </sc-for>
       </div>
+      <sc-if value="{{ hasAbilityBoost }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px; color:#8a7c63; font-style:italic; margin-bottom:4px;">{{ abilityBoostNote }}</div></sc-if>
       <sc-if value="{{ hasPlaySaves }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#cfc0a4; margin-top:7px;"><span style="color:#bd7d3f; font-weight:600;">Saves</span> {{ playSaves }}</div></sc-if>
       <sc-if value="{{ hasPlaySkills }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#cfc0a4; margin-top:3px;"><span style="color:#bd7d3f; font-weight:600;">Skills</span> {{ playSkills }}</div></sc-if>
       <sc-if value="{{ hasPlaySensesRef }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#cfc0a4; margin-top:3px;"><span style="color:#bd7d3f; font-weight:600;">Senses</span> {{ playSensesRef }}</div></sc-if>
@@ -1439,7 +1503,43 @@ class Component extends DCLogic {
   fmtMod(n) { n = parseInt(n, 10); if (isNaN(n)) n = 10; const m = Math.floor((n - 10) / 2); return "(" + (m >= 0 ? "+" : "\u2212") + Math.abs(m) + ")"; }
 
   setPc(k, v) { this.setState(s => ({ draft: Object.assign({}, s.draft, { pc: Object.assign({}, s.draft.pc || {}, { [k]: v }) }) })); }
+  // 2024 background ability boost (+2 / +1 from the background's options). Idempotent: strips the
+  // current boosts to recover the base scores, then re-applies the new picks, so changing them
+  // never double-counts. Stored on pc.abilityBoost2 / pc.abilityBoost1.
+  setAbilityBoost(slot, ability) {
+    this.setState(s => {
+      const pc = Object.assign({}, s.draft.pc || {});
+      const ab = Object.assign({}, s.draft.abilities || {});
+      const cur2 = pc.abilityBoost2, cur1 = pc.abilityBoost1;
+      if (cur2 && ab[cur2] != null) ab[cur2] = parseInt(ab[cur2], 10) - 2;
+      if (cur1 && ab[cur1] != null) ab[cur1] = parseInt(ab[cur1], 10) - 1;
+      if (slot === "b2") pc.abilityBoost2 = ability || ""; else pc.abilityBoost1 = ability || "";
+      const n2 = pc.abilityBoost2, n1 = pc.abilityBoost1;
+      if (n2 && ab[n2] != null) ab[n2] = parseInt(ab[n2], 10) + 2;
+      if (n1 && ab[n1] != null) ab[n1] = parseInt(ab[n1], 10) + 1;
+      return { draft: Object.assign({}, s.draft, { pc, abilities: ab }) };
+    });
+  }
   setPcFields(obj) { this.setState(s => ({ draft: Object.assign({}, s.draft, { pc: Object.assign({}, s.draft.pc || {}, obj) }) })); }
+  // Re-derive after a STRUCTURAL change (class / species / background / subclass / subspecies).
+  // These all feed proficiencies, features, languages, HP and spellcasting, so a plain field-set
+  // would leave the sheet stale — POST /character/derive re-runs the engine (incl. the display
+  // features + languages refresh) and lands the fully-consistent character. Optimistic + safe offline.
+  async derivePc(patch) {
+    const draft = this.state.draft;
+    this.setPcFields(patch);                                  // optimistic: reflect the pick now
+    if (!draft || draft.kind !== "character") return;
+    if (this.state.bridge !== true) { this.setState({ pcDeriveNote: "Set locally — connect to the forge to re-derive the maths." }); return; }
+    this.setState({ pcDeriveNote: "Re-deriving…" });
+    try {
+      const newPc = Object.assign({}, draft.pc || {}, patch);
+      const res = await this.jpost("/character/derive", { character: Object.assign({}, draft, { pc: newPc }) }, 9000);
+      const ch = res.character || res;
+      this.setState(s => ({ draft: Object.assign({}, s.draft, ch), pcDeriveNote: this.summariseChanges(res.changes, res.warnings) }));
+    } catch (e) {
+      this.setState({ pcDeriveNote: "Couldn't re-derive (engine offline?) — set locally." });
+    }
+  }
   // Re-derive a PC for a new level: POST /character/derive returns the character with HP,
   // hit dice, proficiency bonus, spell slots, save DC/attack and class features re-derived
   // (player's exact abilities/spells/gear untouched). Lands the result as the draft + a note.
@@ -1571,9 +1671,9 @@ class Component extends DCLogic {
   setPcCurrency(k, v) { this.setState(s => { const pc = Object.assign({}, s.draft.pc || {}); const n = parseInt(v, 10); pc.currency = Object.assign({}, pc.currency || {}, { [k]: isNaN(n) ? 0 : n }); return { draft: Object.assign({}, s.draft, { pc }) }; }); }
   // ----- Languages editor (Studio): manual languages persist in pc.extraLanguages; the engine
   // re-derives species/class tongues + these on save, and writes the display line + descriptions. -----
-  addLanguage() {
-    const name = (this.state.langName || "").trim(); if (!name) return;
-    const desc = (this.state.langDesc || "").trim();
+  addLanguage(presetName) {
+    const name = (typeof presetName === "string" ? presetName : (this.state.langName || "")).trim(); if (!name) return;
+    const desc = (typeof presetName === "string" ? "" : (this.state.langDesc || "")).trim();
     this.setState(s => {
       const pc = Object.assign({}, s.draft.pc || {});
       const lk = name.toLowerCase();
@@ -1611,8 +1711,16 @@ class Component extends DCLogic {
   }
   async saveCharacter() {
     if (!this.state.bridge) return null;
-    try { const res = await this.jpost("/character", { character: this.charPayload() }, 15000); this.refreshLibrary(); return res; }
-    catch (e) { return null; }
+    try {
+      const res = await this.jpost("/character", { character: this.charPayload() }, 15000);
+      // The save endpoint re-runs the full engine (proficiencies, gear canonicalisation, features,
+      // languages, action reconcile/annotate) and returns the derived character — land it so the
+      // on-screen sheet matches exactly what was persisted, never drifting until the next reload.
+      const ch = res && res.character;
+      if (ch && ch.kind) this.setState(s => ({ draft: Object.assign({}, s.draft, ch) }));
+      this.refreshLibrary();
+      return res;
+    } catch (e) { return null; }
   }
   // ---- My creations: save / open / delete ----
   toggleLib() { this.setState(s => ({ libOpen: !s.libOpen })); }
@@ -1786,6 +1894,17 @@ class Component extends DCLogic {
     try {
       const c = await this.api("/character/" + encodeURIComponent(id), null, 6000);
       const ch = c.character || c;
+      // Self-heal a companion's owner link: if it was forged before the owner was saved (id null),
+      // fill the id from the library by matching the owner's name — so a later owner rename can't
+      // silently sever the back-link (resolution then keys on a stable id, not just the name).
+      if (ch.companionOf && !ch.companionOf.id) {
+        const owner = (this.state.serverChars || []).find(o => o && String(o.name || "").toLowerCase() === String(ch.companionOf.name || "").toLowerCase());
+        if (owner && owner.id) ch.companionOf = Object.assign({}, ch.companionOf, { id: owner.id });
+      }
+      // Switch the active ruleset to the one this character was forged under, so the Studio editor
+      // offers the right edition's options (2014 vs 2024) and the 2024 background widgets appear.
+      const slug = ch.ruleset, known = (this.state.rulesets || []).some(r => (r.slug || r) === slug);
+      if (slug && known && slug !== this.state.rulesetSlug) this.loadRuleset(slug);
       this.setState({ activeId: id, draft: ch, mode: ch.kind === "character" ? "character" : "monster", copied: false, portraitIndex: 0, freshStart: false, pcDeriveNote: "" });
     } catch (e) { this.load(id); }
   }
@@ -1943,6 +2062,7 @@ class Component extends DCLogic {
     try {
       const res = await this.jpost("/forge", { dump: this.state.draft.dump || "", ruleset: this.state.rulesetSlug, kind: this.state.draft.kind, rulesMode: this.state.rulesMode, details: this.forgeDetails() }, 90000);
       const ch = res.character || res;
+      ch.ruleset = ch.ruleset || this.state.rulesetSlug;   // stamp the edition so re-opens target the right rules
       ch.proseName = ch.name || "";   // the name the AI used in the summary blurb — so a later rename can track it
       // FIDELITY: keep the user's typed descriptive fields — overlay any non-empty entry over the engine's,
       // so pressing Forge never silently overwrites what they wrote. (Blank fields fall through to the engine's.)
@@ -2519,6 +2639,22 @@ class Component extends DCLogic {
   // Compact at-the-table reference: abilities/saves/skills, attacks (with hit+damage), features,
   // reactions, equipment + coin. Just the scannable essentials — full descriptions live on the Codex.
   // Returns flat bindings used by the Play view AND (as HTML) the downloaded file, so they match.
+  // A short provenance line for the 2024 background ability boost (+2 / +1), e.g.
+  // "+2 Strength, +1 Constitution from the Soldier background". "" when no boost is recorded.
+  abilityBoostNote(d) {
+    const pc = (d && d.pc) || {};
+    const b2 = pc.abilityBoost2, b1 = pc.abilityBoost1;
+    if (!b2 && !b1) return "";
+    if (String((d && d.ruleset) || "").indexOf("2024") < 0) return "";  // 2024-only mechanic — don't show on a 2014 sheet
+    const full = { STR: "Strength", DEX: "Dexterity", CON: "Constitution", INT: "Intelligence", WIS: "Wisdom", CHA: "Charisma" };
+    const parts = [];
+    if (b2) parts.push("+2 " + (full[b2] || b2));
+    if (b1) parts.push("+1 " + (full[b1] || b1));
+    const OL = (this.state.ruleset && this.state.ruleset.optionLists) || {};
+    const bg = (OL.backgrounds || []).find(x => String(x.index) === String(pc.background));
+    const bgName = (bg && bg.name) || pc.background || "";
+    return parts.join(", ") + (bgName ? " from the " + bgName + " background" : " from background");
+  }
   playReference(d) {
     d = d || this.state.draft || {};
     const ab = d.abilities || {}, pc = d.pc || {};
@@ -2542,6 +2678,7 @@ class Component extends DCLogic {
     const coin = ["pp", "gp", "ep", "sp", "cp"].filter(k => (pc.currency || {})[k]).map(k => pc.currency[k] + " " + k).join(", ");
     return {
       playAbilities: ["STR", "DEX", "CON", "INT", "WIS", "CHA"].map(k => ({ k, score: (ab[k] != null ? ab[k] : "—"), mod: this.fmtMod(ab[k]) })),
+      abilityBoostNote: this.abilityBoostNote(d), hasAbilityBoost: !!this.abilityBoostNote(d),
       playSaves: d.saves || "", hasPlaySaves: !!d.saves,
       playSkills: d.skills || "", hasPlaySkills: !!d.skills,
       playSensesRef: d.senses || "", hasPlaySensesRef: !!d.senses,
@@ -2560,6 +2697,7 @@ class Component extends DCLogic {
     const head = t => '<div style="font-family:Cinzel,serif;font-size:12px;letter-spacing:1px;color:#bd7d3f;text-transform:uppercase;margin:18px 0 7px;border-bottom:1px solid #3a3227;padding-bottom:3px;">' + t + "</div>";
     const H = [head("Abilities")];
     H.push('<div style="display:flex;flex-wrap:wrap;gap:7px;">' + r.playAbilities.map(a => '<div style="background:#1f1b15;border:1px solid #3a3227;border-radius:7px;padding:5px 12px;text-align:center;"><div style="font-size:10px;color:#bd7d3f;font-family:Cinzel,serif;">' + a.k + '</div><div style="color:#e9dcc2;">' + esc(a.score) + " " + esc(a.mod) + "</div></div>").join("") + "</div>");
+    if (r.hasAbilityBoost) H.push('<div style="font-size:11.5px;color:#8a7c63;font-style:italic;margin-top:5px;">' + esc(r.abilityBoostNote) + "</div>");
     const line = (lbl, val) => '<div style="font-size:13px;color:#cfc0a4;margin-top:6px;"><strong style="color:#bd7d3f;">' + lbl + "</strong> " + esc(val) + "</div>";
     if (r.hasPlaySaves) H.push(line("Saves", r.playSaves));
     if (r.hasPlaySkills) H.push(line("Skills", r.playSkills));
@@ -3045,7 +3183,11 @@ class Component extends DCLogic {
     (sp.spells || []).forEach(s => { if (q && s.name.toLowerCase().indexOf(q) === -1) return; (byLevel[s.level] = byLevel[s.level] || []).push(s); });
     const mkBtn = (s, isCantrip) => {
       const picked = isCantrip ? !!cset[s.index] : !!pset[s.index];
-      return { name: s.name, onClick: () => this.toggleSpellPick(s.index, s.level), style: "border-radius:6px;padding:5px 11px;font-size:12.5px;cursor:pointer;border:1px solid " + (picked ? "#9a4f25;background:#7a3f1e;color:#f7e9d4;" : "#4a3f30;background:#2d271f;color:#cabfa9;") };
+      // A.3: flag OCR-suspect spells with ⚠ (don't hide them); surface at-higher-levels in the tooltip.
+      const ocr = !!s.ocrSuspect;
+      const ord = s.level === 0 ? "Cantrip" : ("Level " + s.level);
+      const title = ord + (ocr ? " · ⚠ text may have OCR errors — verify against the book" : "") + (s.atHigherLevels ? "\nAt Higher Levels: " + s.atHigherLevels : "");
+      return { name: s.name + (ocr ? " ⚠" : ""), title: title, onClick: () => this.toggleSpellPick(s.index, s.level), style: "border-radius:6px;padding:5px 11px;font-size:12.5px;cursor:pointer;border:1px solid " + (picked ? "#9a4f25;background:#7a3f1e;color:#f7e9d4;" : (ocr ? "#7a6a3a;background:#2d291f;color:#cabfa9;" : "#4a3f30;background:#2d271f;color:#cabfa9;")) };
     };
     // CANTRIPS get their own section; levelled spells are grouped separately below.
     const cantripButtons = (byLevel[0] || []).map(s => mkBtn(s, true));
@@ -3071,6 +3213,66 @@ class Component extends DCLogic {
       spellLeveledColor: overP ? "#c08a5a" : "#9c8e76",
       spellPickerOverNote: (overC || overP) ? "(over the by-the-book limit — fine in Relaxed)" : "",
     });
+  }
+  // ===== Feat picker (A.2 — 2024-local; groups by type, greys prereq-locked feats but still lets you add) =====
+  async openFeatPicker() {
+    const d = this.state.draft, pc = d.pc || {}, ab = d.abilities || {};
+    this.setState({ featPicker: { open: true, loading: true, feats: [], search: "", error: "" } });
+    try {
+      const qs = "ruleset=" + encodeURIComponent(this.state.rulesetSlug) + "&class=" + encodeURIComponent(String(pc.class || "").toLowerCase()) + "&level=" + (pc.level || 1)
+        + "&str=" + (ab.STR || 10) + "&dex=" + (ab.DEX || 10) + "&con=" + (ab.CON || 10) + "&int=" + (ab.INT || 10) + "&wis=" + (ab.WIS || 10) + "&cha=" + (ab.CHA || 10);
+      const res = await this.api("/feats?" + qs, null, 8000);
+      const feats = res.feats || [];
+      this.setState({ featPicker: { open: true, loading: false, feats: feats, search: "", error: feats.length ? "" : "No feats available for this ruleset." } });
+    } catch (e) {
+      this.setState({ featPicker: { open: true, loading: false, feats: [], search: "", error: "Couldn't load feats — " + e.message + " (engine connected?)" } });
+    }
+  }
+  closeFeatPicker() { this.setState({ featPicker: null }); }
+  setFeatSearch(v) { this.setState(s => ({ featPicker: Object.assign({}, s.featPicker, { search: v }) })); }
+  toggleFeat(index) {
+    this.setState(s => {
+      const pc = Object.assign({}, s.draft.pc || {});
+      const arr = (pc.feats || []).slice();
+      const i = arr.indexOf(index);
+      if (i > -1) arr.splice(i, 1); else arr.push(index);
+      pc.feats = arr;
+      return { draft: Object.assign({}, s.draft, { pc }) };
+    });
+  }
+  removeFeat(index) { this.setState(s => { const pc = Object.assign({}, s.draft.pc || {}); pc.feats = (pc.feats || []).filter(x => x !== index); return { draft: Object.assign({}, s.draft, { pc }) }; }); }
+  featPickerRender() {
+    const base = { onOpenFeatPicker: () => this.openFeatPicker(), onCloseFeatPicker: () => this.closeFeatPicker(), onFeatSearch: e => this.setFeatSearch(e.target.value) };
+    const fp = this.state.featPicker;
+    // chosen-feats chips (always available, even with the modal closed) — from pc.feats
+    const d = this.state.draft || {}, pc = d.pc || {};
+    const chosen = (pc.feats || []);
+    const slugLabel = s => String(s || "").split(/[-_\s]+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    const nameOf = idx => { const f = ((this.state.featPicker || {}).feats || []).find(x => x.index === idx); return (f && f.name) || slugLabel(idx); };
+    // Feats apply to every edition (2014 SRD feats + 2024 local) — show the picker whenever a PC is loaded live.
+    base.showFeats = this.state.bridge === true && !!((this.state.draft || {}).pc);
+    base.chosenFeats = chosen.map(idx => ({ index: idx, label: nameOf(idx), onRemove: () => this.removeFeat(idx) }));
+    base.hasChosenFeats = chosen.length > 0;
+    if (!fp || !fp.open) return Object.assign(base, { featPickerOpen: false });
+    const chset = {}; chosen.forEach(x => { chset[x] = 1; });
+    const q = (fp.search || "").toLowerCase().trim();
+    const TYPE_ORDER = [["origin", "Origin feats"], ["fighting-style", "Fighting Style feats"], ["general", "General feats"], ["epic-boon", "Epic Boon feats"]];
+    const byType = {};
+    (fp.feats || []).forEach(f => { if (q && f.name.toLowerCase().indexOf(q) === -1) return; (byType[f.type] = byType[f.type] || []).push(f); });
+    const groups = TYPE_ORDER.filter(t => (byType[t[0]] || []).length).map(t => ({
+      label: t[1],
+      feats: byType[t[0]].map(f => {
+        const picked = !!chset[f.index];
+        const locked = f.available === false;
+        const title = (f.prerequisites_text && f.prerequisites_text !== "None" ? "Prereq: " + f.prerequisites_text + "\n" : "") + (f.description || "").slice(0, 220);
+        return {
+          name: f.name + (locked ? " 🔒" : ""), title: title,
+          onClick: () => this.toggleFeat(f.index),
+          style: "border-radius:6px;padding:5px 11px;font-size:12.5px;cursor:pointer;border:1px solid " + (picked ? "#9a4f25;background:#7a3f1e;color:#f7e9d4;" : (locked ? "#4a3f30;background:#241f18;color:#8a7c66;opacity:0.75;" : "#4a3f30;background:#2d271f;color:#cabfa9;")),
+        };
+      }),
+    }));
+    return Object.assign(base, { featPickerOpen: true, featPickerLoading: !!fp.loading, featPickerError: fp.error || "", featPickerSearch: fp.search || "", featGroups: groups });
   }
   pickPreset(e) { const i = e.target.value; e.target.value = ""; if (i === "") return; const p = this.traitPresets()[+i]; if (!p) return; this.setState(s => ({ draft: { ...s.draft, traits: [...s.draft.traits, { name: p.name, text: p.text }] } })); }
   // ===== Equipment picker (browse the catalog; includes homebrew like the Hoopak) =====
@@ -3100,12 +3302,20 @@ class Component extends DCLogic {
     const ep = this.state.equipPicker;
     if (!ep || !ep.open) return Object.assign(base, { equipPickerOpen: false });
     const q = (ep.search || "").toLowerCase().trim();
-    const items = (ep.items || []).filter(it => !q || (it.name || "").toLowerCase().indexOf(q) !== -1 || (it.category || "").toLowerCase().indexOf(q) !== -1).slice(0, 120).map(it => {
+    // A.5: firearms (Musket/Pistol) only show if the character has DEX 13+ or Firearms proficiency.
+    const d = this.state.draft || {};
+    const dex = parseInt((d.abilities || {}).DEX, 10) || 10;
+    const profW = (((d.pc || {}).proficiencies || {}).weapons) || [];
+    const canFirearm = dex >= 13 || profW.some(w => /firearm/i.test(String(w)));
+    const items = (ep.items || []).filter(it => !q || (it.name || "").toLowerCase().indexOf(q) !== -1 || (it.category || "").toLowerCase().indexOf(q) !== -1)
+      .filter(it => !it.firearm || canFirearm)
+      .slice(0, 120).map(it => {
       const modeCount = (it.modes || []).length;
       const hb = !!it.homebrew;
+      const mastery = it.mastery ? (typeof it.mastery === "string" ? it.mastery : (it.mastery.name || "")) : "";
       return {
-        label: it.name + (modeCount ? " ⚙" : ""),
-        title: (it.category || "") + (modeCount ? " · " + modeCount + " modes" : "") + (hb ? " · homebrew" : ""),
+        label: it.name + (modeCount ? " ⚙" : "") + (it.firearm ? " 🔫" : ""),
+        title: (it.category || "") + (mastery ? " · mastery: " + mastery : "") + (modeCount ? " · " + modeCount + " modes" : "") + (hb ? " · homebrew" : "") + (it.firearm ? " · firearm (needs DEX 13+ or proficiency)" : ""),
         onClick: () => this.addCatalogItem(it),
         style: "border-radius:6px;padding:5px 11px;font-size:12.5px;cursor:pointer;border:1px solid " + (hb ? "#6a5a44;background:#3a2e1f;color:#f0d9b5;" : "#4a3f30;background:#2d271f;color:#cabfa9;"),
       };
@@ -3328,6 +3538,12 @@ class Component extends DCLogic {
     // Studio editor: chips (species/class auto = locked; chosen = removable) + add inputs.
     char.langChips = (Array.isArray(d.languagesList) ? d.languagesList : []).map(l => ({ name: l.name, srcTag: srcPretty(l.source), desc: l.description || "", hasDesc: !!l.description, removable: l.source === "chosen", onRemove: () => this.removeLanguage(l.name) }));
     char.onAddLanguage = () => this.addLanguage();
+    // Language picker — browse the ruleset's language list and add with one click.
+    const _olLangs = (this.state.ruleset && this.state.ruleset.optionLists && this.state.ruleset.optionLists.languages) || [];
+    char.hasLangBrowse = _olLangs.length > 0;
+    char.langBrowseOpen = !!this.state.langBrowseOpen;
+    char.onToggleLangBrowse = () => this.setState(s => ({ langBrowseOpen: !s.langBrowseOpen }));
+    char.langBrowseItems = _olLangs.map(l => ({ name: l.name, title: (l.type ? l.type + " language" : ""), onClick: () => this.addLanguage(l.name) }));
     char.langNameVal = this.state.langName || ""; char.onLangName = e => this.setState({ langName: e.target.value });
     char.langDescVal = this.state.langDesc || ""; char.onLangDesc = e => this.setState({ langDesc: e.target.value });
 
@@ -3391,13 +3607,21 @@ class Component extends DCLogic {
       char.pcSpeciesOpts = mkPcSel(pairList(OL.species)); char.pcSpeciesVal = String(pc.species || "");
       char.pcBackgroundOpts = mkPcSel(pairList(OL.backgrounds)); char.pcBackgroundVal = String(pc.background || "");
       // 2024 backgrounds work differently (Origin Feat + ability boosts + fixed skills, no languages);
-      // surface that structure in the editor when the local 2024 ruleset is active.
-      const is2024Local = String(this.state.rulesetSlug || "").indexOf("local") > -1;
-      const bg2024 = is2024Local ? ((OL.backgrounds || []).find(b => String(b.index) === String(pc.background)) || null) : null;
+      // surface that structure in the editor for ANY 2024 ruleset (SRD or the richer local PHB build).
+      const is2024 = String(this.state.rulesetSlug || "").indexOf("2024") > -1;
+      const bg2024 = is2024 ? ((OL.backgrounds || []).find(b => String(b.index) === String(pc.background)) || null) : null;
       char.show2024Bg = !!(bg2024 && (bg2024.featText || bg2024.abilityScoresText || bg2024.skillsText));
       char.bg2024Feat = (bg2024 && bg2024.featText) || "";
       char.bg2024Ability = (bg2024 && bg2024.abilityScoresText) || "";
       char.bg2024Skills = (bg2024 && bg2024.skillsText) || "";
+      // +2/+1 ability-boost widget: two selectors over the background's three ability options.
+      const abilOpts = (bg2024 && bg2024.abilityOptions) || [];
+      char.has2024AbilBoost = abilOpts.length > 0;
+      const mkAbilOpts = () => [React.createElement("option", { key: "_", value: "" }, "—")].concat(abilOpts.map(a => React.createElement("option", { key: a, value: a }, a)));
+      char.abilBoost2Opts = mkAbilOpts(); char.abilBoost1Opts = mkAbilOpts();
+      char.abilBoost2Val = String(pc.abilityBoost2 || ""); char.abilBoost1Val = String(pc.abilityBoost1 || "");
+      char.onAbilBoost2 = e => this.setAbilityBoost("b2", e.target.value);
+      char.onAbilBoost1 = e => this.setAbilityBoost("b1", e.target.value);
       char.pcSubclassOpts = mkPcSel(subPairs); char.pcSubclassVal = String(pc.subclass || ""); char.pcHasSubclass = subPairs.length > 0;
       const subspPairs = pairList((OL.subspeciesBySpecies || {})[pc.species] || []);
       char.pcSubspeciesOpts = mkPcSel(subspPairs); char.pcSubspeciesVal = String(pc.subspecies || ""); char.pcHasSubspecies = subspPairs.length > 0;
@@ -3415,7 +3639,7 @@ class Component extends DCLogic {
         return { label: (o.name || titleCase(idx)), onClick: () => this.toggleSkillChoice(idx, skillChoose),
           style: "border:1px solid " + (on ? "#99502a" : "#4a3f30") + "; background:" + (on ? "#99502a" : "#2d271f") + "; color:" + (on ? "#fff" : "#cabfa9") + "; border-radius:999px; padding:4px 11px; font-size:12.5px; cursor:pointer;" };
       });
-      char.onPcClass = e => this.setPcFields({ "class": e.target.value, subclass: "", skillChoices: [] });
+      char.onPcClass = e => this.derivePc({ "class": e.target.value, subclass: "", skillChoices: [] });
       // Level control: re-derives HP/slots/PB/features via POST /character/derive (engine maths).
       char.pcLevelVal = String(pc.level || 1);
       char.onPcLevel = e => this.deriveLevel(e.target.value);
@@ -3445,10 +3669,32 @@ class Component extends DCLogic {
         char.pcClassRows = [];
         char.pcTotalLevel = pc.level || 1;
       }
-      char.onPcSpecies = e => this.setPcFields({ species: e.target.value, subspecies: "" });
-      char.onPcSubspecies = e => this.setPcFields({ subspecies: e.target.value });
-      char.onPcBackground = e => this.setPcFields({ background: e.target.value });
-      char.onPcSubclass = e => this.setPcFields({ subclass: e.target.value });
+      // 2024 multiclass prerequisites (ability minimums) — a reference note for the classes in play.
+      char.show2024McPrereq = false; char.mc2024Prereq = "";
+      if (isMulticlass && is2024) {
+        const mc = (OL.multiclassing && OL.multiclassing.prerequisites) || [];
+        const myClasses = pc.classes.map(r => String(r.class || "").toLowerCase()).filter(Boolean);
+        const reqs = mc.filter(p => myClasses.indexOf(String(p.class || "").toLowerCase()) > -1).map(p => {
+          const r = p.requires || {}; const parts = Object.keys(r).map(k => k.slice(0, 3).toUpperCase() + " " + r[k]);
+          return (p.class_name || p.class) + " (" + (parts.join(", ") || "—") + ")";
+        });
+        char.show2024McPrereq = reqs.length > 0; char.mc2024Prereq = reqs.join(" · ");
+      }
+      char.onPcSpecies = e => this.derivePc({ species: e.target.value, subspecies: "" });
+      char.onPcSubspecies = e => this.derivePc({ subspecies: e.target.value });
+      char.onPcBackground = e => this.derivePc({ background: e.target.value });
+      // A.10b: 2014 background "choose one tool" (gaming set / instrument / artisan's tools). The player
+      // names the specific tool; it's stored on pc.bgTools and applied to proficiencies on save/derive.
+      const bgRec = (OL.backgrounds || []).find(b => String(b.index) === String(pc.background)) || null;
+      const bgToolChoices = (bgRec && bgRec.toolChoices) || [];
+      char.hasBgToolChoice = bgToolChoices.length > 0;
+      char.bgToolPrompt = bgToolChoices.map(t => t.desc).join("; ");
+      char.bgToolVal = ((pc.bgTools || [])[0]) || "";
+      char.onBgTool = e => { const v = e.target.value; this.setState(s => ({ draft: Object.assign({}, s.draft, { pc: Object.assign({}, s.draft.pc || {}, { bgTools: v.trim() ? [v.trim()] : [] }) }) })); };
+      char.onPcSubclass = e => this.derivePc({ subclass: e.target.value });
+      // 2024 background ability-boost provenance, surfaced read-only on the Codex (the Studio editor
+      // owns the picker; this just labels where the +2/+1 came from).
+      char.abilityBoostNote = this.abilityBoostNote(d); char.hasAbilityBoost = !!char.abilityBoostNote;
     }
     // Only show the Codex spellcasting block when there's something real to show — an empty
     // spellcasting{} on a non-caster shouldn't render a hollow "Spellcasting" section.
@@ -3609,7 +3855,7 @@ class Component extends DCLogic {
     const ownerKey = d.id || this.state.activeId;
     const ownedCreatures = (this.state.serverChars || []).filter(c => {
       const o = c && c.companionOf; if (!o) return false;
-      return (ownerKey && o.id === ownerKey) || (d.name && o.name === d.name);
+      return (ownerKey && o.id === ownerKey) || (d.name && String(o.name || "").toLowerCase() === String(d.name).toLowerCase());
     }).map(c => {
       const cid = c.id || c.slug;
       const noun = c.bondType === "Familiar" ? "familiar" : ({ companion: "companion", pet: "pet" }[c.kind] || "companion");
@@ -3683,7 +3929,7 @@ class Component extends DCLogic {
     else if (this.state.bridge === true) { bst = "\u25CF Bridge live"; bstyle = "color:#48b06a;"; bridgeStatusTitle = "Connected to " + this.bridgeBase(); }
     else if (this.state.bridge === false) { bst = "\u25CB Not connected"; bstyle = "color:#c0875a;"; bridgeStatusTitle = "Not connected. Press \u21BB Reconnect (try port 5001 if 5000 is stuck) or start the bridge (python -m forge.web.app)."; }
     const bridgeStatusStyle = "font-size:12.5px; font-weight:600; letter-spacing:0.3px; white-space:nowrap; " + bstyle;
-    const rulesetLabel = s => ({ "dnd5e-2014": "D&D 5e (2014)", "dnd5e-2024": "D&D 5e (2024)" }[s] || s);
+    const rulesetLabel = s => ({ "dnd5e-2014": "D&D 5e (2014)", "dnd5e-2024": "D&D 5e (2024)", "dnd5e-2024-local": "D&D 5e (2024) — local PHB build" }[s] || s);
     const rulesetEls = (this.state.rulesets || []).map(r => { const slug = (r && r.slug) || r; const label = (r && r.label) || rulesetLabel(slug); return React.createElement("option", { key: slug, value: slug }, label); });
     const warnColor = { error: "#c0392b", warning: "#d6892f", info: "#8a6f4a" };
     const forgeWarnings = (this.state.forgeWarnings || []).map(w => ({ message: w.message, style: "border-left:3px solid " + (warnColor[w.level] || warnColor.info) + "; padding:7px 10px; background:#2a241d; border-radius:0 4px 4px 0; font-size:13px; color:#d8ccb4; line-height:1.45;" }));
@@ -3748,8 +3994,10 @@ class Component extends DCLogic {
       onForgeBondedCompanion: () => this.forgeBondedForCurrent("Companion"),
       onForgeBondedPet: () => this.forgeBondedForCurrent("Pet"),
       onForgeBondedFamiliar: () => this.forgeBondedForCurrent("Familiar"),
-      // persistent, pre-filled "Forge <the companion you described> too" — from ch.bonded remembered at forge time
-      hasDeclaredBonded: !!(d.bonded && d.bonded.type),
+      // persistent, pre-filled "Forge <the companion you described> too" — from ch.bonded remembered at
+      // forge time. Suppressed once a linked creature actually exists (no duplicate offers); it returns
+      // automatically if that companion is later deleted (hasOwnedCreatures then goes false).
+      hasDeclaredBonded: !!(d.bonded && d.bonded.type) && !hasOwnedCreatures,
       declaredBondedLabel: (() => { const b = d.bonded || {}; const nm = ((b.desc || "").split(/[,—–]/)[0] || "").trim(); return (nm && nm.length <= 24) ? nm : ("their " + (b.type || "companion").toLowerCase()); })(),
       declaredBondedNoun: ((d.bonded || {}).type || "companion").toLowerCase(),
       onForgeDeclaredBonded: () => this.forgeDeclaredBonded(),
@@ -3758,6 +4006,7 @@ class Component extends DCLogic {
       showSpellEdit: !!(d.kind === "character" && d.spellcasting),
       ...this.spellPickerRender(),
       ...this.equipPickerRender(),
+      ...this.featPickerRender(),
       ...this.stdPickerRender(),
       cantripsEditVal: ((d.spellcasting || {}).cantrips || []).join(", "),
       preparedEditVal: ((d.spellcasting || {}).prepared || []).join(", "),

@@ -97,19 +97,25 @@ def apply_ability_bonuses(
     *,
     edition: str,
     species: dict | None = None,
+    subspecies: dict | None = None,
     background: dict | None = None,
     allocation_2024: dict[str, int] | None = None,
 ) -> tuple[dict[str, int], list[tuple[str, int, str]]]:
-    """Return (final_scores, applied) where applied is a list of (ability, bonus, source)."""
+    """Return (final_scores, applied) where applied is a list of (ability, bonus, source).
+
+    In 2014 both the species AND the chosen subrace grant ability bonuses (e.g. Dwarf +2 CON,
+    then Hill Dwarf +1 WIS) — both are applied.
+    """
     final = dict(base)
     applied: list[tuple[str, int, str]] = []
 
     if edition == "2014":
-        for ab in (species or {}).get("ability_bonuses") or []:
-            idx = ab["ability_score"]["index"]
-            bonus = int(ab["bonus"])
-            final[idx] = final.get(idx, 0) + bonus
-            applied.append((idx, bonus, f"species:{(species or {}).get('index')}"))
+        for src_dict, src_kind in ((species, "species"), (subspecies, "subspecies")):
+            for ab in (src_dict or {}).get("ability_bonuses") or []:
+                idx = ab["ability_score"]["index"]
+                bonus = int(ab["bonus"])
+                final[idx] = final.get(idx, 0) + bonus
+                applied.append((idx, bonus, f"{src_kind}:{(src_dict or {}).get('index')}"))
 
     elif edition == "2024":
         allowed = [a["index"] for a in (background or {}).get("ability_scores", [])]

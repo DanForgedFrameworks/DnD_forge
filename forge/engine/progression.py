@@ -177,14 +177,26 @@ def _block_to_totals(block: dict) -> dict[str, int]:
     return out
 
 
-def combined_caster_level(cls_list: list[dict]) -> int:
+def combined_caster_level(cls_list: list[dict], edition: str = "2014") -> int:
+    """Combined caster level for the multiclass spell-slot table.
+
+    Full casters add their full level; half casters (paladin/ranger) add half — rounded DOWN in 2014,
+    UP in 2024 (per the owner's book-verified PHB data); third casters (Eldritch Knight fighter /
+    Arcane Trickster rogue) add a third, rounded down. Warlock Pact Magic is handled separately.
+    """
     lvl = 0
     for e in cls_list:
         ci = e["class"]
+        sub = (e.get("subclass") or "").lower()
+        el = int(e["level"])
         if ci in FULL_CASTERS:
-            lvl += int(e["level"])
+            lvl += el
         elif ci in HALF_CASTERS:
-            lvl += int(e["level"]) // 2
+            lvl += -(-el // 2) if edition == "2024" else el // 2  # 2024 rounds up, 2014 down
+        elif ci == "fighter" and "eldritch" in sub:
+            lvl += el // 3
+        elif ci == "rogue" and ("arcane" in sub or "trickster" in sub):
+            lvl += el // 3
     return lvl
 
 
@@ -211,7 +223,7 @@ def _merge_slots(target: dict, key: str, totals: dict[str, int]) -> None:
     target[key] = out
 
 
-def _derive_spellcasting(character, pc, cls_list, repo, pb, mods) -> None:
+def _derive_spellcasting(character, pc, cls_list, repo, pb, mods, edition="2014") -> None:
     caster_entries = [e for e in cls_list if e["class"] in CASTER_RULES]
     if not caster_entries:
         return  # non-caster mix — leave any stray block for enforce_rules to police
@@ -233,7 +245,7 @@ def _derive_spellcasting(character, pc, cls_list, repo, pb, mods) -> None:
         return
 
     # multiclass: combined caster level -> wizard table; warlock pact kept separate
-    _merge_slots(sc, "slots", multiclass_slots(repo, combined_caster_level(cls_list)))
+    _merge_slots(sc, "slots", multiclass_slots(repo, combined_caster_level(cls_list, edition)))
     warlock_level = next((e["level"] for e in cls_list if e["class"] == "warlock"), 0)
     if warlock_level:
         _merge_slots(sc, "pactSlots", pact_slots(repo, warlock_level))
@@ -367,7 +379,7 @@ def rederive(character: dict, *, level=None, classes=None) -> tuple[dict, list, 
     pc["classFeatures"] = features_by_level(repo, cls_list)
 
     # spell slots + per-class DC/attack
-    _derive_spellcasting(character, pc, cls_list, repo, pb, mods)
+    _derive_spellcasting(character, pc, cls_list, repo, pb, mods, edition)
 
     # proficiencies (multiclass-aware) + rules-mode enforcement (advisory/strict)
     resolve_pc_proficiencies(character)

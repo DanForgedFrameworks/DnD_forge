@@ -35,7 +35,7 @@ def _flavour_descriptions() -> dict:
     """Hand-authored flavour descriptions for languages (richer than the SRD catalog's terse
     script/speaker data), keyed by lower-cased name."""
     try:
-        data = json.loads((_HOMEBREW_ROOT / "languages.json").read_text(encoding="utf-8"))
+        data = json.loads((_HOMEBREW_ROOT / "language_descriptions.json").read_text(encoding="utf-8"))
         return {k.lower(): v for k, v in data.items() if not k.startswith("_")}
     except Exception:
         return {}
@@ -143,6 +143,12 @@ def derive_languages(character: dict, edition: str = "2014") -> list[dict]:
             add("Common", f"species:{sp_name}")
         elif not grounded:
             add(ln, f"species:{sp_name}")
+
+    # 1b) 2024 moved languages OFF species onto the character's origin: everyone knows Common, plus
+    # two more standard languages of the player's choice (those two come through as `chosen` picks,
+    # below). 2024 species carry no languages of their own, so grant Common here if nothing else has.
+    if edition == "2024" and "common" not in seen:
+        add("Common", "origin")
 
     # 2) class secret tongues (rogue/druid)
     for ci in _class_mix(pcd):

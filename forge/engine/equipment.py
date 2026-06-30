@@ -83,23 +83,40 @@ def _catalog_card(entry: dict) -> dict:
     return card
 
 
-def equipment_catalog(edition: str = "2014", query: str | None = None) -> list[dict]:
+def equipment_catalog(edition: str = "2014", query: str | None = None, *, include_local: bool = False) -> list[dict]:
     """All equipment items (SRD + homebrew overlay) as picker cards, optionally
     filtered by a case-insensitive substring ``query`` over name/category.
 
-    Sorted homebrew-first then alphabetically, so species signature items surface
-    at the top of an empty search.
+    Sorted homebrew/local-first then alphabetically, so species signature items and the
+    local 2024 PHB catalog surface at the top of an empty search. When ``include_local``
+    (the 2024-local ruleset), the local PHB equipment is merged in, de-duped by index.
     """
     try:
         entries = _repo(edition).all("equipment")
     except Exception:
-        return []
+        entries = []
     cards = [_catalog_card(e) for e in entries if e.get("name")]
+    if include_local:
+        from ..ruleset import local_data as L
+        by_idx = {(c.get("index") or c.get("name") or "").lower(): c for c in cards}
+        for c in L.equipment():
+            key = (c.get("index") or "").lower()
+            if not key:
+                continue
+            if key in by_idx:
+                # item in both SRD + local — overlay the local's owner-verified gating fields
+                # (firearm/eligibility/mastery) onto the existing card so they aren't shadowed.
+                for f in ("firearm", "eligibilityNote", "mastery"):
+                    if c.get(f) and not by_idx[key].get(f):
+                        by_idx[key][f] = c[f]
+            else:
+                cards.append(c)
+                by_idx[key] = c
     q = (query or "").strip().lower()
     if q:
         cards = [c for c in cards
                  if q in (c["name"] or "").lower() or q in (c.get("category") or "").lower()]
-    cards.sort(key=lambda c: (0 if c.get("homebrew") else 1, (c["name"] or "").lower()))
+    cards.sort(key=lambda c: (0 if (c.get("homebrew") or c.get("local")) else 1, (c["name"] or "").lower()))
     return cards
 
 

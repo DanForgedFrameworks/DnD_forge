@@ -616,3 +616,21 @@ if __name__ == "__main__":
 #
 # Run all: pass the PDF path as the first argument to each script, e.g.
 #   python scripts/extract_phb2024_classes.py "PDFs/D&D 5E [2024] PHB.pdf"
+#
+# scripts/patch_phb2024_feat_prereqs.py      -> patches data/local/feats_2024_phb.json in-place
+#   Adds prerequisites_text to all 74 feat records using a canonical lookup table
+#   cross-verified against PDF pp.197-210. Origin feats -> 'None'; general/fighting-style feats
+#   -> level + ability prerequisites; epic boons -> 'Level 20+'. Corrects two OCR errors:
+#   athlete prereq ('Strength 0 1* Dexterity 13+' -> 'Strength or Dexterity 13+') and
+#   polearm-master prereq stray space ('Level 4 +' -> 'Level 4+'). 2 ocr_suspect flags set.
+#
+# scripts/extract_phb2024_equipment.py       -> data/local/equipment_2024_phb.json
+#   170 records in 4 top-level keys: weapons (38), armor (13), tools (37),
+#   adventuring_gear (82). Weapons encoded canonically from the p.213 table; includes Musket
+#   and Pistol. 0 OCR suspects. All records: srd=false, local=true, source=PHB 2024.
+#
+# scripts/extract_phb2024_spells.py          -> data/local/spells_2024_phb.json
+#   370 records (33 cantrips + L1-L9). Two-pass extraction from PDF pp.237-341. 75 records
+#   carry ocr_suspect=true. 21 spell names auto-corrected via fuzzy match (name_ocr_raw stored).
+#   Known gaps: Longstrider missing, Hideous Laughter missing, Telepathy Components empty.
+#   classes=[] for all records — class spell lists deferred to a follow-up pass.

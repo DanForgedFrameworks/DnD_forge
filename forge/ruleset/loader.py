@@ -13,6 +13,7 @@ rather than hard-coded.
 from __future__ import annotations
 
 import json
+import re
 from copy import deepcopy
 from pathlib import Path
 
@@ -116,7 +117,13 @@ class Ruleset:
 
         def names(category: str) -> list:
             try:
-                return [{"index": e.get("index"), "name": e.get("name")} for e in repo.all(category)]
+                out = []
+                for e in repo.all(category):
+                    if isinstance(e, str):  # some SRD files (e.g. 2014 languages) are plain name lists
+                        out.append({"index": re.sub(r"[^a-z0-9]+", "-", e.lower()).strip("-"), "name": e})
+                    elif isinstance(e, dict):
+                        out.append({"index": e.get("index"), "name": e.get("name")})
+                return out
             except Exception:
                 return []
 
@@ -145,6 +152,7 @@ class Ruleset:
             "subspeciesBySpecies": self._subspecies_by_species(repo),
             "backgrounds": self._backgrounds_enriched(repo, prof_type),
             "feats": names("feats"),
+            "languages": names("languages"),     # for the language picker (local overlay replaces for 2024)
             "conditions": names("conditions"),
             "creatureTypes": CREATURE_TYPES,
             "sizes": SIZES,
@@ -192,10 +200,15 @@ class Ruleset:
             lists["weaponMasteries"] = wm
         langs = L.languages()
         if langs:
-            lists["languages"] = langs
+            # A.7: secret tongues (Druidic, Thieves' Cant) are class-granted, not manually pickable —
+            # keep them out of the standard language picker (they still appear via class features).
+            lists["languages"] = [l for l in langs if not l.get("secret")]
         mc = L.multiclassing()
         if mc:
             lists["multiclassing"] = mc
+        tr = L.trinkets()
+        if tr:
+            lists["trinkets"] = tr  # optional d100 creation step (roll or pick)
 
     @staticmethod
     def _classes_enriched(repo, prof_type: dict) -> list:
@@ -257,11 +270,19 @@ class Ruleset:
                     tools.append(idx[len("tool-"):])
                 elif prof_type.get(idx) in _TOOL_PROF_TYPES:
                     tools.append(idx)
+            # 2014 "choose one" tool grants (e.g. "One type of artisan's tools of your choice") — the
+            # player names the specific tool; the engine applies it (grants.py reads pc.bgTools).
+            tool_choices = []
+            for opt in (bg.get("starting_proficiency_options") or []):
+                if isinstance(opt, dict) and str(opt.get("type", "")).lower() == "proficiencies":
+                    tool_choices.append({"choose": int(opt.get("choose", 1) or 1),
+                                         "desc": opt.get("desc", "One tool of your choice")})
             out.append({
                 "index": bg.get("index"),
                 "name": bg.get("name"),
                 "skills": skills,
                 "tools": tools,
+                "toolChoices": tool_choices,
                 "languages": int((bg.get("language_options") or {}).get("choose", 0) or 0),
                 "abilityOptions": [a.get("index", "").upper() for a in bg.get("ability_scores", []) or []],
                 "feat": (bg.get("feat") or {}).get("index"),

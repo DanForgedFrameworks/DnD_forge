@@ -88,10 +88,12 @@ def class_spell_list(class_index: str, edition: str = "2014") -> dict[str, int]:
     return _spell_list_by_class(edition).get(class_index, {})
 
 
-def class_spells_detailed(class_index: str, edition: str = "2014") -> list[dict]:
-    """[{index, name, level}] for a class's SRD spell list, sorted by (level, name).
+def class_spells_detailed(class_index: str, edition: str = "2014", *, include_local: bool = False) -> list[dict]:
+    """[{index, name, level, ocrSuspect?}] for a class's spell list, sorted by (level, name).
 
-    Powers the front-end spell picker (browse + tick). Names come from the spell entries.
+    Powers the front-end spell picker (browse + tick). Names come from the spell entries. When
+    `include_local` (the 2024-local ruleset), the local PHB spell list is merged in by `classes[]`,
+    de-duped by index, carrying `ocrSuspect` so the picker can flag possibly-garbled entries.
     """
     names: dict[str, str] = {}
     try:
@@ -101,7 +103,15 @@ def class_spells_detailed(class_index: str, edition: str = "2014") -> list[dict]
         pass
     out = [{"index": idx, "name": names.get(idx, idx), "level": lvl}
            for idx, lvl in class_spell_list(class_index, edition).items()]
-    out.sort(key=lambda s: (s["level"], s["name"].lower()))
+    if include_local:
+        from ..ruleset import local_data as L
+        have = {s["index"] for s in out}
+        for s in L.spells(class_index):
+            if s["index"] not in have:
+                out.append({"index": s["index"], "name": s["name"], "level": s["level"],
+                            "ocrSuspect": s["ocrSuspect"], "atHigherLevels": s.get("atHigherLevels", "")})
+                have.add(s["index"])
+    out.sort(key=lambda s: (s["level"] if s["level"] is not None else 0, s["name"].lower()))
     return out
 
 

@@ -177,6 +177,16 @@ def _local_class_features(character: dict, edition: str) -> list[dict]:
                 lvl = _lvl(sf.get("level"))
                 if lvl is not None and 1 <= lvl <= clvl:
                     add(sf.get("name"), sf.get("desc"), f"subclass:{s.get('name', sub_idx)}", lvl)
+        # A.11: the OCR couldn't recover the Barbarian Features table — inject the per-level
+        # Rages / Rage Damage / Weapon Mastery counts from the hardcoded PHB table.
+        if ci == "barbarian":
+            rr = L.barbarian_resources(clvl)
+            if rr:
+                plural = "" if rr["rages"] == "1" else "s"
+                add("Rage — at a glance",
+                    f"At level {clvl}: {rr['rages']} Rage{plural} per Long Rest · Rage Damage +{rr['rageDamage']} · "
+                    f"Weapon Mastery on {rr['weaponMastery']} weapons.",
+                    "class:Barbarian", clvl)
     return _finalize_features(out)
 
 
@@ -360,12 +370,43 @@ OPPORTUNITY_ATTACK = {
 }
 
 
+def derive_feats(character: dict, edition: str = "2014") -> list[dict]:
+    """The PC's chosen feats (``pc.feats`` slugs) as feature entries so they render on the Codex and
+    Play sheets like any other feature — otherwise feats are a write-only field. Names + descriptions
+    come from the local 2024 feat data or the SRD; an unknown slug still shows as a tidied name."""
+    pc = character.get("pc") or {}
+    slugs = [str(s).strip().lower() for s in (pc.get("feats") or []) if str(s).strip()]
+    if not slugs:
+        return []
+    lookup: dict[str, tuple[str, str]] = {}
+    try:
+        if "local" in str(character.get("ruleset", "")):
+            from ..ruleset import local_data as L
+            for f in L.feats_full():
+                lookup[f["index"].lower()] = (f["name"], f.get("description") or "")
+        else:
+            from ..canon import SRDRepository
+            for f in SRDRepository(edition).all("feats"):
+                d = f.get("desc") or f.get("description")
+                lookup[(f.get("index") or "").lower()] = (
+                    f.get("name") or f.get("index"),
+                    " ".join(d) if isinstance(d, list) else (d or ""))
+    except Exception:
+        pass
+    out = []
+    for s in slugs:
+        name, text = lookup.get(s, (s.replace("-", " ").title(), ""))
+        out.append({"name": name, "text": text, "source": "feat", "kind": "trait"})
+    return out
+
+
 def pc_features_for_display(character: dict, edition: str = "2014") -> list[dict]:
-    """The feature list to store on a PC for the sheet: class + subclass features, plus the
-    universal Opportunity Attack. Empty for non-PCs (monsters keep their own actions/traits)."""
+    """The feature list to store on a PC for the sheet: class + subclass features, the chosen feats,
+    plus the universal Opportunity Attack. Empty for non-PCs (monsters keep their own actions/traits)."""
     if character.get("kind") != "character" or not isinstance(character.get("pc"), dict):
         return []
     return (derive_species_traits(character, edition)
             + derive_background_feature(character, edition)
             + derive_class_features(character, edition)
+            + derive_feats(character, edition)
             + [dict(OPPORTUNITY_ATTACK)])

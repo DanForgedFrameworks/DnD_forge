@@ -75,6 +75,32 @@ def _is_fragment_trait(name: str) -> bool:
     return n.startswith("you ") or (bool(n) and n[0].islower())
 
 
+@lru_cache(maxsize=1)
+def _text_fix_pairs() -> tuple:
+    """Flat [bad, good] OCR fixes applied to description text at read-time: the corrections file's
+    ``text_fixes`` (so documented fixes take effect without re-running the extractor; good=None
+    truncates at the bad span) plus a few unambiguous global patterns. The bad spans are unique OCR
+    garbage, so applying them anywhere is safe."""
+    pairs = [["Yl)u", "You"], ["tl)e ", "the "], ["Tl)e ", "The "], ["  ", " "]]
+    tf = (_load("phb2024_corrections.json") or {}).get("text_fixes", {})
+    for by_index in (tf.values() if isinstance(tf, dict) else []):
+        for fixes in (by_index.values() if isinstance(by_index, dict) else []):
+            for pair in (fixes or []):
+                if isinstance(pair, list) and pair:
+                    pairs.append([pair[0], pair[1] if len(pair) > 1 else None])
+    return tuple(tuple(p) for p in pairs)
+
+
+def _fix_text(text: str) -> str:
+    """Apply the OCR text-fixes to a description string."""
+    if not text:
+        return text
+    for bad, good in _text_fix_pairs():
+        if bad in text:
+            text = text.split(bad)[0] if good is None else text.replace(bad, good)
+    return text
+
+
 @lru_cache(maxsize=16)
 def _load(name: str):
     try:
@@ -103,7 +129,7 @@ def species_traits(index: str) -> list:
     OCR fragment sub-bullets are dropped and names tidied."""
     for s in _load("species_2024_phb.json") or []:
         if s.get("index") == index:
-            return [{"name": _fix_name(t["name"]), "desc": t.get("desc", "")}
+            return [{"name": _fix_name(t["name"]), "desc": _fix_text(t.get("desc", ""))}
                     for t in (s.get("traits") or [])
                     if isinstance(t, dict) and t.get("name") and not _is_fragment_trait(t["name"])]
     return []
@@ -111,6 +137,19 @@ def species_traits(index: str) -> list:
 
 def feats() -> list:
     return _names(_load("feats_2024_phb.json"))
+
+
+def feats_full() -> list:
+    """Full 2024 feat records [{index, name, type, prerequisites_text, description}] for the feat
+    picker (the `feats()` accessor returns names only for optionLists)."""
+    out = []
+    for f in _load("feats_2024_phb.json") or []:
+        if isinstance(f, dict) and f.get("index"):
+            out.append({"index": f["index"], "name": f.get("name") or f["index"],
+                        "type": f.get("type") or "general",
+                        "prerequisites_text": f.get("prerequisites_text") or "None",
+                        "description": _fix_text(f.get("description") or "")})
+    return out
 
 
 def subclasses_by_class() -> dict:
@@ -153,7 +192,7 @@ def backgrounds() -> list:
         feat = {}
         if feat_name:
             rec = feats.get(_slug(feat_name)) or feats.get(_slug(feat_name.split("(")[0]))
-            feat = {"index": _slug(feat_name), "name": feat_name, "text": (rec or {}).get("description", "")}
+            feat = {"index": _slug(feat_name), "name": feat_name, "text": _fix_text((rec or {}).get("description", ""))}
         out.append({
             "index": b.get("index"), "name": b.get("name"),
             "skills": skills, "tools": tools, "languages": 0,
@@ -177,15 +216,16 @@ def class_features_by_class() -> dict:
     """{classIndex: [{level, name, desc}]} — level-by-level base features (OCR names tidied)."""
     data = _load("class_features_2024_phb_by_class.json") or {}
     by = data.get("by_class", {}) if isinstance(data, dict) else {}
-    return {ci: [{**f, "name": _fix_name(f.get("name", ""))} for f in feats]
+    return {ci: [{**f, "name": _fix_name(f.get("name", "")), "desc": _fix_text(f.get("desc", ""))} for f in feats]
             for ci, feats in by.items()}
 
 
 def subclass_records() -> list:
-    """The 48 local subclasses, each with a ``features: [{name, level, desc}]`` list (names tidied)."""
+    """The 48 local subclasses, each with a ``features: [{name, level, desc}]`` list (names + text tidied)."""
     out = []
     for s in _load("subclasses_2024_phb.json") or []:
-        feats = [{**f, "name": _fix_name(f.get("name", ""))} for f in (s.get("features") or [])]
+        feats = [{**f, "name": _fix_name(f.get("name", "")), "desc": _fix_text(f.get("desc", ""))}
+                 for f in (s.get("features") or [])]
         out.append({**s, "features": feats})
     return out
 
@@ -200,13 +240,192 @@ def weapon_masteries() -> dict:
     }
 
 
+@lru_cache(maxsize=1)
+def _weapon_mastery_map() -> dict:
+    wm = weapon_masteries()
+    prop_name = {p.get("index"): p.get("name") for p in wm.get("properties", []) if p.get("index")}
+    out = {}
+    for w in wm.get("weapons", []):
+        wi, mi = w.get("weapon"), w.get("mastery")
+        if wi and mi:
+            out[wi] = prop_name.get(mi, str(mi).title())
+    return out
+
+
+def weapon_mastery(weapon_index: str) -> str | None:
+    """The 2024 mastery property name for a weapon (e.g. 'longsword' -> 'Sap'); None if none."""
+    return _weapon_mastery_map().get(weapon_index)
+
+
+@lru_cache(maxsize=1)
+def mastery_classes() -> frozenset:
+    """The 2024 classes that gain the Weapon Mastery feature — and so may APPLY a weapon's mastery
+    property (a non-warrior can wield the weapon but not use its mastery). Derived from the
+    class-features data rather than hardcoded: barbarian, fighter, paladin, ranger, rogue."""
+    cfb = class_features_by_class()
+    return frozenset(ci for ci, feats in cfb.items()
+                     if any("weapon mastery" in (f.get("name", "").lower()) for f in (feats or [])))
+
+
 def languages() -> list:
     """19 language records (10 standard, 9 rare); Druidic/Thieves' Cant flagged secret."""
     return _load("languages_2024_phb.json") or []
 
 
 def multiclassing() -> dict:
-    """{prerequisites, proficiencies_gained, spellcaster_slot_table, notes}."""
+    """{prerequisites, proficiencies_gained, spellcaster_slot_table, notes, spellcasting_level_formula}."""
     data = _load("multiclassing_2024_phb.json") or {}
-    return {k: data.get(k) for k in ("prerequisites", "proficiencies_gained", "spellcaster_slot_table", "notes")
-            if k in data}
+    return {k: data.get(k) for k in ("prerequisites", "proficiencies_gained", "spellcaster_slot_table",
+                                     "notes", "spellcasting_level_formula") if k in data}
+
+
+# bucket key -> display category for the equipment picker
+_EQUIP_BUCKETS = {"weapons": "Weapon", "armor": "Armor", "tools": "Tools", "adventuring_gear": "Adventuring Gear"}
+
+
+def equipment() -> list:
+    """2024 PHB equipment as picker-ready catalog cards: [{index, name, category, local, mastery?,
+    eligibilityNote?}]. Flattens the weapons/armor/tools/adventuring_gear buckets; the bucket is the
+    category. `eligibilityNote` (Musket/Pistol) drives the firearm-proficiency gate in the picker."""
+    data = _load("equipment_2024_phb.json") or {}
+    out = []
+    for bucket, label in _EQUIP_BUCKETS.items():
+        for e in (data.get(bucket) or []):
+            if not isinstance(e, dict) or not e.get("index"):
+                continue
+            card = {"index": e["index"], "name": _clean(e.get("name") or e["index"]),
+                    "category": label, "local": True}
+            if e.get("mastery"):
+                card["mastery"] = e["mastery"]
+            if e.get("eligibility_note"):
+                card["eligibilityNote"] = e["eligibility_note"]
+                card["firearm"] = True  # A.5: gated — needs DEX 13+ or Firearms proficiency
+            out.append(card)
+    # A.4: a single "Trinket" item whose + Action rolls the d100 trinket table (not a creation step).
+    if data.get("weapons") is not None or _load("trinkets_2024_phb.json"):
+        out.append({"index": "trinket", "name": "Trinket", "category": "Adventuring Gear",
+                    "local": True, "trinketRoller": True})
+    return out
+
+
+def spells(class_index: str | None = None) -> list:
+    """2024 PHB spells as picker rows: [{index, name, level, classes, ocrSuspect}]. When `class_index`
+    is given, only spells whose `classes[]` includes it (case-insensitive). `ocrSuspect` flags the 69
+    records with possible OCR artifacts (shown with a warning icon, not hidden)."""
+    ci = (class_index or "").strip().lower()
+    out = []
+    for s in _load("spells_2024_phb.json") or []:
+        if not isinstance(s, dict) or not s.get("index"):
+            continue
+        classes = [str(c).lower() for c in (s.get("classes") or [])]
+        if ci and ci not in classes:
+            continue
+        out.append({"index": s["index"], "name": _clean(s.get("name") or s["index"]),
+                    "level": s.get("level"), "classes": classes,
+                    "ocrSuspect": bool(s.get("ocr_suspect")),
+                    "atHigherLevels": (s.get("at_higher_levels") or "").strip()})
+    return out
+
+
+@lru_cache(maxsize=1)
+def _spells_by_index() -> dict:
+    return {s["index"]: s for s in (_load("spells_2024_phb.json") or [])
+            if isinstance(s, dict) and s.get("index")}
+
+
+def spell(index: str) -> dict | None:
+    """One full 2024 spell record by index (for the detail view — carries description + the separate
+    `at_higher_levels` string)."""
+    return _spells_by_index().get(index)
+
+
+def trinkets() -> list:
+    """The 2024 d100 trinket table: [{roll, description}] (100 entries). Drives the Trinket item's
+    randomiser action (roll on the table), not a creation-step wizard."""
+    data = _load("trinkets_2024_phb.json") or {}
+    return data.get("trinkets") or []
+
+
+# A.11: the 2024 Barbarian Features table (Rages / Rage Damage / Weapon Mastery count by level). This
+# columnar data was OCR-garbled in the class-features extraction, so it's hardcoded here from the PHB
+# table. ⚠️ owner-confirm these values. Indexed by character level 1-20; level 20 rages = "Unlimited".
+_BARBARIAN_TABLE = {
+    1: {"rages": "2", "rageDamage": 2, "weaponMastery": 2},
+    2: {"rages": "2", "rageDamage": 2, "weaponMastery": 2},
+    3: {"rages": "3", "rageDamage": 2, "weaponMastery": 2},
+    4: {"rages": "3", "rageDamage": 2, "weaponMastery": 3},
+    5: {"rages": "3", "rageDamage": 2, "weaponMastery": 3},
+    6: {"rages": "4", "rageDamage": 2, "weaponMastery": 3},
+    7: {"rages": "4", "rageDamage": 2, "weaponMastery": 3},
+    8: {"rages": "4", "rageDamage": 2, "weaponMastery": 3},
+    9: {"rages": "4", "rageDamage": 3, "weaponMastery": 3},
+    10: {"rages": "4", "rageDamage": 3, "weaponMastery": 4},
+    11: {"rages": "4", "rageDamage": 3, "weaponMastery": 4},
+    12: {"rages": "5", "rageDamage": 3, "weaponMastery": 4},
+    13: {"rages": "5", "rageDamage": 3, "weaponMastery": 4},
+    14: {"rages": "5", "rageDamage": 3, "weaponMastery": 4},
+    15: {"rages": "5", "rageDamage": 3, "weaponMastery": 4},
+    16: {"rages": "5", "rageDamage": 4, "weaponMastery": 4},
+    17: {"rages": "6", "rageDamage": 4, "weaponMastery": 4},
+    18: {"rages": "6", "rageDamage": 4, "weaponMastery": 4},
+    19: {"rages": "6", "rageDamage": 4, "weaponMastery": 4},
+    20: {"rages": "Unlimited", "rageDamage": 4, "weaponMastery": 4},
+}
+
+
+def barbarian_resources(level: int) -> dict | None:
+    """{rages, rageDamage, weaponMastery} for a Barbarian at `level` (1-20), else None. Hardcoded from
+    the 2024 PHB Barbarian table (the OCR couldn't recover those columns)."""
+    try:
+        return _BARBARIAN_TABLE.get(max(1, min(20, int(level))))
+    except (TypeError, ValueError):
+        return None
+
+
+def feat_prereq_status(feat: dict, character: dict) -> dict:
+    """Evaluate a 2024 feat's `prerequisites_text` against a character → {available, reason}.
+
+    ADVISORY, not a hard block (rule-of-cool friendly): an unparseable / unknown-feature prereq
+    defaults to available with a "check" note rather than hiding the feat. Types:
+    origin → always; fighting-style → needs a Fighting Style feature; epic-boon → Level 19+;
+    general → free text ("Level 4+", "Strength 13+", "Spellcasting or Pact Magic Feature", a feat name).
+    Alternatives joined by "or" pass if ANY clause is met.
+    """
+    ftype = (feat.get("type") or "").lower()
+    text = (feat.get("prerequisites_text") or "").strip()
+    if ftype == "origin" or not text or text.lower() == "none":
+        return {"available": True, "reason": ""}
+    pc = character.get("pc") or {}
+    classes = pc.get("classes") if isinstance(pc.get("classes"), list) else None
+    level = sum(int((c or {}).get("level") or 0) for c in classes) if classes else int(pc.get("level") or 0)
+    abilities = {str(k).upper(): v for k, v in (character.get("abilities") or {}).items()}
+    classes_have = {(pc.get("class") or "").lower()} | ({(c.get("class") or "").lower() for c in classes} if classes else set())
+    classes_have.discard("")
+    have_feats = {_slug(str(f)) for f in (pc.get("feats") or [])}
+    is_caster = bool(character.get("spellcasting")) or bool(
+        classes_have & {"bard", "cleric", "druid", "sorcerer", "wizard", "warlock", "paladin", "ranger"})
+    has_fighting_style = bool(classes_have & {"fighter", "paladin", "ranger"})  # heuristic
+
+    def clause_met(c: str):
+        c = c.strip()
+        m = re.search(r"level\s+(\d+)", c, re.I)
+        if m:
+            return level >= int(m.group(1))
+        m = re.search(r"(strength|dexterity|constitution|intelligence|wisdom|charisma)\s+(\d+)", c, re.I)
+        if m:
+            return int(abilities.get(_ABILITIES[m.group(1).lower()], 0) or 0) >= int(m.group(2))
+        cl = c.lower()
+        if "spellcasting" in cl or "pact magic" in cl:
+            return is_caster
+        if "fighting style" in cl:
+            return has_fighting_style
+        if cl.endswith("feature"):
+            return None  # an unknown class feature — can't evaluate, don't hard-block
+        return True if _slug(c) in have_feats else None  # otherwise a feat-name prereq
+
+    results = [clause_met(c) for c in re.split(r"\s+or\s+", text, flags=re.I)]
+    if any(r is True for r in results):
+        return {"available": True, "reason": ""}
+    if results and all(r is False for r in results):
+        return {"available": False, "reason": "Requires " + text}
+    return {"available": True, "reason": "Check prerequisite: " + text}  # unevaluable → advisory

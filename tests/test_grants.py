@@ -49,7 +49,9 @@ def main() -> int:
     if "Thieves Tools" not in profs.get("tools", []):
         failures.append(f"criminal's thieves' tools should land in pc.proficiencies.tools: {profs.get('tools')}")
 
-    # --- 2014 wizard (class-only; sage background absent in 2014 SRD) ------------
+    # --- 2014 wizard + sage: class skill picks merge with the background's fixed skills -----
+    # Sage grants Arcana + History; the wizard chooses Arcana + Investigation, so the overlapping
+    # Arcana dedups -> {Arcana, History, Investigation} (same merge the rogue/criminal case checks).
     wiz = {
         "kind": "character", "ruleset": "dnd5e-2014",
         "pc": {"class": "wizard", "background": "sage", "skillChoices": ["arcana", "investigation"]},
@@ -57,8 +59,12 @@ def main() -> int:
     resolve_pc_proficiencies(wiz)
     if wiz.get("saveProfs") != ["INT", "WIS"]:
         failures.append(f"wizard saveProfs should be [INT, WIS], got {wiz.get('saveProfs')}")
-    if [s["skill"] for s in wiz["skillProfs"]] != ["Arcana", "Investigation"]:
-        failures.append(f"wizard skills wrong: {[s['skill'] for s in wiz['skillProfs']]}")
+    wiz_skills = [s["skill"] for s in wiz["skillProfs"]]
+    if sorted(wiz_skills) != ["Arcana", "History", "Investigation"]:
+        failures.append(f"wizard skills should merge chosen + Sage's grants to "
+                        f"[Arcana, History, Investigation], got {wiz_skills}")
+    if wiz_skills.count("Arcana") != 1:
+        failures.append(f"overlapping skill (Arcana) not deduped: {wiz_skills}")
 
     # --- non-PC is a strict no-op ----------------------------------------------
     monster = {"kind": "monster", "saveProfs": ["WIS"], "abilities": {}}

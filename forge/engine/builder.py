@@ -8,7 +8,7 @@ Intent dict (v1) keys:
     ruleset            "2014" | "2024"
     name               str
     species            slug (e.g. "elf")
-    subspecies         slug | None        (bonuses applied later; TODO v1)
+    subspecies         slug | None        (its ability bonuses are applied alongside the species')
     class              slug (e.g. "wizard")
     level              int 1-20
     background         slug | None
@@ -39,6 +39,7 @@ def build_character(intent: dict, repo, *, levels_repo=None, class_repo=None) ->
 
     # --- canonical lookups -----------------------------------------------------
     species = repo.get("species", intent["species"])
+    subspecies = repo.get("subspecies", intent["subspecies"]) if intent.get("subspecies") else None
     cls = repo.get("classes", intent["class"])
     background = repo.get("backgrounds", intent["background"]) if intent.get("background") else None
     level = int(intent.get("level", 1))
@@ -58,6 +59,7 @@ def build_character(intent: dict, repo, *, levels_repo=None, class_repo=None) ->
         base,
         edition=edition,
         species=species,
+        subspecies=subspecies,
         background=background,
         allocation_2024=intent.get("ability_allocation_2024"),
     )
