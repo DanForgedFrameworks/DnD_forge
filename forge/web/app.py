@@ -688,6 +688,8 @@ def save_character():
     body = request.get_json(force=True) or {}
     character = body.get("character") or body
     character["id"] = character.get("id") or _slug(character.get("name"))
+    if not character.get("ruleset"):
+        character["ruleset"] = "dnd5e-2014"  # never persist a null edition (legacy chars, robust default)
     resolve_pc_proficiencies(character)  # PC: derive saveProfs/skillProfs/proficiencies from class+bg
     if character.get("kind") == "character":
         try:  # canonicalise gear on save (re-attach catalog modes; tolerate any edition/data gap)
