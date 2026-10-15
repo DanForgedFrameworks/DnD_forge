@@ -195,7 +195,7 @@ clean, SRD builds leak no local keys, 11/11 tests green._
 - **A.3 Spell picker UI.** `classes[]` filter (data ready); `ocrSuspect` → small warning icon (don't
   hide); `at_higher_levels` → distinct block in the detail view (separate string, via `local_data.spell()`).
   Note: Divine Smite is a L1 Paladin spell in 2024 — don't also render it as a class feature.
-- **A.4 Trinkets = item + randomiser action (RE-SCOPED).** Not a creation-step wizard — a **Trinket item**
+- **A.4 ✅ Trinkets = item + randomiser action — DONE (a1eabe5).** Not a creation-step wizard — a **Trinket item**
   whose **+ Action** rolls the d100 table (`local_data.trinkets()`), same pattern as Bag of Holding (#4).
   Engine item-action + the catalog item.
 - **A.5 Musket/Pistol gating.** Hide from the weapon picker unless DEX 13+ or a class/subclass granting
