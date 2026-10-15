@@ -103,6 +103,29 @@ def test_class_beats() -> list:
     return fails
 
 
+def test_state_envs() -> list:
+    """art.stateEnvs overrides the environment per state; absent/blank -> unchanged."""
+    fails: list[str] = []
+    base = copy.deepcopy(char)
+    base["art"]["environment"] = "a cosy fireplace"
+    before = {s: build_prompt(base, s) for s in FIXED_PORTRAIT_STATES}
+
+    c = copy.deepcopy(base)
+    c["art"]["stateEnvs"] = {"travelling": "a windswept moorland road.", "in-battle": "   "}
+    trav = build_prompt(c, "travelling")
+    if "crossing the open expanse of a windswept moorland road, a high-fantasy world" not in trav:
+        fails.append("stateEnvs: travelling override not applied")
+    if "fireplace" in trav:
+        fails.append("stateEnvs: home environment must not bleed into an overridden state")
+    for s in ("at-rest", "in-conversation", "in-battle"):
+        if build_prompt(c, s) != before[s]:
+            fails.append(f"stateEnvs: {s} must be unchanged when unset/blank")
+    c["art"]["stateEnvs"] = {}
+    if any(build_prompt(c, s) != before[s] for s in FIXED_PORTRAIT_STATES):
+        fails.append("stateEnvs: empty stateEnvs must equal no stateEnvs")
+    return fails
+
+
 def test_lock_appearance() -> list:
     """lock_appearance makes gender explicit + stable, is idempotent, and leaves
     genderless creatures untouched."""
@@ -206,6 +229,7 @@ def main() -> int:
     # Item 6 + 7 acceptance: portrait set, class beats, appearance/gender lock
     failures += test_portrait_set()
     failures += test_class_beats()
+    failures += test_state_envs()
     failures += test_lock_appearance()
     failures += test_companion()
 

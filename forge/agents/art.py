@@ -135,7 +135,9 @@ def build_prompt(
     segments.append(f"{action}; {STATE_CAM[state]}")
 
     # 4) environment, reframed per state via envPrefix
-    env = art.get("environment")
+    # a per-state override (art.stateEnvs[state]) replaces the home environment for that state only
+    env = (art.get("stateEnvs") or {}).get(state)
+    env = env if (env and _clean(env)) else art.get("environment")
     if env:
         segments.append(f"{STATE_ENV_PREFIX[state]} {_clean(env)}, a high-fantasy world")
     else:

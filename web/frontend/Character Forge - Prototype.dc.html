@@ -920,6 +920,11 @@
         <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Appearance</label><textarea value="{{ art.appearance }}" onInput="{{ AH.appearance }}" rows="2" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea></div>
         <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Outfit / gear</label><textarea value="{{ art.outfit }}" onInput="{{ AH.outfit }}" rows="2" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea></div>
         <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Environment</label><textarea value="{{ art.environment }}" onInput="{{ AH.environment }}" rows="2" style="width:100%; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;"></textarea></div>
+        <div style="grid-column:1 / -1; font-size:12px; color:#9d907a; margin-top:2px;">Optional per-state scenes. Set one when the Environment above is a fixed place (e.g. a fireplace) that would look wrong in that portrait.</div>
+        <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">At rest scene</label><input type="text" value="{{ stateEnvVals.atRest }}" onInput="{{ SE.atRest }}" placeholder="Blank → uses the Environment above" style="width:100%; box-sizing:border-box; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;" /></div>
+        <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">In conversation scene</label><input type="text" value="{{ stateEnvVals.inConversation }}" onInput="{{ SE.inConversation }}" placeholder="Blank → uses the Environment above" style="width:100%; box-sizing:border-box; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;" /></div>
+        <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">In battle scene</label><input type="text" value="{{ stateEnvVals.inBattle }}" onInput="{{ SE.inBattle }}" placeholder="Blank → uses the Environment above" style="width:100%; box-sizing:border-box; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;" /></div>
+        <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Travelling scene</label><input type="text" value="{{ stateEnvVals.travelling }}" onInput="{{ SE.travelling }}" placeholder="Blank → uses the Environment above" style="width:100%; box-sizing:border-box; background:#2d271f; border:1px solid #4a3f30; border-radius:6px; padding:8px; font-size:13.5px; color:#d8ccb4; line-height:1.4;" /></div>
         <div><label style="font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; color:#bd7d3f; text-transform:uppercase; display:block; margin-bottom:5px;">Art style</label>
           <label style="display:flex; align-items:center; gap:7px; font-size:12.5px; color:#cdbf9f; cursor:pointer; margin-bottom:6px;"><input type="checkbox" checked="{{ artUseDefault }}" onChange="{{ onArtUseDefault }}" style="width:15px; height:15px; cursor:pointer;" /> Use the default house style</label>
           <sc-if value="{{ artCustomStyle }}" hint-placeholder-val="{{ false }}">
@@ -3083,6 +3088,8 @@ class Component extends DCLogic {
   selField(k, e) { const v = e.target.value; this.setField(k, v === "__other__" ? "" : v); }
   setAbility(k, v) { this.setState(s => ({ draft: { ...s.draft, abilities: { ...s.draft.abilities, [k]: v } } })); }
   stepAbility(k, delta) { this.setState(s => { let n = (parseInt(s.draft.abilities[k], 10) || 10) + delta; n = Math.max(1, Math.min(30, n)); return { draft: { ...s.draft, abilities: { ...s.draft.abilities, [k]: n } } }; }); }
+  // Per-state environment override (art.stateEnvs[state]); blank removes it so the generic Environment applies.
+  setStateEnv(state, v) { this.setState(s => { const art = Object.assign({}, s.draft.art || {}); const se = Object.assign({}, art.stateEnvs || {}); if ((v || "").trim()) se[state] = v; else delete se[state]; art.stateEnvs = se; return { draft: { ...s.draft, art } }; }); }
   setArt(k, v) { this.setState(s => ({ draft: { ...s.draft, art: { ...s.draft.art, [k]: v } } })); }
   setDump(v) { this.setState(s => ({ draft: { ...s.draft, dump: v } })); }
   setRulesMode(m) { this.setState(s => { const d = { ...s.draft }; if (d.pc) d.pc = { ...d.pc, rulesMode: m }; return { rulesMode: m, draft: d }; }); }
@@ -3433,7 +3440,10 @@ class Component extends DCLogic {
     // replaces the generic action; the camera/lighting clause stays for set consistency.
     const beat = (a.stateBeats || {})[stateKey];
     seg.push((beat ? clean(beat) : sc.act) + "; " + sc.cam);
-    seg.push(a.environment ? sc.env + " " + clean(a.environment) + ", a high-fantasy world" : sc.env + " an evocative high-fantasy location");
+    // Per-state environment override (art.stateEnvs[state]) replaces the home environment for that state only.
+    const stateEnv = (a.stateEnvs || {})[stateKey];
+    const envText = stateEnv && clean(stateEnv) ? stateEnv : a.environment;
+    seg.push(envText ? sc.env + " " + clean(envText) + ", a high-fantasy world" : sc.env + " an evocative high-fantasy location");
     if (a.personality) seg.push("mood: " + clean(a.personality));
     // style: the character's own art.style REPLACES the house style; else the locked house style.
     seg.push(a.style ? clean(a.style) : "in the style of Greg Rutkowski and Tyler Jacobson, gritty painterly high-fantasy digital illustration, dramatic cinematic lighting");
@@ -3718,6 +3728,9 @@ class Component extends DCLogic {
     const H = {};
     ["name", "size", "type", "alignment", "ac", "hp", "speed", "challenge"].forEach(k => { H[k] = e => this.setField(k, e.target.value); });
     const AH = {};
+    const SEKEY = { atRest: "at-rest", inConversation: "in-conversation", inBattle: "in-battle", travelling: "travelling" };
+    const SE = {}, stateEnvVals = {};
+    Object.keys(SEKEY).forEach(k => { SE[k] = e => this.setStateEnv(SEKEY[k], e.target.value); stateEnvVals[k] = ((d.art || {}).stateEnvs || {})[SEKEY[k]] || ""; });
     ["appearance", "outfit", "pose", "environment", "personality", "style"].forEach(k => { AH[k] = e => this.setArt(k, e.target.value); });
 
     const traitItems = (d.traits || []).map((t, i) => ({
@@ -3979,7 +3992,7 @@ class Component extends DCLogic {
       onSurprise: () => this.surpriseMe(), showKindToggle: this.state.freshStart,
       hasConcept: !!this.state.concept, conceptLine: this.conceptLine(),
       onReRoll: () => this.rollConcept(), onForgeConcept: () => this.requestForge("concept"), onDiscardConcept: () => this.discardConcept(),
-      starters, starterGroups, char, abilityList, H, AH, traitItems,
+      starters, starterGroups, char, abilityList, H, AH, SE, stateEnvVals, traitItems,
       abilityTotal, abilityMax, abilityMin, abilityNote,
       sizeOptionEls: mkOpts(SIZES, true), typeOptionEls: mkOpts(TYPES, true), alignOptionEls: mkOpts(ALIGNS, true), kindOptionEls, traitPresetEls, presetSel: "",
       sizeSel: sizeIsOther ? "__other__" : d.size, typeSel: typeIsOther ? "__other__" : (TYPES.find(t => t.toLowerCase() === (d.type || "").toLowerCase()) || "__other__"), alignSel: alignIsOther ? "__other__" : d.alignment, kindSel: d.kind, kindLockLabel: (d.bondType === "Familiar" ? "Familiar" : kindLabelFor(d.kind)),

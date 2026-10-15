@@ -71,7 +71,7 @@ _Last updated: 2026-06-29_
   the separately-forged companion identity ("Soot and Ember") aren't kept in sync. Examples:
   `casimir-vael-*.json`, `soot-and-ember.json`. Touches `build_prompt` (art.py) ⇄ `computePrompt()`.
 
-- **[art] Static environment bleeds into state-specific portraits (travelling/battle).** The character's
+- **[art] Static environment bleeds into state-specific portraits (travelling/battle). — DONE: `art.stateEnvs` implemented (engine + front-end fields).** The character's
   single `a.environment` is appended to all four scene lead-ins, including "Travelling" ("crossing the
   open expanse of …") and "In battle" ("amid the chaos and wreckage of …"). For a character whose home
   scene is a specific indoor place — Brindle the hearth cat's fireplace — the Travelling portrait reads
